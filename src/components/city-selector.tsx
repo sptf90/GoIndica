@@ -6,10 +6,12 @@ export function CitySelector({
   initial,
   onChange,
   name = 'cityId',
+  required = true,
 }: {
   initial?: City | null;
   onChange?: (city: City | null) => void;
   name?: string;
+  required?: boolean;
 }) {
   const id = useId();
   const input = useRef<HTMLInputElement>(null);
@@ -178,7 +180,7 @@ export function CitySelector({
           autoCapitalize="words"
           spellCheck={false}
           maxLength={60}
-          required
+          required={required}
           onFocus={() => setOpen(true)}
           onChange={(event) => {
             request.current?.abort();

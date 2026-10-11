@@ -1,6 +1,6 @@
-# MVP de descoberta local
+# GoIndica
 
-Implementação de [ESPECIFICACAO_MVP_DESCOBERTA_LOCAL.md](./ESPECIFICACAO_MVP_DESCOBERTA_LOCAL.md), que continua sendo a fonte principal de verdade. “Descoberta local” é apenas uma identificação provisória, não uma decisão de marca.
+Plataforma de indicações da comunidade, com identidade visual baseada em [logo.png](./logo.png). Implementação de [ESPECIFICACAO_MVP_DESCOBERTA_LOCAL.md](./ESPECIFICACAO_MVP_DESCOBERTA_LOCAL.md), que continua sendo a fonte principal das regras de produto.
 
 Por solicitação posterior do responsável, o acesso também aceita **e-mail e senha pelo Supabase**, além do Google opcional. Essa é uma alteração da decisão de autenticação da seção 13 da especificação; as regras do produto e o modelo de permissões permanecem os mesmos.
 
@@ -46,7 +46,7 @@ npm run banco:migrar
 
 Informe a senha do banco quando a CLI solicitar. O script executa `supabase db push`, aplica os arquivos pendentes em ordem e registra o histórico no banco remoto. Não é necessário iniciar um Supabase local para esse fluxo. Se já tiver inicializado a CLI, pule `init`. Use `npm run banco:migrar -- --dry-run` para listar as migrations pendentes sem aplicá-las. Os arquivos temporários de vinculação da CLI são ignorados pelo Git.
 
-A aplicação usa o papel autenticado e RLS nas leituras e RPCs. A chave de serviço aparece somente na fronteira que registra uma indicação já validada no Google e no contador agregado de analytics. Ela nunca é enviada ao navegador.
+A aplicação usa o papel autenticado e RLS nas leituras e RPCs. A chave de serviço fica nas operações restritas do servidor: registro de indicação validada pelo Google, analytics, diagnóstico, fila de e-mails e encerramento no Auth. Ela nunca é enviada ao navegador.
 
 ### Login sem Google
 
@@ -60,14 +60,19 @@ Os links padrão (`{{ .ConfirmationURL }}`) utilizam `/auth/callback` com PKCE e
 
 ```html
 <!-- Confirm signup -->
-<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email">Confirmar e-mail</a>
+<a
+  href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next={{ .RedirectTo | urlquery }}"
+  >Confirmar e-mail</a
+>
 <!-- Reset password -->
 <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery"
   >Definir nova senha</a
 >
 ```
 
-O callback aceita apenas confirmação de e-mail ou recuperação e redireciona para destinos internos fixos. Nenhum login depende de Google Places. As migrations continuam necessárias para onboarding e demais fluxos; Places continua necessário para indicar estabelecimentos.
+O parâmetro `next` preserva o pedido compartilhado durante cadastro, confirmação e onboarding. O callback aceita somente rotas internas permitidas, validando também a origem quando recebe `.RedirectTo`. O template usa as [variáveis oficiais de e-mail do Supabase](https://supabase.com/docs/guides/auth/auth-email-templates) e o escape de query do [Go template](https://pkg.go.dev/text/template). Inclua na allowlist as variantes de `/auth/callback` com `next` usadas pela aplicação, restringindo origem e caminho conforme a [configuração de redirecionamentos](https://supabase.com/docs/guides/auth/redirect-urls). Para alteração de e-mail, mantenha o template padrão com `.ConfirmationURL` e homologue o retorno a `/conta`.
+
+Nenhum login depende de Google Places. As migrations continuam necessárias para onboarding e demais fluxos; Places continua necessário para indicar estabelecimentos.
 
 ### Primeiro administrador
 
@@ -131,10 +136,16 @@ Nenhum deploy ou provisionamento de conta externa foi feito automaticamente. A c
 ```bash
 npm run lint
 npm run typecheck
+npm run db:types:check
 npm test
 npm run build
-npx playwright install chromium
+npx playwright install --with-deps chromium firefox webkit
 npm run test:e2e
+npm run test:e2e:cross
+npm run tools:postgrest
+POSTGREST_BIN=.test-tools/postgrest npm run verify:postgrest
+npm run verify:scale
+npm run verify:recovery
 ```
 
 `npm test` executa validações de integração no **PostgreSQL real**, provisionado temporariamente pelo pacote de desenvolvimento `embedded-postgres`. As migrations, triggers, transações, constraints e papéis RLS são exercitados sem reimplementar as regras de negócio em memória.
@@ -154,13 +165,19 @@ Se npm exigir aprovação de scripts de dependências, aprove o pacote `@embedde
 
 Para homologar o ciclo com serviços reais, consulte [docs/HOMOLOGACAO.md](./docs/HOMOLOGACAO.md).
 
+A suíte completa roda no Chromium; Firefox/WebKit cobrem fluxos críticos. `verify:postgrest` exercita RPCs e permissões pelo servidor PostgREST real em banco temporário. Escala valida busca indexada com 10 mil pedidos, e recuperação exige `pg_dump`/`pg_restore` compatíveis com PostgreSQL 18. Os tipos em `src/lib/supabase/database.types.ts` são gerados por `npm run db:types`; o CI confere divergências. Consulte [operação e recuperação](./docs/OPERACAO.md) para detalhes e configurações de e-mails opcionais.
+
 ## Documentação
 
+- [Fotos, pedidos sem ajuda, interesses, reconfirmações, alertas e cards](./docs/DESCOBERTAS_COMUNITARIAS.md)
 - [Análise inicial e cobertura da especificação](./docs/ANALISE_E_COBERTURA.md)
+- [Análise do sistema e melhorias propostas](./docs/ANALISE_SISTEMA.md)
+- [Implementação e revisão individual dos 24 itens](./docs/IMPLEMENTACAO_E_REVISAO.md)
+- [Operação, lembretes e recuperação](./docs/OPERACAO.md)
 - [Decisões, concorrência e permissões](./docs/ARQUITETURA.md)
 - [Revisão de interface e sugestões de cidades](./docs/REVISAO_INTERFACE.md)
-- [Padrão visual baseado no protótipo Figma](./docs/PADRAO_VISUAL.md)
+- [Identidade visual do GoIndica](./docs/PADRAO_VISUAL.md)
 - [Verificação e seus limites](./docs/VERIFICACAO.md)
 - [Homologação com provedores reais](./docs/HOMOLOGACAO.md)
 
-O catálogo contém 5.571 municípios brasileiros oficiais do IBGE, importados em 4 de outubro de 2026. Para atualizar o arquivo versionado: `npm run cities:update`. Revise a migration gerada antes de aplicá-la em produção.
+O catálogo contém 5.571 municípios brasileiros oficiais do IBGE, importados em 4 de outubro de 2026 e conferidos novamente em 7 de outubro. Para conferir mudanças sem gravar arquivos: `npm run cities:update -- --dry-run`. Para atualizar, `npm run cities:update` cria uma migration nova, preservando as anteriores; revise-a antes de aplicar.

@@ -6,7 +6,7 @@ export const metadata = { title: 'Novo pedido' };
 export default async function NewRequest({
   searchParams,
 }: {
-  searchParams: Promise<{ city?: string }>;
+  searchParams: Promise<{ city?: string; q?: string }>;
 }) {
   const { db, profile } = await member();
   const params = await searchParams;
@@ -27,7 +27,11 @@ export default async function NewRequest({
         onde encontrar.
       </h1>
       <p className="muted">Seja específico. Não precisa de preço, foto ou categoria.</p>
-      <RequestComposer city={city} />
+      <RequestComposer
+        city={city}
+        initialDescription={(params.q || '').trim().slice(0, 300)}
+        draftKey={'goindica:request:v1:' + profile.id}
+      />
     </div>
   );
 }

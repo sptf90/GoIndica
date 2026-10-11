@@ -3,12 +3,15 @@ import Link from 'next/link';
 import { pageNumber } from '@/lib/pagination';
 import { administrator } from '@/server/auth';
 import { check } from '@/lib/errors';
+import { reviewSupport } from '@/server/community-actions';
+import { environmentStatus } from '@/lib/env';
+import { CitySelector } from '@/components/city-selector';
 import { moderate } from '@/server/actions';
 import { ActionForm } from '@/components/action-form';
-import { Empty, Pagination, Status, GoogleAttribution, PlaceAttributions } from '@/components/ui';
-import { timestamp, livePlace } from '@/server/queries';
+import { Empty, Pagination, Status } from '@/components/ui';
+import { timestamp } from '@/server/queries';
+import { PlacePanel } from '@/components/place-panel';
 import { uuid } from '@/lib/validation/schemas';
-import { safeMapsUrl } from '@/lib/google/places';
 export const metadata = { title: 'Administração' };
 const tabs = {
   users: 'Usuários',
@@ -18,6 +21,8 @@ const tabs = {
   rewards: 'Recompensas',
   logs: 'Logs',
   metrics: 'Métricas',
+  support: 'Suporte',
+  operations: 'Operação',
 };
 function Control({ id, action, label }: { id: string; action: string; label: string }) {
   return (
@@ -29,13 +34,36 @@ function Control({ id, action, label }: { id: string; action: string; label: str
     >
       <input type="hidden" name="targetId" value={id} />
       <input type="hidden" name="action" value={action} />
+      <details className="decision-note">
+        <summary>Motivo da decisão</summary>
+        <label className="field">
+          Justificativa
+          <textarea
+            name="note"
+            minLength={10}
+            maxLength={500}
+            rows={2}
+            defaultValue="Revisão administrativa registrada"
+            required
+          />
+        </label>
+      </details>
     </ActionForm>
   );
 }
 export default async function Admin({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; q?: string; page?: string; target?: string }>;
+  searchParams: Promise<{
+    tab?: string;
+    q?: string;
+    page?: string;
+    target?: string;
+    status?: string;
+    city?: string;
+    since?: string;
+    until?: string;
+  }>;
 }) {
   const { db } = await administrator();
   const params = await searchParams;
@@ -93,7 +121,6 @@ export default async function Admin({
     const rows = check(await query.range(start, start + 30));
     more = rows.length > 30;
     const selected = selectedId.success ? rows[0] : null;
-    const place = selected ? await livePlace(selected.place_id) : null;
     const person = selected
       ? check(await db.from('profiles').select('*').eq('id', selected.user_id).single())
       : null;
@@ -110,19 +137,7 @@ export default async function Admin({
               <p>
                 {person?.display_name} · @{person?.username}
               </p>
-              {place ? (
-                <>
-                  <strong>{place.displayName.text}</strong>
-                  <p>{place.formattedAddress}</p>
-                  <a href={safeMapsUrl(place)} target="_blank" rel="noopener noreferrer">
-                    Ver no Google Maps ↗
-                  </a>
-                  <GoogleAttribution />
-                  <PlaceAttributions place={place} />
-                </>
-              ) : (
-                <p className="notice">Não foi possível consultar o estabelecimento agora.</p>
-              )}
+              <PlacePanel requestId={r.request_id} placeId={r.place_id} autoLoad />
             </>
           ) : (
             <Link href={'/admin?tab=indications&target=' + r.id}>Inspecionar indicação ↗</Link>
@@ -134,14 +149,21 @@ export default async function Admin({
       </article>
     ));
   } else if (tab === 'reports') {
-    const rows = check(
-      await db
-        .from('reports')
-        .select('*')
-        .order('status')
-        .order('created_at', { ascending: false })
-        .range(start, start + 30),
-    );
+    let reportQuery = db
+      .from('reports')
+      .select('*')
+      .order('status')
+      .order('created_at', { ascending: false });
+    if (['OPEN', 'REVIEWED'].includes(params.status || ''))
+      reportQuery = reportQuery.eq('status', params.status!);
+    const rows = check(await reportQuery.range(start, start + 30));
+    const reviewers = rows
+      .flatMap((r) => [r.reporter_id, r.reviewed_by])
+      .filter((id): id is string => Boolean(id));
+    const reviewerRows = reviewers.length
+      ? check(await db.from('profiles').select('id,display_name').in('id', reviewers))
+      : [];
+    const reviewerMap = new Map(reviewerRows.map((p) => [p.id, p.display_name]));
     more = rows.length > 30;
     body = rows.slice(0, 30).map((r) => (
       <article className="admin-row" key={r.id}>
@@ -151,8 +173,18 @@ export default async function Admin({
           </strong>
           <p>{r.reason}</p>
           <p className="hint">
-            {r.status === 'OPEN' ? 'Pendente' : 'Revisada'} · {timestamp(r.created_at)}
+            Denunciado por {reviewerMap.get(r.reporter_id) || 'Perfil indisponível'}
           </p>
+          <p className="hint">
+            {r.status === 'OPEN' ? 'Pendente' : 'Revisada'} · {timestamp(r.created_at)}
+            {r.reviewed_at
+              ? ' · Revisada em ' +
+                timestamp(r.reviewed_at) +
+                ' por ' +
+                (reviewerMap.get(r.reviewed_by!) || 'Administrador')
+              : ''}
+          </p>
+          {r.decision_note ? <p>Decisão: {r.decision_note}</p> : null}
           {r.target_type === 'REQUEST' ? (
             <Link href={'/pedidos/' + r.target_id}>Abrir pedido ↗</Link>
           ) : (
@@ -179,14 +211,30 @@ export default async function Admin({
         .from('reward_events')
         .select('*')
         .order('created_at', { ascending: false })
+        .order('id')
         .range(start, start + 30),
     );
+    const people = rows.length
+      ? check(
+          await db
+            .from('profiles')
+            .select('id,display_name,username')
+            .in(
+              'id',
+              rows.map((r) => r.user_id),
+            ),
+        )
+      : [];
+    const peopleMap = new Map(people.map((p) => [p.id, p]));
     more = rows.length > 30;
     body = rows.slice(0, 30).map((r) => (
       <article className="admin-row" key={r.id}>
         <div>
           <strong>+{r.points} · Indicação confirmada</strong>
-          <p className="hint">Usuário: {r.user_id}</p>
+          <p className="hint">
+            {peopleMap.get(r.user_id)?.display_name || 'Perfil indisponível'} · @
+            {peopleMap.get(r.user_id)?.username || 'indisponível'}
+          </p>
           <Link href={'/pedidos/' + r.request_id}>Ver solicitação ↗</Link>
           <p className="hint">
             {timestamp(r.created_at)} · Evento {r.id}
@@ -200,13 +248,24 @@ export default async function Admin({
         .from('audit_logs')
         .select('*')
         .order('created_at', { ascending: false })
+        .order('id')
         .range(start, start + 30),
     );
+    const actors = rows.map((r) => r.actor_id).filter((id): id is string => Boolean(id));
+    const people = actors.length
+      ? check(await db.from('profiles').select('id,display_name,username').in('id', actors))
+      : [];
+    const peopleMap = new Map(people.map((p) => [p.id, p]));
     more = rows.length > 30;
     body = rows.slice(0, 30).map((r) => (
       <article className="admin-row" key={r.id}>
         <div>
           <strong>{r.event_type}</strong>
+          <p className="hint">
+            {r.actor_id
+              ? peopleMap.get(r.actor_id)?.display_name || 'Perfil indisponível'
+              : 'Sistema'}
+          </p>
           <p className="hint">
             {r.entity_type} · {r.entity_id}
           </p>
@@ -215,50 +274,253 @@ export default async function Admin({
         </div>
       </article>
     ));
-  } else {
-    const m = check(await db.rpc('admin_metrics'));
+  } else if (tab === 'support') {
+    const rows = check(
+      await db
+        .from('support_requests')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .order('id')
+        .range(start, start + 30),
+    );
+    more = rows.length > 30;
+    const names = rows.length
+      ? check(
+          await db
+            .from('profiles')
+            .select('id,display_name,username')
+            .in(
+              'id',
+              rows.map((r) => r.user_id),
+            ),
+        )
+      : [];
+    const nameMap = new Map(names.map((p) => [p.id, p]));
+    body = rows.slice(0, 30).map((r) => (
+      <article key={r.id} className="admin-row">
+        <div>
+          <strong>
+            {r.kind === 'CLOSE_ACCOUNT' ? 'Encerramento de conta' : 'Ajuda com dados'}
+          </strong>
+          <p>
+            {nameMap.get(r.user_id)?.display_name} · @{nameMap.get(r.user_id)?.username}
+          </p>
+          <p>{r.reason}</p>
+          <p className="hint">
+            {r.status} · {timestamp(r.created_at)}
+          </p>
+          {r.decision_note ? <p>{r.decision_note}</p> : null}
+        </div>
+        {['OPEN', 'PROCESSING'].includes(r.status) ? (
+          <div>
+            {(r.kind === 'CLOSE_ACCOUNT' && r.status === 'PROCESSING'
+              ? ['CLOSE']
+              : [r.kind === 'CLOSE_ACCOUNT' ? 'CLOSE' : 'COMPLETED', 'DECLINED']
+            ).map((decision) => (
+              <ActionForm
+                key={decision}
+                action={reviewSupport}
+                label={
+                  decision === 'CLOSE'
+                    ? 'Encerrar e anonimizar'
+                    : decision === 'COMPLETED'
+                      ? 'Concluir atendimento'
+                      : 'Recusar solicitação'
+                }
+                confirm={
+                  decision === 'CLOSE'
+                    ? 'Encerrar o acesso e anonimizar esta conta? Esta ação é definitiva.'
+                    : 'Registrar esta decisão?'
+                }
+                className="quiet"
+              >
+                <input type="hidden" name="id" value={r.id} />
+                <input type="hidden" name="decision" value={decision} />
+                <label className="field">
+                  Motivo da decisão
+                  <textarea name="note" minLength={10} maxLength={500} required rows={2} />
+                </label>
+              </ActionForm>
+            ))}
+          </div>
+        ) : null}
+      </article>
+    ));
+  } else if (tab === 'operations') {
+    const operations = check(await db.rpc('admin_operations'));
     body = (
-      <div className="metrics">
-        <p>
-          Pedidos criados <strong>{m.requests}</strong>
+      <>
+        <h2>Configuração dos serviços</h2>
+        <div className="metrics">
+          {Object.entries(environmentStatus()).map(([key, ok]) => (
+            <p key={key}>
+              {key}
+              <strong>{ok ? 'Configurado' : 'Pendente'}</strong>
+            </p>
+          ))}
+        </div>
+        <h2>Entrega de lembretes</h2>
+        <div className="metrics">
+          <p>
+            Na fila<strong>{operations.pending_email}</strong>
+          </p>
+          <p>
+            Enviados<strong>{operations.sent_email}</strong>
+          </p>
+          <p>
+            Falharam após tentativas<strong>{operations.failed_email}</strong>
+          </p>
+        </div>
+        <p className="hint">
+          A disponibilidade do banco é verificada em /api/health. Erros operacionais são registrados
+          sem dados pessoais.
         </p>
-        <p>
-          Receberam indicações{' '}
-          <strong>{m.requests ? Math.round((100 * m.with_indications) / m.requests) : 0}%</strong>
+      </>
+    );
+  } else {
+    const validDate = (value: string | undefined) =>
+      value && /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value))
+        ? value
+        : undefined;
+    const since = validDate(params.since),
+      until = validDate(params.until);
+    const cityId = /^\d{7}$/.test(params.city || '') ? Number(params.city) : undefined;
+    const city = cityId
+      ? check(await db.from('cities').select('*').eq('id', cityId).maybeSingle())
+      : null;
+    const validRange = !since || !until || since <= until;
+    const m = check(
+      await db.rpc('admin_metrics', {
+        ...(city ? { p_city_id: city.id } : {}),
+        ...(since && validRange ? { p_since: since + 'T00:00:00Z' } : {}),
+        ...(until && validRange
+          ? { p_until: new Date(Date.parse(until) + 86400000).toISOString() }
+          : {}),
+      }),
+    );
+    body = (
+      <>
+        <form className="metrics-filter" action="/admin">
+          <input type="hidden" name="tab" value="metrics" />
+          <CitySelector initial={city} name="city" required={false} />
+          <label className="field">
+            Desde (UTC)
+            <input type="date" name="since" defaultValue={since} />
+          </label>
+          <label className="field">
+            Até (UTC)
+            <input type="date" name="until" defaultValue={until} />
+          </label>
+          <button className="button secondary">Filtrar métricas</button>
+          <Link href="/admin?tab=metrics">Limpar filtros</Link>
+        </form>
+        {!validRange ? (
+          <p className="notice error">
+            O início deve ser anterior ao fim. Exibindo todos os períodos.
+          </p>
+        ) : null}
+        <div className="metrics">
+          <p>
+            Pedidos criados <strong>{m.requests}</strong>
+          </p>
+          <p>
+            Receberam indicações{' '}
+            <strong>{m.requests ? Math.round((100 * m.with_indications) / m.requests) : 0}%</strong>
+          </p>
+          <p>
+            Confirmados em local indicado{' '}
+            <strong>{m.requests ? Math.round((100 * m.resolved) / m.requests) : 0}%</strong>
+          </p>
+          <p>
+            Encontrados em outro local<strong>{m.other_place}</strong>
+          </p>
+          <p>
+            Encerrados sem resultado<strong>{m.not_found}</strong>
+          </p>
+          <p>
+            Abertos sem indicação<strong>{m.without_indications}</strong>
+          </p>
+          <p>
+            Aguardando decisão<strong>{m.awaiting_decision}</strong>
+          </p>
+          <p>
+            Retorno de colaboradores<strong>{m.returning_contributors}</strong>
+          </p>
+          <p>
+            Onboardings concluídos<strong>{m.onboarded}</strong>
+          </p>
+          <p>
+            Pessoas que contribuíram <strong>{m.contributors}</strong>
+          </p>
+          <p>
+            Tempo médio até a primeira indicação{' '}
+            <strong>
+              {m.avg_first_indication_seconds === null
+                ? '—'
+                : Math.round(m.avg_first_indication_seconds / 60) + ' min'}
+            </strong>
+          </p>
+          <p>
+            Tempo médio até resolução{' '}
+            <strong>
+              {m.avg_resolution_seconds === null
+                ? '—'
+                : Math.round(m.avg_resolution_seconds / 60) + ' min'}
+            </strong>
+          </p>
+          <p>
+            Visitas à landing <strong>{m.analytics.LANDING_VISIT || 0}</strong>
+          </p>
+          <p>
+            Cliques para começar <strong>{m.analytics.CTA_CLICK || 0}</strong>
+          </p>
+          <p>
+            Consultas a descobertas anteriores <strong>{m.analytics.SEARCH_REUSED || 0}</strong>
+          </p>
+          <p>
+            Mediana até primeira indicação
+            <strong>
+              {m.median_first_indication_seconds === null
+                ? '—'
+                : Math.round(m.median_first_indication_seconds / 60) + ' min'}
+            </strong>
+          </p>
+          <p>
+            P90 até primeira indicação
+            <strong>
+              {m.p90_first_indication_seconds === null
+                ? '—'
+                : Math.round(m.p90_first_indication_seconds / 60) + ' min'}
+            </strong>
+          </p>
+          <p>
+            Mediana até confirmação
+            <strong>
+              {m.median_resolution_seconds === null
+                ? '—'
+                : Math.round(m.median_resolution_seconds / 60) + ' min'}
+            </strong>
+          </p>
+          <p>
+            P90 até confirmação
+            <strong>
+              {m.p90_resolution_seconds === null
+                ? '—'
+                : Math.round(m.p90_resolution_seconds / 60) + ' min'}
+            </strong>
+          </p>
+          {Object.entries(m.search).map(([kind, hits]) => (
+            <p key={kind}>
+              Histórico: {kind}
+              <strong>{hits}</strong>
+            </p>
+          ))}
+        </div>
+        <p className="hint">
+          Os indicadores de tempo de resolução consideram confirmações em locais indicados.
+          Analytics da página pública são globais; as métricas de busca seguem a cidade selecionada.
         </p>
-        <p>
-          Resolvidos com local encontrado{' '}
-          <strong>{m.requests ? Math.round((100 * m.resolved) / m.requests) : 0}%</strong>
-        </p>
-        <p>
-          Pessoas que contribuíram <strong>{m.contributors}</strong>
-        </p>
-        <p>
-          Tempo médio até a primeira indicação{' '}
-          <strong>
-            {m.avg_first_indication_seconds === null
-              ? '—'
-              : Math.round(m.avg_first_indication_seconds / 60) + ' min'}
-          </strong>
-        </p>
-        <p>
-          Tempo médio até resolução{' '}
-          <strong>
-            {m.avg_resolution_seconds === null
-              ? '—'
-              : Math.round(m.avg_resolution_seconds / 60) + ' min'}
-          </strong>
-        </p>
-        <p>
-          Visitas à landing <strong>{m.analytics.LANDING_VISIT || 0}</strong>
-        </p>
-        <p>
-          Cliques para começar <strong>{m.analytics.CTA_CLICK || 0}</strong>
-        </p>
-        <p>
-          Consultas a descobertas anteriores <strong>{m.analytics.SEARCH_REUSED || 0}</strong>
-        </p>
-      </div>
+      </>
     );
   }
   return (
@@ -277,6 +539,20 @@ export default async function Admin({
           </Link>
         ))}
       </ScrollableTabs>
+      {tab === 'reports' ? (
+        <form className="admin-search" action="/admin">
+          <input type="hidden" name="tab" value="reports" />
+          <label className="field">
+            Status
+            <select name="status" defaultValue={params.status || ''}>
+              <option value="">Todos</option>
+              <option value="OPEN">Pendentes</option>
+              <option value="REVIEWED">Revisadas</option>
+            </select>
+          </label>
+          <button className="button secondary">Filtrar denúncias</button>
+        </form>
+      ) : null}
       {['users', 'requests', 'indications'].includes(tab) ? (
         <form action="/admin" className="admin-search">
           <input type="hidden" name="tab" value={tab} />
@@ -288,7 +564,12 @@ export default async function Admin({
         </form>
       ) : null}
       {Array.isArray(body) && !body.length ? <Empty title="Nenhum registro para revisar." /> : body}
-      <Pagination page={page} hasMore={more} base="/admin" params={{ tab, q }} />
+      <Pagination
+        page={page}
+        hasMore={more}
+        base="/admin"
+        params={{ tab, q, ...(params.status ? { status: params.status } : {}) }}
+      />
     </>
   );
 }

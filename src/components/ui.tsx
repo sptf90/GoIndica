@@ -70,11 +70,14 @@ export function Avatar({
 }
 export function Brand() {
   return (
-    <Link href="/" className="brand">
-      <span className="brand-mark" aria-hidden="true">
-        <Icon name="compass" size={24} />
-      </span>
-      <span>Descoberta Local</span>
+    <Link href="/" className="brand" aria-label="GoIndica — início">
+      <Image
+        className="brand-logo"
+        src="/goindica-logo.svg"
+        alt="GoIndica"
+        width={190}
+        height={46}
+      />
     </Link>
   );
 }

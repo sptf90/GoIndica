@@ -17,14 +17,20 @@ import {
 import { check, safeError } from '@/lib/errors';
 import { placeDetails, validatePlaceCity } from '@/lib/google/places';
 import type { ActionState } from '@/lib/types';
+import { returnPath } from '@/lib/return-path';
+import { prepareRequestPhoto } from '@/lib/request-photo';
 const value = (f: FormData, k: string) => String(f.get(k) || '');
-export async function login(): Promise<void> {
+export async function login(f: FormData): Promise<void> {
   if (!configured()) redirect('/entrar?motivo=configuracao');
   if (!googleLoginEnabled()) redirect('/entrar');
   const db = await supabase();
+  const next = returnPath(f.get('next'));
   const result = await db.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: appUrl() + '/auth/callback' },
+    options: {
+      redirectTo:
+        appUrl() + '/auth/callback' + (next === '/app' ? '' : '?next=' + encodeURIComponent(next)),
+    },
   });
   if (result.error || !result.data.url) redirect('/entrar?motivo=falha');
   redirect(result.data.url);
@@ -56,7 +62,7 @@ export async function saveProfile(_state: ActionState, f: FormData): Promise<Act
   }
   revalidatePath('/', 'layout');
   if (profile) return { success: 'Perfil atualizado.' };
-  redirect('/app');
+  redirect(returnPath(f.get('next')));
 }
 export async function createRequest(_state: ActionState, f: FormData): Promise<ActionState> {
   const { db } = await member();
@@ -68,17 +74,18 @@ export async function createRequest(_state: ActionState, f: FormData): Promise<A
       neighborhood: value(f, 'neighborhood'),
     });
     id = check(
-      await db.rpc('create_request', {
+      await db.rpc('create_request_with_photo', {
         p_description: input.description,
         p_city_id: input.cityId,
         p_neighborhood: input.neighborhood,
+        p_photo: await prepareRequestPhoto(f.get('photo')),
       }),
     );
   } catch (e) {
     return safeError(e);
   }
   revalidatePath('/app');
-  redirect('/pedidos/' + id);
+  return { success: 'Pedido publicado.', redirectTo: '/pedidos/' + id };
 }
 export async function editRequest(_state: ActionState, f: FormData): Promise<ActionState> {
   const { db } = await member();
@@ -91,11 +98,13 @@ export async function editRequest(_state: ActionState, f: FormData): Promise<Act
       neighborhood: value(f, 'neighborhood'),
     });
     check(
-      await db.rpc('edit_request', {
+      await db.rpc('edit_request_with_photo', {
         p_request_id: id,
         p_description: input.description,
         p_city_id: input.cityId,
         p_neighborhood: input.neighborhood,
+        p_photo: await prepareRequestPhoto(f.get('photo')),
+        p_remove_photo: value(f, 'removePhoto') === 'true',
       }),
     );
   } catch (e) {
@@ -210,7 +219,13 @@ export async function moderate(_state: ActionState, f: FormData): Promise<Action
   const { db } = await administrator();
   try {
     const input = adminSchema.parse({ action: value(f, 'action'), targetId: value(f, 'targetId') });
-    check(await db.rpc('admin_moderate', { p_action: input.action, p_target_id: input.targetId }));
+    check(
+      await db.rpc('admin_moderate', {
+        p_action: input.action,
+        p_target_id: input.targetId,
+        p_note: value(f, 'note') || 'Revisão administrativa registrada',
+      }),
+    );
     revalidatePath('/', 'layout');
     return { success: 'Ação registrada.' };
   } catch (e) {

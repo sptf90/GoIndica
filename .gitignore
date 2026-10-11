@@ -11,3 +11,5 @@ coverage/
 tests/.auth/
 supabase/.temp/
 supabase/.branches/
+
+.test-tools/

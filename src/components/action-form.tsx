@@ -1,6 +1,9 @@
 'use client';
 import { useActionState, useId, useRef, useEffect } from 'react';
 import type { FormAction, ActionState } from '@/lib/types';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { returnPath } from '@/lib/return-path';
 export function ActionForm({
   action,
   children,
@@ -9,6 +12,7 @@ export function ActionForm({
   className = '',
   confirm,
   disabled = false,
+  onSuccess,
 }: {
   action: FormAction;
   children?: React.ReactNode;
@@ -17,7 +21,9 @@ export function ActionForm({
   className?: string;
   confirm?: string;
   disabled?: boolean;
+  onSuccess?: () => void;
 }) {
+  const router = useRouter();
   const preserveValues = useRef(false);
   const form = useRef<HTMLFormElement>(null);
   const error = useRef<HTMLParagraphElement>(null);
@@ -28,11 +34,15 @@ export function ActionForm({
       // React reseta os campos após uma action. Uma falha precisa preservar a edição
       // no próprio formulário, sem armazenar senhas ou outros valores fora dele.
       preserveValues.current = Boolean(result.error);
+      if (result.success) onSuccess?.();
       return result;
     },
     {},
   );
   const errorId = useId();
+  useEffect(() => {
+    if (state.redirectTo) router.push(returnPath(state.redirectTo));
+  }, [state.redirectTo, router]);
   useEffect(() => {
     if (!state.error) return;
     const field = Object.keys(state.fields || {})[0];
@@ -68,6 +78,11 @@ export function ActionForm({
         <p className="notice success" role="status">
           {state.success}
         </p>
+      ) : null}
+      {state.redirectTo ? (
+        <Link href={returnPath(state.redirectTo)} className="text-link">
+          Abrir pedido ↗
+        </Link>
       ) : null}
       <button
         type="submit"

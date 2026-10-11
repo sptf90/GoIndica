@@ -35,6 +35,8 @@ const autocompleteSchema = z.object({
     .default([]),
 });
 async function google(path: string, body?: unknown, mask?: string) {
+  const started = performance.now();
+  let success = false;
   try {
     const response = await fetch('https://places.googleapis.com/v1/' + path, {
       method: body ? 'POST' : 'GET',
@@ -48,9 +50,20 @@ async function google(path: string, body?: unknown, mask?: string) {
       signal: AbortSignal.timeout(6000),
     });
     if (!response.ok) throw new Error('PLACES_UNAVAILABLE');
-    return (await response.json()) as unknown;
+    const result = (await response.json()) as unknown;
+    success = true;
+    return result;
   } catch {
     throw new Error('PLACES_UNAVAILABLE');
+  } finally {
+    console.info(
+      JSON.stringify({
+        event: 'places.request',
+        operation: body ? 'search' : 'details',
+        duration_ms: Math.round(performance.now() - started),
+        success,
+      }),
+    );
   }
 }
 export async function autocomplete(input: string, city: City, sessionToken: string) {
@@ -117,16 +130,4 @@ export function validatePlaceCity(
   )
     throw new Error('INVALID_CITY');
 }
-export function safeMapsUrl(place: GooglePlace) {
-  if (place.googleMapsUri) {
-    const url = new URL(place.googleMapsUri);
-    if (
-      url.protocol === 'https:' &&
-      (url.hostname === 'maps.google.com' ||
-        (url.hostname === 'www.google.com' && /^\/maps(?:\/|$)/.test(url.pathname)) ||
-        url.hostname === 'maps.app.goo.gl')
-    )
-      return url.toString();
-  }
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.displayName.text)}&query_place_id=${encodeURIComponent(place.id)}`;
-}
+export { safeMapsUrl } from '@/lib/maps-url';

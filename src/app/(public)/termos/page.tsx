@@ -3,11 +3,11 @@ export const metadata = { title: 'Termos de uso', alternates: { canonical: '/ter
 export default function Terms() {
   return (
     <main id="conteudo" className="legal-page wrap">
-      <p className="eyebrow">Atualizado em 4 de outubro de 2026</p>
+      <p className="eyebrow">Atualizado em 10 de outubro de 2026</p>
       <h1>Termos de uso</h1>
       <p>
-        A Descoberta local conecta pessoas que procuram algo a pessoas que conhecem estabelecimentos
-        na cidade. As indicações vêm da comunidade. O serviço não vende produtos, intermedeia
+        O GoIndica conecta pessoas que procuram algo a pessoas que conhecem estabelecimentos na
+        cidade. As indicações vêm da comunidade. O serviço não vende produtos, intermedeia
         pagamentos nem garante estoque, preços ou disponibilidade.
       </p>
       <h2>Participação</h2>
@@ -50,6 +50,11 @@ export default function Terms() {
       <p>
         Um resultado registra onde algo foi encontrado em uma data. A disponibilidade pode ter
         mudado. Verifique diretamente com o estabelecimento antes de se deslocar.
+      </p>
+      <p>
+        Use “Encontrei aqui também” somente se encontrou o mesmo item no estabelecimento confirmado.
+        Essa reconfirmação registra uma nova experiência com data própria e não gera pontos. Envie
+        fotos que você possa compartilhar para identificar o item, sem dados pessoais de terceiros.
       </p>
       <Link href="/privacidade" className="text-link">
         Ler a política de privacidade

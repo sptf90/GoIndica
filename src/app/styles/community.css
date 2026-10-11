@@ -1,0 +1,171 @@
+.community-list {
+  display: grid;
+  gap: 12px;
+  margin: 24px 0;
+}
+.settings-page > h2 {
+  margin-top: 32px;
+  margin-bottom: 12px;
+  font-size: 24px;
+}
+.settings-page > p {
+  margin-bottom: 16px;
+}
+.settings-page .checkbox input {
+  flex: 0 0 20px;
+}
+.settings-page > .back-link {
+  margin-top: 24px;
+}
+.community-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  overflow-wrap: anywhere;
+}
+.community-row p {
+  margin: 6px 0;
+}
+.notification-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  color: var(--brand-green);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.notification-count {
+  border-radius: 20px;
+  background: #347d25;
+  color: #fff;
+  min-width: 22px;
+  padding: 2px 5px;
+  text-align: center;
+  font-size: 0.7rem;
+}
+.unread-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0252dc;
+  margin-right: 8px;
+}
+.city-shortcuts,
+.inline-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 16px 0;
+}
+.city-shortcuts a {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  font-size: 0.85rem;
+}
+.metrics-filter {
+  display: flex;
+  gap: 16px;
+  align-items: end;
+  flex-wrap: wrap;
+  margin: 24px 0;
+}
+.metrics-filter .field {
+  flex: 1;
+  min-width: 160px;
+}
+.recognition {
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #edf5df;
+  color: #24561c;
+}
+.decision-note {
+  font-size: 0.75rem;
+  max-width: 240px;
+}
+.decision-note summary {
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+.draft-notice {
+  margin-bottom: 20px;
+}
+.draft-clear {
+  align-self: flex-start;
+}
+.place-panel .group-heading {
+  flex-wrap: wrap;
+}
+.place-panel > .action-form {
+  margin-top: 16px;
+}
+.install-app {
+  margin: 20px 0;
+}
+.discovery-place {
+  margin-top: 12px;
+}
+.discovery-place summary {
+  cursor: pointer;
+  color: #24561c;
+  font-size: 0.85rem;
+}
+.discovery-place .place-panel {
+  padding: 12px 0;
+}
+.mobile-nav {
+  max-height: calc(100dvh - 110px);
+  overflow-y: auto;
+}
+.request-actions {
+  flex-wrap: wrap;
+}
+.profile-stats {
+  flex-wrap: wrap;
+}
+@media (max-width: 1023px) {
+  .notification-label {
+    display: none;
+  }
+}
+@media (max-width: 767px) {
+  .community-row {
+    flex-direction: column;
+    padding: 16px;
+    gap: 12px;
+  }
+  .request-actions .action-form {
+    margin: 0;
+  }
+  .request-actions .action-form .button {
+    font-size: 0.75rem;
+    padding: 8px 10px;
+  }
+  .notification-link {
+    padding: 6px;
+  }
+  .metrics-filter {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .metrics-filter .field {
+    min-width: 0;
+  }
+  .profile-stats {
+    gap: 16px;
+  }
+  .inline-actions .button {
+    white-space: normal;
+  }
+}

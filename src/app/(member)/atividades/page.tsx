@@ -4,7 +4,7 @@ import { pageNumber } from '@/lib/pagination';
 import type { LocalRequest, Reward } from '@/lib/types';
 import { member } from '@/server/auth';
 import { check } from '@/lib/errors';
-import { citiesFor, date } from '@/server/queries';
+import { citiesFor, date, resolutionsFor } from '@/server/queries';
 import { RequestCard } from '@/components/request-card';
 import { Empty, Pagination } from '@/components/ui';
 export const metadata = { title: 'Minhas atividades' };
@@ -34,6 +34,7 @@ export default async function Activities({
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
+        .order('id')
         .range(start, start + 20),
     );
     const ids = indications.map((i) => i.request_id);
@@ -49,6 +50,7 @@ export default async function Activities({
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
+        .order('id')
         .range(start, start + 20),
     );
     const ids = rewards.map((r) => r.request_id);
@@ -58,13 +60,14 @@ export default async function Activities({
       .from('requests')
       .select('*')
       .eq('requester_id', user.id)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .order('id');
     if (tab === 'decision')
       query = query.or('status.eq.REVEALED,and(status.eq.OPEN,indication_count.gt.0)');
     if (tab === 'closed') query = query.in('status', ['RESOLVED', 'CLOSED_NO_RESULT', 'CANCELED']);
     requests = check(await query.range(start, start + 20));
   }
-  const cities = await citiesFor(requests);
+  const [cities, resolutions] = await Promise.all([citiesFor(requests), resolutionsFor(requests)]);
   return (
     <>
       <p className="eyebrow">Tudo o que você movimentou</p>
@@ -119,7 +122,12 @@ export default async function Activities({
       ) : requests.length ? (
         <div>
           {requests.slice(0, 20).map((r) => (
-            <RequestCard key={r.id} request={r} city={cities.get(r.city_id)} />
+            <RequestCard
+              key={r.id}
+              request={r}
+              city={cities.get(r.city_id)}
+              resolution={resolutions.get(r.id)}
+            />
           ))}
         </div>
       ) : (

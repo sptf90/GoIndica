@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase/server';
 import { appUrl, configured } from '@/lib/env';
+import { returnPath } from '@/lib/return-path';
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code');
   if (code && configured()) {
@@ -10,7 +11,9 @@ export async function GET(request: NextRequest) {
       if (!error) {
         await db.rpc('log_login');
         const destination =
-          request.nextUrl.searchParams.get('destino') === 'senha' ? '/nova-senha' : '/app';
+          request.nextUrl.searchParams.get('destino') === 'senha'
+            ? '/nova-senha'
+            : returnPath(request.nextUrl.searchParams.get('next'));
         return NextResponse.redirect(appUrl() + destination);
       }
     } catch {

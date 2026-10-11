@@ -1,11 +1,20 @@
 import Link from 'next/link';
 import { Empty, Avatar } from '@/components/ui';
 import { LandingAnalytics } from '@/components/landing-analytics';
-import { configured } from '@/lib/env';
+import { configured, pilotCityId } from '@/lib/env';
 import { supabase } from '@/lib/supabase/server';
 export default async function Landing() {
   const db = configured() ? await supabase() : null;
-  const ranking = db ? await db.rpc('city_ranking', { p_city_id: 3549805 }) : null;
+  const pilot = pilotCityId();
+  const cityResult = db
+    ? await db.from('cities').select('name,state_code').eq('id', pilot).maybeSingle()
+    : null;
+  const cityLabel = cityResult?.data
+    ? cityResult.data.name + ' — ' + cityResult.data.state_code
+    : pilot === 3549805
+      ? 'São José do Rio Preto — SP'
+      : 'Comunidade local';
+  const ranking = db ? await db.rpc('city_ranking', { p_city_id: pilot }) : null;
   return (
     <main id="conteudo">
       <LandingAnalytics />
@@ -41,7 +50,7 @@ export default async function Landing() {
             <span className="eyebrow">Demonstração</span>
           </div>
           <div className="demo-question">
-            <p className="eyebrow">São José do Rio Preto — SP</p>
+            <p className="eyebrow">{cityLabel}</p>
             <h2>
               Onde encontro uma
               <br />
@@ -141,7 +150,7 @@ export default async function Landing() {
             Pessoas que ajudam
             <br />a cidade a encontrar.
           </h2>
-          <p className="muted">São José do Rio Preto — SP</p>
+          <p className="muted">{cityLabel}</p>
         </div>
         <div className="ranking-preview">
           {ranking?.data?.length ? (

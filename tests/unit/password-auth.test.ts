@@ -100,6 +100,27 @@ test('login válido usa credenciais, registra login e redireciona para regras no
   });
   expect(mocks.rpc).toHaveBeenCalledWith('log_login');
 });
+test('login e callback preservam pedido interno e rejeitam destino externo', async () => {
+  const target = '/pedidos/00000000-0000-0000-0000-000000000001';
+  mocks.auth.signInWithPassword.mockResolvedValue({
+    data: { user: { id: 'identity' }, session: {} },
+    error: null,
+  });
+  await expect(
+    loginWithEmail({}, form({ email: 'pessoa@example.com', password, next: target })),
+  ).rejects.toThrow('REDIRECT:' + target);
+  const { GET } = await import('@/app/auth/callback/route');
+  mocks.auth.exchangeCodeForSession.mockResolvedValue({ error: null });
+  const result = await GET(
+    new NextRequest(
+      'http://localhost:3000/auth/callback?code=valid&next=' + encodeURIComponent(target),
+    ),
+  );
+  expect(result.headers.get('location')).toBe('http://localhost:3000' + target);
+  await expect(
+    loginWithEmail({}, form({ email: 'pessoa@example.com', password, next: '//evil.example' })),
+  ).rejects.toThrow('REDIRECT:/app');
+});
 test('cadastro pendente respeita confirmação e não cria sessão nem registra login', async () => {
   mocks.auth.signUp.mockResolvedValue({ data: { session: null }, error: null });
   const result = await signupWithEmail(

@@ -29,7 +29,13 @@ test('provedores reais: duas indicações do mesmo local e +10 para ambas', asyn
       await p.goto('/perfil');
       await expect(p).toHaveURL(/\/perfil$/);
       before.push(
-        Number(await p.locator('.profile-stats p').first().locator('strong').textContent()),
+        Number(
+          await p
+            .locator('.profile-stats p')
+            .filter({ hasText: 'pontos' })
+            .locator('strong')
+            .textContent(),
+        ),
       );
     }
     await owner.goto('/pedidos/novo?city=' + encodeURIComponent(city));
@@ -60,13 +66,13 @@ test('provedores reais: duas indicações do mesmo local e +10 para ambas', asyn
     await owner.reload();
     for (const [index, p] of [a, b].entries()) {
       await p.goto('/perfil');
-      await expect(p.locator('.profile-stats p').first().locator('strong')).toHaveText(
-        String(before[index] + 10),
-      );
+      await expect(
+        p.locator('.profile-stats p').filter({ hasText: 'pontos' }).locator('strong'),
+      ).toHaveText(String(before[index] + 10));
       await p.reload();
-      await expect(p.locator('.profile-stats p').first().locator('strong')).toHaveText(
-        String(before[index] + 10),
-      );
+      await expect(
+        p.locator('.profile-stats p').filter({ hasText: 'pontos' }).locator('strong'),
+      ).toHaveText(String(before[index] + 10));
     }
     await a.goto('/ranking?city=' + city);
     await expect(a.locator('.ranking-list')).toContainText('@' + process.env.E2E_HELPER_A_USERNAME);

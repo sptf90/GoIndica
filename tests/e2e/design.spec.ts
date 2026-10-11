@@ -3,7 +3,7 @@ import { context } from './helpers';
 
 const widths = [320, 375, 390, 414, 768, 1024, 1280, 1440];
 
-test('identidade do protótipo e contexto do pedido se adaptam aos oito tamanhos', async ({
+test('identidade GoIndica e contexto do pedido se adaptam aos oito tamanhos', async ({
   browser,
 }) => {
   const ana = await context(browser, 'Ana', 'ana_teste');
@@ -37,7 +37,7 @@ test('identidade do protótipo e contexto do pedido se adaptam aos oito tamanhos
           fits: document.documentElement.scrollWidth <= innerWidth,
         };
       });
-      expect(appearance.canvas).toBe('rgb(238, 242, 239)');
+      expect(appearance.canvas).toBe('rgb(244, 247, 241)');
       expect(appearance.surface).toBe('rgb(255, 255, 255)');
       expect(appearance.font).toContain('Inter Variable');
       expect(appearance.loaded).toBe(true);

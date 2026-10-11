@@ -1,10 +1,51 @@
 # Verificação da implementação
 
-Executada em 4 de outubro de 2026, com Node 24 e build de produção do Next.js.
+Revisão inicial em 4 de outubro e revisão das melhorias em 7 de outubro de 2026, com Node 24 e build de produção do Next.js.
+
+## Adições revisadas em 10 de outubro
+
+As seis funcionalidades de [descobertas comunitárias](./DESCOBERTAS_COMUNITARIAS.md) estão implementadas: foto opcional, filtro de pedidos sem indicação, interesse compartilhado, reconfirmações históricas, alertas por assunto e card PNG com QR code.
+
+| Verificação                                      | Resultado                                                                                                                                            |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ESLint, TypeScript e tipos derivados do banco    | Aprovados, sem warnings de lint ou divergências                                                                                                      |
+| Testes unitários/integrados                      | **155 aprovados em 17 arquivos**                                                                                                                     |
+| Build de produção em `.next-review`              | Aprovado                                                                                                                                             |
+| Chromium, suíte completa                         | **49 aprovados**                                                                                                                                     |
+| Firefox/WebKit, fluxos críticos e seis novidades | **6 aprovados**, três por navegador                                                                                                                  |
+| Verificações adicionais no build final           | Dois fluxos novos repetidos no Chromium e três no WebKit, aprovados                                                                                  |
+| PostgREST real                                   | Fotos, interesses, alertas, reconfirmação, exportação, busca e autorização aprovados                                                                 |
+| Escala                                           | 10 mil pedidos; índice do filtro sem indicação e índice da busca confirmados                                                                         |
+| Backup/restauração                               | Fotos, alertas, interesses, reconfirmações e recompensas comparados e preservados                                                                    |
+| Auditoria de dependências de produção            | Zero vulnerabilidades conhecidas reportadas                                                                                                          |
+| Supabase da aplicação                            | Migração `202610100001` aplicada; quatro tabelas/colunas, nove RPCs novas e health check confirmados por leitura, sem ler ou criar dados de usuários |
+
+A prévia final de migrations retornou `upToDate: true` e nenhuma migration pendente. Nenhum deploy foi feito.
+
+As bibliotecas que faltavam para WebKit foram extraídas em `.test-tools/webkit-libs`, sem instalar pacotes no sistema. A configuração de testes detecta esses arquivos e os carrega somente no processo do WebKit; também aceita `GOINDICA_WEBKIT_PRELOAD` quando necessário. Os clientes PostgreSQL 18 foram extraídos em `.test-tools/postgres-client` para executar a restauração. Essas ferramentas locais são ignoradas pelo Git.
+
+O ambiente de teste usa provedores HTTP isolados e PostgreSQL real. O arquivo `.env.local` continua sem uma chave válida de Google Places e não há contas/sessões preparadas para a suíte de provedores reais. Portanto, os testes aprovados não equivalem à homologação de consultas a estabelecimentos reais ou de e-mails. A chave precisa ser configurada para esse uso.
+
+## Melhorias revisadas em 7 de outubro
+
+Os 24 itens têm revisão individual registrada em [IMPLEMENTACAO_E_REVISAO.md](./IMPLEMENTACAO_E_REVISAO.md). Foram adicionadas sete migrations sem alterar as antigas, funcionalidades de conta/comunidade e verificadores reproduzíveis. A aplicação não foi publicada e nenhuma migration foi aplicada remotamente nesta etapa.
+
+Consolidado: **141 testes unitários/integrados em 14 arquivos**, lint sem warnings, typecheck, comparação dos tipos gerados e build de produção aprovados. A auditoria das dependências de produção retornou zero vulnerabilidades conhecidas. Após os últimos ajustes, os seis fluxos de produto passaram novamente no build final.
+
+- Suíte Chromium completa: **47 testes aprovados**, incluindo os 41 anteriores e seis fluxos de produto novos. Cobertura de novas páginas em 320, 390, 768 e 1440 px, além dos oito tamanhos das páginas anteriores.
+- Fluxos críticos Firefox/WebKit: **dois testes aprovados**, um por navegador, cobrindo login, rascunho, publicação, salvos, navegação e exportação. Esses navegadores não executaram a suíte completa de 47 testes.
+- PostgreSQL com todas as migrations: notificações privadas, estados independentes de favoritos/acompanhamento, cotas, filtros e tipos de resultado, marcos, moderação, opt-in e concorrência da fila, exportação e anonimização sem apagar recompensas.
+- PostgREST **16.4 real** em banco temporário: parâmetros padrão e nomeados das RPCs, JWTs, busca com acentos/múltiplas palavras/marcas, métricas, usuário bloqueado, conteúdo oculto, não administrador e visitante. A verificação revelou tentativas de locks em RPCs STABLE; a migration 006 corrige a autorização das leituras para funcionar em transações somente leitura.
+- Escala com **10 mil pedidos e mil indicações**: busca realmente usa o índice GIN; feed, paginação, ranking e métricas retornam resultados esperados. Uma execução local durante outras validações mediu busca 34 ms, feed 6 ms, paginação 4 ms, ranking 7 ms e métricas 226 ms. Não é teste de usuários simultâneos nem previsão de latência em produção.
+- Recuperação: dump e restauração em um segundo PostgreSQL temporário, comparando pedidos resolvidos, recompensas, estatísticas e RLS. Verifica o processo local; não provisiona nem certifica backups do Supabase hospedado.
+- Prévia do importador sobre o catálogo oficial: **5.571 municípios e 27 UFs**, sem diferenças e sem gravar arquivos. Testes também aplicam uma atualização de cidade sobre um banco já migrado, mantendo seus vínculos.
+- Inspeção visual das telas novas: checkbox de e-mail e espaçamento entre seções corrigidos. Histórico testado com prévia de local sob demanda, sem nova chamada ao fechar e reabrir.
+
+Comandos e pré-requisitos em [OPERACAO.md](./OPERACAO.md). O CI inclui essas verificações e a comparação dos tipos gerados. Resultados de lint, tipos, testes unitários/integrados e build estão no consolidado abaixo.
 
 ## Verificações automatizadas
 
-Resultado após a revisão de interface, cidades, aplicação do protótipo Figma, padronização do painel interno e restauração do layout público: **78 testes unitários/integrados e 41 testes E2E locais aprovados**, lint sem warnings, typecheck e build de produção aprovados. A instalação da fonte Inter e remoção de DM Sans/Manrope concluíram a auditoria npm sem vulnerabilidades.
+Na revisão inicial de 4 de outubro, interface, cidades, aplicação do protótipo Figma, painel interno e layout público passaram com **78 testes unitários/integrados e 41 E2E locais**. A instalação da fonte Inter e remoção de DM Sans/Manrope concluíram então a auditoria npm sem vulnerabilidades. A ampliação de 7 de outubro mantém essa cobertura e acrescenta as validações descritas acima.
 
 - ESLint sem warnings.
 - TypeScript em modo strict.
@@ -35,4 +76,4 @@ Revelação e resolução bloqueiam a mesma linha que a indicação. As regras d
 
 Os testes E2E usam fornecedores isolados, sem criar contas nem enviar e-mails no projeto remoto. Na revisão de interface, consultas de leitura a `/api/cities` no localhost com a configuração real retornaram HTTP 200 e municípios corretos para Manaus/AM, Salvador/BA e “Rio Preto SP”, confirmando que o catálogo está disponível nesse ambiente. A observação anterior sobre tabelas remotas ausentes é histórica; não representa o estado atual da tabela de cidades. A configuração remota de confirmação de e-mail não foi reavaliada nesta revisão.
 
-A entrega SMTP, sessões remotas, consentimento Google, billing/cotas de Places e domínio de produção não foram homologados nem provisionados. A suíte live e as instruções em `HOMOLOGACAO.md` permitem verificar esse ambiente separadamente. Os testes visuais cobrem Chromium e emulação de toque; outros navegadores e teclado virtual em aparelhos físicos não foram verificados. A aprovação local não comprova configuração completa dos provedores externos.
+A entrega SMTP/Resend, sessões remotas, confirmação real da troca de e-mail, encerramento no Supabase hospedado, consentimento Google, billing/cotas de Places e domínio de produção não foram homologados nem provisionados. A suíte live e as instruções em `HOMOLOGACAO.md` permitem verificar esse ambiente separadamente. Os testes visuais completos cobrem Chromium; Firefox e WebKit têm somente os fluxos críticos descritos acima. Aparelhos físicos e seus teclados virtuais não foram verificados. A aprovação local não comprova configuração completa dos provedores externos.

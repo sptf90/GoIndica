@@ -5,6 +5,7 @@ import { loginWithEmail } from '@/server/password-auth';
 import { configured, googleLoginEnabled } from '@/lib/env';
 import { ActionForm } from '@/components/action-form';
 import { EmailField, PasswordFields, AuthTerms } from '@/components/auth-fields';
+import { accessLink, returnPath } from '@/lib/return-path';
 export const metadata: Metadata = { title: 'Entrar', robots: { index: false, follow: false } };
 const reasons: Record<string, string> = {
   configuracao:
@@ -18,9 +19,10 @@ const reasons: Record<string, string> = {
 export default async function Login({
   searchParams,
 }: {
-  searchParams: Promise<{ motivo?: string }>;
+  searchParams: Promise<{ motivo?: string; next?: string }>;
 }) {
-  const { motivo } = await searchParams;
+  const { motivo, next: target } = await searchParams;
+  const next = returnPath(target);
   return (
     <main id="conteudo" className="auth-page wrap">
       <p className="eyebrow">Sua cidade sabe mais do que parece</p>
@@ -52,17 +54,19 @@ export default async function Login({
         pendingLabel="Entrando…"
         disabled={!configured()}
       >
+        <input type="hidden" name="next" value={next} />
         <EmailField />
         <PasswordFields />
       </ActionForm>
       <nav className="auth-links" aria-label="Acesso à conta">
-        <Link href="/cadastro">Criar uma conta</Link>
+        <Link href={accessLink('/cadastro', next)}>Criar uma conta</Link>
         <Link href="/recuperar-senha">Esqueci minha senha</Link>
       </nav>
       {googleLoginEnabled() ? (
         <>
           <p className="auth-divider">ou</p>
           <form action={login}>
+            <input type="hidden" name="next" value={next} />
             <button className="button secondary google-login" disabled={!configured()}>
               <span aria-hidden="true">G</span>Continuar com Google
             </button>

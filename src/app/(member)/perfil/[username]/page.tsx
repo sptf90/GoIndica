@@ -9,8 +9,8 @@ export default async function PublicProfile({ params }: { params: Promise<{ user
   if (!/^[a-z][a-z0-9_]{2,23}$/.test(username)) notFound();
   const { db, user } = await member();
   const result = await db.from('profiles').select('*').eq('username', username).maybeSingle();
-  if (!result.data) notFound();
-  const profile = result.data;
+  const profile = check(result);
+  if (!profile) notFound();
   const [cityResult, statsResult] = await Promise.all([
     db.from('cities').select('*').eq('id', profile.home_city_id).single(),
     db.rpc('profile_stats', { p_username: username }),
@@ -34,12 +34,27 @@ export default async function PublicProfile({ params }: { params: Promise<{ user
       </div>
       <div className="profile-stats">
         <p>
+          <strong>{stats.requests}</strong> pedidos publicados
+        </p>
+        <p>
+          <strong>{stats.indications}</strong> indicações enviadas
+        </p>
+        <p>
           <strong>{stats.points}</strong> pontos
         </p>
         <p>
           <strong>{stats.confirmations}</strong> indicações confirmadas
         </p>
       </div>
+      {stats.confirmations > 0 ? (
+        <p className="recognition">
+          {stats.confirmations >= 50
+            ? 'Referência da comunidade'
+            : stats.confirmations >= 10
+              ? 'Ajuda frequente'
+              : 'Primeira indicação confirmada'}
+        </p>
+      ) : null}
       <p className="muted">
         Reconhecimento por ajudar outras pessoas a encontrar o que procuravam.
       </p>

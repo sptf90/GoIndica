@@ -6,6 +6,7 @@ import { check } from '@/lib/errors';
 import { CitySelector } from '@/components/city-selector';
 import { RequestCard } from '@/components/request-card';
 import { Empty, Pagination } from '@/components/ui';
+import { resolutionsFor } from '@/server/queries';
 export const metadata = { title: 'Pergunte à cidade' };
 export default async function Feed({
   searchParams,
@@ -17,19 +18,45 @@ export default async function Feed({
   const cityId = Number(params.city) || profile.home_city_id;
   const page = pageNumber(params.page);
   const q = (params.q || '').trim().slice(0, 300);
-  const status = params.status === 'RESOLVED' ? 'RESOLVED' : 'OPEN';
+  const status =
+    params.status === 'RESOLVED'
+      ? 'RESOLVED'
+      : params.status === 'UNANSWERED'
+        ? 'UNANSWERED'
+        : 'OPEN';
   const cityResult = await db.from('cities').select('*').eq('id', cityId).maybeSingle();
   const city =
     cityResult.data ||
     check(await db.from('cities').select('*').eq('id', profile.home_city_id).single());
-  let query = db
-    .from('requests')
-    .select('*')
-    .eq('city_id', city.id)
-    .eq('status', status)
-    .order('created_at', { ascending: false });
-  if (q) query = query.textSearch('description', q, { type: 'websearch', config: 'portuguese' });
-  const requests = check(await query.range((page - 1) * 20, page * 20));
+  const requests = check(
+    status === 'UNANSWERED'
+      ? await db.rpc('search_unanswered_requests', {
+          p_city_id: city.id,
+          p_query: q,
+          p_offset: (page - 1) * 20,
+        })
+      : await db.rpc('search_requests', {
+          p_city_id: city.id,
+          p_query: q,
+          p_status: status,
+          p_offset: (page - 1) * 20,
+        }),
+  );
+  const resolutions = await resolutionsFor(requests);
+  const newRequest =
+    '/pedidos/novo?' + new URLSearchParams({ city: String(city.id), ...(q ? { q } : {}) });
+  const followed = check(await db.from('followed_cities').select('city_id'));
+  const followedCities = followed.length
+    ? check(
+        await db
+          .from('cities')
+          .select('*')
+          .in(
+            'id',
+            followed.map((f) => f.city_id),
+          ),
+      )
+    : [];
   const more = requests.length > 20;
   return (
     <>
@@ -40,12 +67,25 @@ export default async function Feed({
             O que você está
             <br className="mobile-break" /> procurando?
           </h1>
-          <Link href={`/pedidos/novo?city=${city.id}`} className="button">
-            Novo pedido +
+          <Link href={newRequest} className="button">
+            {q ? 'Publicar esta busca' : 'Novo pedido +'}
           </Link>
         </div>
         <p className="muted">Pergunte à cidade ou ajude alguém a encontrar o caminho.</p>
       </section>
+      {followedCities.length ? (
+        <nav className="city-shortcuts" aria-label="Cidades acompanhadas">
+          {followedCities.map((c) => (
+            <Link
+              key={c.id}
+              href={'/app?' + new URLSearchParams({ city: String(c.id), q, status })}
+            >
+              {c.name} — {c.state_code}
+            </Link>
+          ))}
+          <Link href="/preferencias">Gerenciar cidades ↗</Link>
+        </nav>
+      ) : null}
       <form className="feed-search" action="/app">
         <div className="field">
           <label htmlFor="query">Buscar pedidos</label>
@@ -71,6 +111,13 @@ export default async function Feed({
             Procurando
           </Link>
           <Link
+            className={status === 'UNANSWERED' ? 'active' : ''}
+            aria-current={status === 'UNANSWERED' ? 'page' : undefined}
+            href={'/app?' + new URLSearchParams({ city: String(city.id), q, status: 'UNANSWERED' })}
+          >
+            Sem indicação
+          </Link>
+          <Link
             className={status === 'RESOLVED' ? 'active' : ''}
             aria-current={status === 'RESOLVED' ? 'page' : undefined}
             href={'/app?' + new URLSearchParams({ city: String(city.id), q, status: 'RESOLVED' })}
@@ -82,10 +129,15 @@ export default async function Feed({
           {city.name} — {city.state_code}
         </span>
       </div>
+      {status === 'UNANSWERED' ? (
+        <p className="hint unanswered-hint">
+          Pedidos que ainda precisam de ajuda, começando pelos mais antigos.
+        </p>
+      ) : null}
       {requests.length ? (
         <div className="request-list">
           {requests.slice(0, 20).map((r) => (
-            <RequestCard key={r.id} request={r} city={city} />
+            <RequestCard key={r.id} request={r} city={city} resolution={resolutions.get(r.id)} />
           ))}
         </div>
       ) : (
@@ -93,17 +145,21 @@ export default async function Feed({
           title={
             q
               ? 'Nenhum pedido encontrado.'
-              : status === 'OPEN'
-                ? 'Ainda não há pedidos por aqui.'
-                : 'A cidade ainda está construindo seu histórico.'
+              : status === 'UNANSWERED'
+                ? 'Nenhum pedido sem indicação nesta cidade.'
+                : status === 'OPEN'
+                  ? 'Ainda não há pedidos por aqui.'
+                  : 'A cidade ainda está construindo seu histórico.'
           }
         >
           <p>
-            {status === 'OPEN'
-              ? 'Que tal ser a primeira pessoa a perguntar?'
-              : 'As descobertas aparecem quando alguém confirma onde encontrou.'}
+            {status === 'UNANSWERED'
+              ? 'Veja os outros pedidos da cidade ou publique o que você procura.'
+              : status === 'OPEN'
+                ? 'Que tal ser a primeira pessoa a perguntar?'
+                : 'As descobertas aparecem quando alguém confirma onde encontrou.'}
           </p>
-          <Link href={`/pedidos/novo?city=${city.id}`} className="text-link">
+          <Link href={newRequest} className="text-link">
             Publicar um pedido ↗
           </Link>
         </Empty>

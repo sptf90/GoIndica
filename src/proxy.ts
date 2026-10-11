@@ -1,7 +1,9 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import type { Database } from '@/lib/supabase/database.types';
-import { optionalEnv, secureCookies } from '@/lib/env';
+import { optionalEnv, secureCookies, configured } from '@/lib/env';
+import { returnPath } from '@/lib/return-path';
+import { operationalError } from '@/lib/observability';
 export async function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
   const dev = process.env.NODE_ENV !== 'production';
@@ -19,10 +21,14 @@ export async function proxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
   requestHeaders.set('Content-Security-Policy', csp);
+  requestHeaders.set(
+    'x-auth-destination',
+    returnPath(request.nextUrl.pathname + request.nextUrl.search),
+  );
   let response = NextResponse.next({ request: { headers: requestHeaders } });
   const url = optionalEnv('NEXT_PUBLIC_SUPABASE_URL'),
     key = optionalEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY');
-  if (url && key) {
+  if (configured() && url && key) {
     const client = createServerClient<Database>(url, key, {
       cookieOptions: {
         httpOnly: true,
@@ -39,7 +45,11 @@ export async function proxy(request: NextRequest) {
         },
       },
     });
-    await client.auth.getClaims();
+    try {
+      await client.auth.getClaims();
+    } catch (error) {
+      operationalError('auth.refresh', error);
+    }
   }
   response.headers.set('Content-Security-Policy', csp);
   response.headers.set('Cache-Control', 'private, no-store');
@@ -47,6 +57,6 @@ export async function proxy(request: NextRequest) {
 }
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff2)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|sw.js|offline.html|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff2)$).*)',
   ],
 };

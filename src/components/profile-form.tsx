@@ -7,11 +7,13 @@ export function ProfileForm({
   city,
   defaultName = '',
   googlePhotoAvailable = false,
+  next = '/app',
 }: {
   profile?: Profile | null;
   city?: City | null;
   defaultName?: string;
   googlePhotoAvailable?: boolean;
+  next?: string;
 }) {
   return (
     <ActionForm
@@ -19,6 +21,7 @@ export function ProfileForm({
       label={profile ? 'Salvar perfil' : 'Concluir e entrar'}
       className="profile-form"
     >
+      <input type="hidden" name="next" value={next} />
       <div className="field">
         <label htmlFor="displayName">Nome de exibição</label>
         <input

@@ -1,24 +1,31 @@
-# Padrão visual do aplicativo
+# Identidade visual do GoIndica
 
-Referência: [protótipo publicado no Figma](https://frame-think-79547627.figma.site/), analisado em 4 de outubro de 2026. A especificação `ESPECIFICACAO_MVP_DESCOBERTA_LOCAL.md` permanece como fonte das regras de produto.
+A identidade segue os dois balões entrelaçados da referência [logo-original.png](../logo-original.png), redesenhados em [logo.svg](../logo.svg) em 7 de outubro de 2026. A versão vetorial elimina sombras e diferenças de cor entre símbolo e tipografia; [logo.png](../logo.png) é uma exportação transparente de 4.096 × 990 px. A estrutura de navegação e dos painéis mantém o desenho existente. A especificação `ESPECIFICACAO_MVP_DESCOBERTA_LOCAL.md` permanece como fonte das regras de produto.
 
 ## Identidade
 
-| Elemento                | Padrão                                                                                                                                 |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Tipografia              | Inter variável, hospedada localmente pelo pacote `@fontsource-variable/inter`. Títulos em peso 600; marca e pequenos destaques em 700. |
-| Texto principal         | `#172b2a`                                                                                                                              |
-| Texto secundário        | `#526664`, também usado nas informações menores para manter contraste.                                                                 |
-| Fundo da página         | `#eef2ef`                                                                                                                              |
-| Superfície principal    | `#ffffff`                                                                                                                              |
-| Superfície secundária   | `#f2f6f3`                                                                                                                              |
-| Destaque                | `#0b746c`; interação escura `#075c56`.                                                                                                 |
-| Superfícies de destaque | `#e7f4f1` e `#f0f8f6`.                                                                                                                 |
-| Divisórias              | `#dfe7e4` e `#e9efec`.                                                                                                                 |
-| Cantos                  | 20 px na superfície principal, 16 px nos painéis internos, 10 px nos controles e formato circular nos avatares/status.                 |
-| Espaçamento             | Base de 4 px, com uso recorrente de 8, 12, 16, 24 e 32 px.                                                                             |
+| Elemento                | Padrão                                                                                                                 |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Marca                   | GoIndica; logo vetorial servida por `public/goindica-logo.svg`.                                                        |
+| Verde principal         | `#347d25`, idêntico no balão verde, em “Indica” e nos botões primários.                                                |
+| Verde para leitura      | `#397527` em links, títulos e estados; `#2c5c1e` na interação escura.                                                  |
+| Verde-lima              | `#85c808`, reservado a detalhes decorativos da interface; não aparece na logo.                                         |
+| Azul secundário         | `#0252dc`, idêntico no balão azul e em “Go”; também usado no favicon e no rótulo da demonstração.                      |
+| Texto principal         | `#1c2b18`.                                                                                                             |
+| Texto secundário        | `#53624d`.                                                                                                             |
+| Fundo da página         | `#f4f7f1`.                                                                                                             |
+| Superfícies             | `#ffffff` e `#f0f5eb`.                                                                                                 |
+| Superfícies de destaque | `#edf7e7` e `#f5faef`.                                                                                                 |
+| Divisórias              | `#dfe7d9` e `#eaf0e5`; bordas de destaque `#d4e7c8`.                                                                   |
+| Tipografia              | Inter variável, hospedada localmente pelo pacote `@fontsource-variable/inter`. Títulos em peso 600.                    |
+| Cantos                  | 20 px na superfície principal, 16 px nos painéis internos, 10 px nos controles e formato circular nos avatares/status. |
+| Espaçamento             | Base de 4 px, com uso recorrente de 8, 12, 16, 24 e 32 px.                                                             |
 
-Os tokens e os estilos compartilhados estão em `src/app/globals.css`. Novas telas devem usar esses tokens e os componentes existentes. Ícones são SVGs locais em `src/components/icon.tsx`, com traço de 1,6 px; a bússola identifica a marca no cabeçalho, favicon e imagem de compartilhamento.
+Os botões primários usam um tom mais sóbrio derivado do verde da marca (`#347d25`), com texto e ícones brancos e contraste de 5,11:1. O texto permanece branco no hover (`#2d6b1f`) e durante o clique (`#245719`). A logo usa exatamente o mesmo verde dos botões. Links e textos pequenos usam o verde `#397527`, com contraste de 5,6:1 em branco. O vermelho continua reservado aos erros.
+
+Os botões secundários têm fundo branco, texto neutro (`#354331`) e borda discreta (`#d0ddc9`). No hover, recebem fundo suave (`#f1f6ed`), texto verde escuro e borda mais definida. Ações discretas usam fundo e borda transparentes, com o mesmo tratamento de hover. Estados desabilitados usam fundo `#edf0e9` e texto `#6b7663`, sem opacidade ou mudança ao passar o mouse. O foco de teclado mantém um contorno verde visível. Os estados são definidos no estilo compartilhado `.button`; variantes alteram variáveis locais, sem sobrescrever as regras de interação. Sugestões de cidades e locais e o botão de menu seguem os mesmos tons neutros e de hover.
+
+Os tokens e os estilos compartilhados estão em `src/app/globals.css`. Novas telas devem usar esses tokens e os componentes existentes. A logo aparece no componente `Brand`, compartilhado por telas públicas, internas e onboarding. O favicon usa os dois balões de conversa em SVG; a imagem Open Graph incorpora a logo vetorial. A tipografia da marca foi convertida em contornos SVG para não depender de fontes instaladas. Ícones funcionais continuam em `src/components/icon.tsx`, com traço de 1,6 px.
 
 ## Estrutura
 
@@ -29,7 +36,7 @@ Os tokens e os estilos compartilhados estão em `src/app/globals.css`. Novas tel
 - Feed, atividades, ranking e administração continuam usando listas com divisórias. Painéis adicionais aparecem quando representam uma função específica, como o contexto de um pedido ou um grupo de indicações.
 - Inputs e botões de filtro têm 52 px e compartilham a linha do campo, mantendo labels e textos de ajuda separados. Ações compactas do detalhe têm área de interação de pelo menos 44 px no celular.
 - Abas rolam horizontalmente quando necessário e mantêm a opção ativa visível. Cidades usam o autocomplete nacional já existente, sem botão de busca.
-- Estados vazios usam a ilustração de localização do protótipo, sem redução involuntária do tamanho no celular. Erros, carregamento, foco e sucesso continuam sendo comunicados pelos componentes funcionais.
+- Estados vazios usam a ilustração de localização com a paleta verde, sem redução involuntária do tamanho no celular. Erros, carregamento, foco e sucesso continuam sendo comunicados pelos componentes funcionais.
 - Avatares sem foto mostram até duas iniciais. As estatísticas de pontos e confirmações do perfil compartilham a mesma linha de base, sem a margem vertical automática entre parágrafos.
 
 ## Detalhe do pedido
@@ -49,7 +56,7 @@ As adaptações funcionais seguem a especificação:
 
 ## Verificação
 
-Os testes em `tests/e2e/design.spec.ts` verificam fonte/carregamento, cores, disposição das colunas, tamanho da ilustração, limites da superfície, privacidade e ferramentas permitidas no pedido aberto. Também exercitam menu por mouse/teclado, Escape, clique externo, links e acesso administrativo, além de cópia e alternativa manual de compartilhamento.
+Os testes em `tests/e2e/design.spec.ts` verificam a identidade GoIndica, fonte/carregamento, cores, disposição das colunas, tamanho da ilustração, limites da superfície, privacidade e ferramentas permitidas no pedido aberto. Também exercitam menu por mouse/teclado, Escape, clique externo, links e acesso administrativo, além de cópia e alternativa manual de compartilhamento.
 
 As suítes existentes continuam verificando o fluxo completo e a responsividade das demais telas. Larguras: 320, 375, 390, 414, 768, 1.024, 1.280 e 1.440 px. Screenshots são geradas em `test-results/`, incluindo `prototipo-pedido-vazio-*` e `prototipo-menu-*`, para comparação com a referência.
 
@@ -57,4 +64,6 @@ As suítes existentes continuam verificando o fluxo completo e a responsividade 
 
 `tests/e2e/public.spec.ts` verifica que landing, login, cadastro, recuperação e páginas legais têm rolagem natural, rodapé acessível e ausência de overflow horizontal nas oito larguras, com altura de 600 px. As páginas públicas preservam a identidade visual sem o painel fixo das telas internas.
 
-Não há nova migration, configuração obrigatória de ambiente ou alteração em autenticação, RLS, pontuação e validação de estabelecimentos. A dependência de fonte Inter substitui DM Sans e Manrope. O teste visual usa Chromium; serviços externos nos E2E ficam isolados nas fixtures existentes, conforme `VERIFICACAO.md`.
+A revisão visual original não exigiu migrations nem alterou regras de pontuação ou validação de estabelecimentos. A dependência de fonte Inter substitui DM Sans e Manrope. O teste visual completo usa Chromium; serviços externos nos E2E ficam isolados, conforme `VERIFICACAO.md`.
+
+Na evolução de 7 de outubro, `globals.css` passou a importar estilos de `src/app/styles`: foundation (tokens/base), application (painel/listas), components, responsive e community (telas novas). A ordem anterior das regras foi preservada. Notificações, salvos, preferências e conta reutilizam o painel, botões e tokens GoIndica. A revisão individual e as migrations dessa evolução estão em `IMPLEMENTACAO_E_REVISAO.md`.

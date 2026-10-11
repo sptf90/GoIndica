@@ -1,6 +1,17 @@
 import { z } from 'zod';
 import type { ActionState } from './types';
 const messages: Record<string, string> = {
+  INVALID_PHOTO: 'Escolha uma foto JPG, PNG ou WebP válida, sem animação.',
+  PHOTO_TOO_LARGE: 'A foto é muito grande. Escolha uma imagem de até 5 MB.',
+  PHOTO_DIMENSIONS: 'A resolução desta foto é muito alta. Reduza a imagem e tente novamente.',
+  TOPIC_LIMIT: 'Você pode ter até 12 alertas. Remova um para adicionar outro.',
+  CURRENT_PASSWORD_INVALID: 'A senha atual está incorreta.',
+  BODY_TOO_LARGE: 'A requisição excedeu o tamanho permitido.',
+  SERVICE_UNAVAILABLE: 'O serviço está temporariamente indisponível. Tente novamente em instantes.',
+  CITY_LIMIT: 'Você pode acompanhar até 8 cidades. Remova uma para adicionar outra.',
+  ADMIN_ACCOUNT:
+    'Transfira a administração e remova seu papel de administrador antes de encerrar a conta.',
+  CLOSURE_REQUIRED: 'Use a ação de encerrar e anonimizar para concluir esta solicitação.',
   AUTH_REQUIRED: 'Entre com sua conta para continuar.',
   ACCOUNT_BLOCKED: 'Esta conta está bloqueada. Entre em contato com a administração.',
   ONBOARDING_REQUIRED: 'Complete seu perfil para continuar.',
@@ -38,7 +49,9 @@ export function safeError(error: unknown): ActionState {
     return { error: 'Este nome de usuário já está em uso ou esta contribuição já foi registrada.' };
   return { error: 'Não foi possível concluir agora. Tente novamente em instantes.' };
 }
-export function check<T>(result: { data: T; error: unknown }): NonNullable<T> {
+export function check<T extends { data: unknown; error: unknown }>(
+  result: T,
+): NonNullable<T['data']> {
   if (result.error) throw result.error;
-  return result.data as NonNullable<T>;
+  return result.data as NonNullable<T['data']>;
 }

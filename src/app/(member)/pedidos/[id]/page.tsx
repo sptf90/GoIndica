@@ -1,3 +1,5 @@
+import { LiveRequest } from '@/components/community-status';
+import { interest } from '@/server/community-actions';
 import Link from 'next/link';
 import { pageNumber } from '@/lib/pagination';
 import { notFound } from 'next/navigation';
@@ -9,8 +11,6 @@ import {
   Status,
   Avatar,
   Empty,
-  GoogleAttribution,
-  PlaceAttributions,
   Pagination,
   LocationIllustration,
   statusLabels,
@@ -18,15 +18,24 @@ import {
 import { Icon } from '@/components/icon';
 import { ShareRequest } from '@/components/share-request';
 import { reveal, resolve, cancel, report } from '@/server/actions';
-import { date, timestamp, livePlace } from '@/server/queries';
-import { safeMapsUrl } from '@/lib/google/places';
+import { date, timestamp } from '@/server/queries';
+import { PlacePanel } from '@/components/place-panel';
+import { DiscoveryFeedback } from '@/components/discovery-feedback';
+import { wanted, reconfirm } from '@/server/discovery-actions';
+import { RequestPhoto } from '@/components/request-photo';
+import { ShareCard } from '@/components/share-card';
 export const metadata = { title: 'Pedido da comunidade' };
 export default async function Detail({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ page?: string; peoplePage?: string; enviado?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    peoplePage?: string;
+    peopleFor?: string;
+    enviado?: string;
+  }>;
 }) {
   const { id } = await params;
   if (!uuid.safeParse(id).success) notFound();
@@ -48,33 +57,52 @@ export default async function Detail({
     author = authorResult.data,
     resolution = resolutionResult.data;
   const owner = request.requester_id === user.id;
+  const interests = check(
+    await db.from('request_interests').select('*').eq('request_id', id).maybeSingle(),
+  );
+  const ownReconfirmation =
+    request.status === 'RESOLVED'
+      ? check(
+          await db
+            .from('request_reconfirmations')
+            .select('confirmed_at')
+            .eq('request_id', id)
+            .maybeSingle(),
+        )
+      : null;
   const editable =
     owner && request.status === 'OPEN'
       ? check(await db.rpc('request_editable', { p_request_id: id }))
       : false;
   const rawGroups =
-    owner && request.status !== 'OPEN'
+    owner && ['REVEALED', 'RESOLVED', 'CLOSED_NO_RESULT'].includes(request.status)
       ? check(await db.rpc('indication_groups', { p_request_id: id, p_offset: (page - 1) * 10 }))
       : [];
-  const groups = await Promise.all(
-    rawGroups.slice(0, 10).map(async (g) => {
-      const [place, peopleResult] = await Promise.all([
-        livePlace(g.place_id),
-        db
-          .from('indications')
-          .select('*')
-          .eq('request_id', id)
-          .eq('place_id', g.place_id)
-          .order('created_at')
-          .range((peoplePage - 1) * 20, peoplePage * 20 - 1),
-      ]);
-      const people = check(peopleResult);
-      const ids = people.map((p) => p.user_id);
-      const profiles = ids.length ? check(await db.from('profiles').select('*').in('id', ids)) : [];
-      return { ...g, place, people, profiles: new Map(profiles.map((p) => [p.id, p])) };
+  const peopleResults = await Promise.all(
+    rawGroups.slice(0, 10).map((g) => {
+      const current = search.peopleFor === g.place_id ? peoplePage : 1;
+      return db
+        .from('indications')
+        .select('*')
+        .eq('request_id', id)
+        .eq('place_id', g.place_id)
+        .order('created_at')
+        .order('id')
+        .range((current - 1) * 20, current * 20 - 1);
     }),
   );
-  const confirmed = resolution?.place_id ? await livePlace(resolution.place_id) : null;
+  const peopleRows = peopleResults.map((r) => check(r));
+  const profileIds = [...new Set(peopleRows.flatMap((rows) => rows.map((i) => i.user_id)))];
+  const profileRows = profileIds.length
+    ? check(await db.from('profiles').select('*').in('id', profileIds))
+    : [];
+  const profileMap = new Map(profileRows.map((p) => [p.id, p]));
+  const groups = rawGroups.slice(0, 10).map((g, index) => ({
+    ...g,
+    people: peopleRows[index],
+    peoplePage: search.peopleFor === g.place_id ? peoplePage : 1,
+    profiles: profileMap,
+  }));
   const createdDate = new Intl.DateTimeFormat('pt-BR', {
     day: 'numeric',
     month: 'long',
@@ -83,6 +111,7 @@ export default async function Detail({
   }).format(new Date(request.created_at));
   return (
     <div className="detail-page">
+      <LiveRequest id={id} count={request.indication_count} status={request.status} />
       <header className="request-header">
         <Link href="/app" className="back-link">
           <Icon name="back" size={18} /> Pedidos da cidade
@@ -103,6 +132,26 @@ export default async function Detail({
               </Link>
             ) : null}
             <ShareRequest description={request.description} compact />
+            {(['saved', 'following'] as const).map((kind) => (
+              <ActionForm
+                key={kind}
+                action={interest}
+                label={
+                  kind === 'saved'
+                    ? interests?.saved
+                      ? 'Remover dos salvos'
+                      : 'Salvar pedido'
+                    : interests?.following
+                      ? 'Deixar de acompanhar'
+                      : 'Acompanhar pedido'
+                }
+                className="compact quiet"
+              >
+                <input type="hidden" name="requestId" value={id} />
+                <input type="hidden" name="kind" value={kind} />
+                <input type="hidden" name="enabled" value={String(!interests?.[kind])} />
+              </ActionForm>
+            ))}
           </div>
         </div>
         <h1>{request.description}</h1>
@@ -133,8 +182,32 @@ export default async function Detail({
           )}
         </div>
       </header>
+      <div className="request-community-interest">
+        {request.wanting_count > 0 ? (
+          <p>
+            {request.wanting_count}{' '}
+            {request.wanting_count === 1
+              ? 'pessoa também procura isso'
+              : 'pessoas também procuram isso'}
+            .
+          </p>
+        ) : null}
+        {!owner && (['OPEN', 'REVEALED'].includes(request.status) || interests?.wanted) ? (
+          <ActionForm
+            action={wanted}
+            label={interests?.wanted ? 'Deixar de procurar junto' : 'Também estou procurando'}
+            className="compact quiet"
+          >
+            <input type="hidden" name="requestId" value={id} />
+            <input type="hidden" name="wanted" value={String(!interests?.wanted)} />
+          </ActionForm>
+        ) : null}
+      </div>
       <div className="detail-grid">
         <div className="detail-content">
+          {request.has_photo ? (
+            <RequestPhoto url={'/api/request-photo?id=' + id + '&v=' + request.photo_updated_at} />
+          ) : null}
           {search.enviado ? (
             <p className="notice success" role="status">
               Sua indicação foi recebida. Você ganha pontos se este local for confirmado.
@@ -238,35 +311,43 @@ export default async function Detail({
               <p className="eyebrow">Resultado registrado em {date(resolution.created_at)}</p>
               {resolution.type === 'INDICATED_PLACE' ? (
                 <>
-                  <h2>
-                    {confirmed
-                      ? `Encontrado em ${confirmed.displayName.text}`
-                      : 'Encontrado em um estabelecimento indicado'}
-                  </h2>
-                  {confirmed ? (
-                    <>
-                      <p>{confirmed.formattedAddress}</p>
-                      <a
-                        href={safeMapsUrl(confirmed)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-link"
-                      >
-                        Abrir no Google Maps ↗
-                      </a>
-                      <GoogleAttribution />
-                      <PlaceAttributions place={confirmed} />
-                    </>
-                  ) : (
-                    <p className="notice">
-                      Não foi possível carregar os dados do local agora. Atualize a página para
-                      tentar novamente.
-                    </p>
-                  )}
+                  <PlacePanel requestId={id} placeId={resolution.place_id!} confirmed autoLoad />
                   <p className="hint">
                     Este item foi encontrado neste local em {date(resolution.created_at)}. A
                     disponibilidade pode ter mudado.
                   </p>
+                  <div className="discovery-reconfirmations">
+                    {request.reconfirmation_count > 0 ? (
+                      <p>
+                        <strong>
+                          {request.reconfirmation_count}{' '}
+                          {request.reconfirmation_count === 1
+                            ? 'pessoa encontrou aqui também'
+                            : 'pessoas encontraram aqui também'}
+                          .
+                        </strong>
+                        {request.last_reconfirmed_at
+                          ? ` Última confirmação em ${date(request.last_reconfirmed_at)}.`
+                          : ''}
+                      </p>
+                    ) : null}
+                    {!owner ? (
+                      ownReconfirmation ? (
+                        <p className="notice success">
+                          Você encontrou aqui também em {date(ownReconfirmation.confirmed_at)}.
+                        </p>
+                      ) : (
+                        <ActionForm
+                          action={reconfirm}
+                          label="Encontrei aqui também"
+                          className="quiet"
+                          confirm="Você encontrou o item neste mesmo local? Registrar sua confirmação com a data de hoje?"
+                        >
+                          <input type="hidden" name="requestId" value={id} />
+                        </ActionForm>
+                      )
+                    ) : null}
+                  </div>
                 </>
               ) : resolution.type === 'OTHER_PLACE' ? (
                 <>
@@ -283,6 +364,9 @@ export default async function Detail({
                   </p>
                 </>
               )}
+              {request.status === 'RESOLVED' ? (
+                <DiscoveryFeedback requestId={id} cityId={city.id} />
+              ) : null}
             </section>
           ) : null}
           {request.status === 'CANCELED' ? (
@@ -296,39 +380,15 @@ export default async function Detail({
                 <p className="eyebrow">Caminhos que a cidade indicou</p>
                 <h2>{request.indication_count} indicações, agrupadas por local.</h2>
               </div>
-              {groups.map((g) => (
+              {groups.map((g, index) => (
                 <article className="indication-group" key={g.place_id}>
-                  <div className="group-heading">
-                    <div>
-                      <h3>
-                        {g.place?.displayName.text ||
-                          'Estabelecimento temporariamente indisponível'}
-                      </h3>
-                      <p className="muted">{g.place?.formattedAddress}</p>
-                    </div>
-                    <span className="convergence">
-                      {g.indications} {g.indications === 1 ? 'pessoa indicou' : 'pessoas indicaram'}
-                    </span>
-                  </div>
-                  {g.place ? (
-                    <>
-                      <a
-                        className="text-link"
-                        href={safeMapsUrl(g.place)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Ver no Google Maps ↗
-                      </a>
-                      <GoogleAttribution />
-                      <PlaceAttributions place={g.place} />
-                    </>
-                  ) : (
-                    <p className="notice">
-                      Não foi possível consultar o local agora. Atualize a página antes de
-                      confirmar.
-                    </p>
-                  )}
+                  <PlacePanel
+                    requestId={id}
+                    placeId={g.place_id}
+                    count={g.indications}
+                    autoLoad={request.status === 'REVEALED' && index === 0}
+                    allowResolve={request.status === 'REVEALED'}
+                  />
                   <ul className="indicators">
                     {g.people.map((i) => {
                       const p = g.profiles.get(i.user_id);
@@ -376,27 +436,12 @@ export default async function Detail({
                   </ul>
                   {g.indications > 20 ? (
                     <Pagination
-                      page={peoplePage}
-                      hasMore={peoplePage * 20 < g.indications}
+                      page={g.peoplePage}
+                      hasMore={g.peoplePage * 20 < g.indications}
                       base={'/pedidos/' + id}
-                      params={{ page: String(page) }}
+                      params={{ page: String(page), peopleFor: g.place_id }}
                       pageKey="peoplePage"
                     />
-                  ) : null}
-                  {request.status === 'REVEALED' && g.place ? (
-                    <ActionForm
-                      action={resolve}
-                      label="Encontrei neste local"
-                      pendingLabel="Confirmando…"
-                      confirm={`Confirmar que encontrou em ${g.place.displayName.text}? Esta decisão é definitiva.`}
-                    >
-                      <input type="hidden" name="requestId" value={id} />
-                      <input type="hidden" name="type" value="INDICATED_PLACE" />
-                      <input type="hidden" name="placeId" value={g.place_id} />
-                      <p className="hint">
-                        Todas as pessoas elegíveis que indicaram este local recebem +10 pontos.
-                      </p>
-                    </ActionForm>
                   ) : null}
                 </article>
               ))}
@@ -445,6 +490,7 @@ export default async function Detail({
           </details>
         </div>
         <aside className="request-context" aria-labelledby="request-context-title">
+          <ShareCard requestId={id} />
           <div className="context-heading">
             <span className="context-icon">
               <Icon name="map" size={20} />

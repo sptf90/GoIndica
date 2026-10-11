@@ -1,6 +1,6 @@
 # Homologação com Google e Supabase reais
 
-A suíte local verifica o banco real, o navegador e os contratos HTTP por fixtures isoladas. Ela não confirma consentimento OAuth do seu Google Cloud, quotas/billing, chave Places, Supabase PostgREST remoto ou URLs do seu domínio. Para isso, use um projeto de homologação separado e as integrações reais configuradas conforme o README.
+A suíte local verifica PostgreSQL e PostgREST reais, permissões, RPCs e navegadores; Auth e Google usam fornecedores isolados no E2E. Ela não confirma consentimento OAuth do seu Google Cloud, quotas/billing, chave Places, Supabase hospedado ou URLs do seu domínio. Para isso, use um projeto de homologação separado e as integrações reais configuradas conforme o README.
 
 ## Primeiro ciclo externo
 
@@ -15,6 +15,10 @@ A suíte local verifica o banco real, o navegador e os contratos HTTP por fixtur
 9. Confirme que o histórico e a busca em novas solicitações mostram o local e a data, com o aviso de disponibilidade.
 10. Teste “encontrei em outro local” e “não encontrei” em novos pedidos: nenhuma recompensa.
 11. Atribua um administrador em homologação, denuncie conteúdo e verifique bloqueio, remoção e log.
+12. Confira as sete migrations novas, métricas filtradas por cidade/dia UTC e painel de operações. Refaça cadastro por link de pedido, confirmação em outro navegador e retorno ao mesmo pedido; o template de confirmação deve carregar `.RedirectTo`, como no README.
+13. Salve/acompanhe um pedido e confirme notificações sem revelar local antes da abertura. Habilite e depois desabilite o consentimento de e-mail em `/preferencias`; configure Resend/agendador conforme `OPERACAO.md` e confira envio real e cancelamento de novas entregas.
+14. Em uma conta descartável com pontos, baixe a exportação, troque senha/e-mail com confirmação real e solicite encerramento. O administrador conclui; confira Auth anonimizado, novo acesso negado, textos anonimizados e recompensas preservadas. Esse ensaio altera irreversivelmente a identidade descartável; use apenas contas de homologação.
+15. Configure monitoramento externo e backup do projeto; ensaie restauração em ambiente separado. O dump/restore temporário local não substitui o processo de recuperação do serviço hospedado.
 
 A disponibilidade é indicada por pessoas e verificada pelo solicitante; não use esse teste para afirmar estoque automaticamente.
 

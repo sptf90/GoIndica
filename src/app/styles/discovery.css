@@ -1,0 +1,77 @@
+.photo-field input[type='file'] {
+  max-width: 100%;
+  padding: 0.75rem;
+}
+.photo-preview {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.photo-preview img {
+  object-fit: contain;
+  background: var(--surface, #f6f8f4);
+  border-radius: 10px;
+  max-width: 100%;
+}
+.request-photo {
+  margin: 0 0 1.5rem;
+}
+.request-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 420px;
+  object-fit: contain;
+  background: #f6f8f4;
+  border-radius: 12px;
+}
+.request-photo figcaption {
+  margin-top: 0.6rem;
+}
+.request-signals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+.request-community-interest {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  align-items: center;
+  margin: 0 0 1.5rem;
+}
+.request-community-interest:empty {
+  display: none;
+}
+.discovery-reconfirmations {
+  margin: 1.25rem 0;
+  padding-top: 1rem;
+  border-top: 1px solid #dbe5d5;
+}
+.share-card-control {
+  margin-bottom: 1.5rem;
+}
+.share-card-control .button {
+  width: 100%;
+  white-space: normal;
+}
+.share-card-control p {
+  margin-top: 0.65rem;
+  overflow-wrap: anywhere;
+}
+.unanswered-hint {
+  margin: 0.75rem 0 1.5rem;
+}
+.topic-alert-list strong {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 480px) {
+  .photo-preview {
+    flex-direction: column;
+  }
+  .request-community-interest {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

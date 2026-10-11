@@ -8,10 +8,15 @@ const destinations = [
   { href: '/atividades', label: 'Minhas atividades' },
   { href: '/ranking', label: 'Ranking' },
   { href: '/perfil', label: 'Perfil' },
+  { href: '/salvos', label: 'Pedidos salvos' },
+  { href: '/notificacoes', label: 'Notificações' },
+  { href: '/preferencias', label: 'Preferências' },
 ];
 export function DesktopNavigation({ admin }: { admin: boolean }) {
   const path = usePathname();
-  const items = destinations.filter((item) => item.href !== '/perfil');
+  const items = destinations.filter((item) =>
+    ['/app', '/atividades', '/ranking'].includes(item.href),
+  );
   if (admin) items.push({ href: '/admin', label: 'Administração' });
   return (
     <nav className="desktop-nav" aria-label="Navegação principal">

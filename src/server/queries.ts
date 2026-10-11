@@ -1,9 +1,8 @@
 import 'server-only';
-import { cache } from 'react';
 import { check } from '@/lib/errors';
 import { supabase } from '@/lib/supabase/server';
 import type { LocalRequest, City } from '@/lib/types';
-import { placeDetails } from '@/lib/google/places';
+import type { Resolution } from '@/lib/types';
 export function date(value: string) {
   return new Intl.DateTimeFormat('pt-BR', {
     dateStyle: 'medium',
@@ -28,14 +27,12 @@ export async function citiesFor(requests: LocalRequest[]) {
   );
   return new Map(rows.map((c) => [c.id, c]));
 }
-export const livePlace = cache(async (id: string) => {
+export async function resolutionsFor(requests: LocalRequest[]) {
+  const ids = requests
+    .filter((r) => r.status === 'RESOLVED' || r.status === 'CLOSED_NO_RESULT')
+    .map((r) => r.id);
+  if (!ids.length) return new Map<string, Resolution>();
   const db = await supabase();
-  const result = await db.from('places').select('*').eq('id', id).maybeSingle();
-  if (!result.data) return null;
-  try {
-    check(await db.rpc('consume_api_limit', { p_bucket: 'places_details' }));
-    return await placeDetails(result.data.google_place_id);
-  } catch {
-    return null;
-  }
-});
+  const rows = check(await db.from('request_resolutions').select('*').in('request_id', ids));
+  return new Map(rows.map((r) => [r.request_id, r]));
+}

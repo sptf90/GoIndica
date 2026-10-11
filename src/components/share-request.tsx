@@ -21,7 +21,7 @@ export function ShareRequest({
     try {
       if (navigator.share) {
         await navigator.share({
-          title: 'Pedido da comunidade · Descoberta Local',
+          title: 'Pedido da comunidade · GoIndica',
           text: description,
           url,
         });

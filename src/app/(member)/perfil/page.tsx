@@ -1,3 +1,4 @@
+import { InstallApp } from '@/components/install-app';
 import Link from 'next/link';
 import { member } from '@/server/auth';
 import { check } from '@/lib/errors';
@@ -14,6 +15,7 @@ export default async function MyProfile() {
     db.from('cities').select('*').eq('id', profile.home_city_id).single(),
     db.rpc('profile_stats', { p_username: profile.username }),
   ]);
+  const summary = check(await db.rpc('member_summary'));
   const city = check(cityResult),
     stats = check(statsResult);
   return (
@@ -28,17 +30,40 @@ export default async function MyProfile() {
       </div>
       <div className="profile-stats">
         <p>
+          <strong>{stats.requests}</strong> pedidos publicados
+        </p>
+        <p>
+          <strong>{stats.indications}</strong> indicações enviadas
+        </p>
+        <p>
           <strong>{stats.points}</strong> pontos
         </p>
         <p>
           <strong>{stats.confirmations}</strong> indicações confirmadas
         </p>
       </div>
+      {stats.confirmations > 0 ? (
+        <p className="recognition">
+          {stats.confirmations >= 50
+            ? 'Referência da comunidade · 50 confirmações'
+            : stats.confirmations >= 10
+              ? 'Ajuda frequente · 10 confirmações'
+              : 'Primeira indicação confirmada'}
+        </p>
+      ) : null}
       <nav className="profile-links">
+        <Link href="/atividades?tab=decision">
+          Pedidos aguardando decisão ({summary.pending}) ↗
+        </Link>
+        <Link href="/salvos">Pedidos salvos ↗</Link>
+        <Link href="/notificacoes">Notificações ↗</Link>
+        <Link href="/preferencias">Preferências ↗</Link>
+        <Link href="/conta">Conta e dados ↗</Link>
         <Link href={'/perfil/' + profile.username}>Ver perfil público ↗</Link>
         <Link href="/atividades?tab=confirmed">Histórico de pontos ↗</Link>
         {admin ? <Link href="/admin">Administração ↗</Link> : null}
       </nav>
+      <InstallApp />
       <h2>Seus dados</h2>
       <ProfileForm profile={profile} city={city} googlePhotoAvailable={googlePhotoAvailable} />
       <form action={logout} className="logout-form">

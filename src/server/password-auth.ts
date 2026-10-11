@@ -11,6 +11,7 @@ import {
 } from '@/lib/validation/schemas';
 import { authError } from '@/lib/auth-errors';
 import type { ActionState } from '@/lib/types';
+import { returnPath } from '@/lib/return-path';
 
 const confirmation =
   'Confira seu e-mail para confirmar o cadastro. Se já tem uma conta, entre com sua senha.';
@@ -34,7 +35,7 @@ export async function loginWithEmail(_state: ActionState, form: FormData): Promi
     return authError(error);
   }
   revalidatePath('/', 'layout');
-  redirect('/app');
+  redirect(returnPath(form.get('next')));
 }
 
 export async function signupWithEmail(_state: ActionState, form: FormData): Promise<ActionState> {
@@ -46,10 +47,16 @@ export async function signupWithEmail(_state: ActionState, form: FormData): Prom
       passwordConfirmation: value(form, 'passwordConfirmation'),
     });
     const db = await supabase();
+    const next = returnPath(form.get('next'));
     const { data, error } = await db.auth.signUp({
       email: input.email,
       password: input.password,
-      options: { emailRedirectTo: appUrl() + '/auth/callback' },
+      options: {
+        emailRedirectTo:
+          appUrl() +
+          '/auth/callback' +
+          (next === '/app' ? '' : '?next=' + encodeURIComponent(next)),
+      },
     });
     if (error) {
       if (error.code === 'user_already_exists' || error.code === 'email_exists')
@@ -63,7 +70,7 @@ export async function signupWithEmail(_state: ActionState, form: FormData): Prom
     return authError(error);
   }
   revalidatePath('/', 'layout');
-  redirect('/app');
+  redirect(returnPath(form.get('next')));
 }
 
 export async function requestPasswordReset(

@@ -19,14 +19,32 @@ type TestUser = {
   provider?: 'email' | 'google';
   passwordHash?: string;
   confirmed?: boolean;
+  deletedAt?: string;
 };
 const users = new Map<string, TestUser>();
-const mailbox = new Map<string, { user: string; tokenHash: string; type: 'email' | 'recovery' }>();
+const mailbox = new Map<
+  string,
+  { user: string; tokenHash: string; type: 'email' | 'recovery'; redirectTo?: string }
+>();
 const passwordHash = (password: string) =>
   createHmac('sha256', signingKey).update(password).digest('hex');
 const authorizations = new Map<string, { challenge: string; redirect: string }>();
 const codes = new Map<string, { challenge: string; user: string }>();
-for (const name of ['Ana', 'João', 'Maria', 'Carlos', 'Administrador']) {
+for (const name of [
+  'Ana',
+  'João',
+  'Maria',
+  'Carlos',
+  'Administrador',
+  'Sofia',
+  'Bruno',
+  'Lia',
+  'NinaFirefox',
+  'NinaWebkit',
+  'Paula',
+  'Diego',
+  'Rita',
+]) {
   const id = randomUUID();
   users.set(id, { id, name, email: name.toLowerCase() + '@test.invalid' });
   await db.pool.query('insert into auth.users(id,raw_user_meta_data) values($1,$2)', [
@@ -46,7 +64,7 @@ async function body(req: IncomingMessage) {
   let text = '';
   for await (const chunk of req) {
     text += chunk;
-    if (text.length > 64000) throw new Error('BODY_TOO_LARGE');
+    if (text.length > 750000) throw new Error('BODY_TOO_LARGE');
   }
   return text ? (JSON.parse(text) as Record<string, unknown>) : {};
 }
@@ -92,6 +110,7 @@ function authUser(u: TestUser) {
     app_metadata: { provider, providers: [provider] },
     user_metadata: { full_name: u.name },
     identities: [{ id: u.id, user_id: u.id, provider, identity_data: { sub: u.id } }],
+    deleted_at: u.deletedAt,
     created_at: new Date().toISOString(),
   };
 }
@@ -115,6 +134,13 @@ const tables = new Set([
   'reward_events',
   'reports',
   'audit_logs',
+  'notifications',
+  'request_interests',
+  'user_preferences',
+  'followed_cities',
+  'support_requests',
+  'topic_alerts',
+  'request_reconfirmations',
 ]);
 const functions: Record<string, string[]> = {
   request_editable: ['p_request_id'],
@@ -124,6 +150,22 @@ const functions: Record<string, string[]> = {
   log_login: [],
   consume_api_limit: ['p_bucket'],
   create_request: ['p_description', 'p_city_id', 'p_neighborhood'],
+  create_request_with_photo: ['p_description', 'p_city_id', 'p_neighborhood', 'p_photo'],
+  edit_request_with_photo: [
+    'p_request_id',
+    'p_description',
+    'p_city_id',
+    'p_neighborhood',
+    'p_photo',
+    'p_remove_photo',
+  ],
+  request_photo: ['p_request_id'],
+  consume_share_card_limit: [],
+  set_request_wanted: ['p_request_id', 'p_wanted'],
+  reconfirm_discovery: ['p_request_id'],
+  add_topic_alert: ['p_city_id', 'p_term'],
+  remove_topic_alert: ['p_id'],
+  search_unanswered_requests: ['p_city_id', 'p_query', 'p_offset'],
   edit_request: ['p_request_id', 'p_description', 'p_city_id', 'p_neighborhood'],
   submit_verified_indication: [
     'p_actor',
@@ -136,11 +178,26 @@ const functions: Record<string, string[]> = {
   resolve_request: ['p_request_id', 'p_type', 'p_place_id'],
   cancel_request: ['p_request_id'],
   report_content: ['p_target_type', 'p_target_id', 'p_reason'],
-  admin_moderate: ['p_action', 'p_target_id'],
+  admin_moderate: ['p_action', 'p_target_id', 'p_note'],
   admin_accounts: ['p_search', 'p_offset'],
   city_ranking: ['p_city_id', 'p_offset'],
   profile_stats: ['p_username'],
-  admin_metrics: [],
+  admin_metrics: ['p_city_id', 'p_since', 'p_until'],
+  search_requests: ['p_city_id', 'p_query', 'p_status', 'p_offset'],
+  record_search_event: ['p_kind', 'p_city_id', 'p_request_id'],
+  set_request_interest: ['p_request_id', 'p_saved', 'p_following'],
+  save_preferences: ['p_email_reminders'],
+  set_followed_city: ['p_city_id', 'p_following'],
+  mark_notifications_read: ['p_id'],
+  member_summary: [],
+  refresh_reminders: [],
+  request_support: ['p_kind', 'p_reason'],
+  admin_review_support: ['p_id', 'p_decision', 'p_note'],
+  prepare_account_closure: ['p_id'],
+  complete_account_closure: ['p_id', 'p_note'],
+  export_account: [],
+  admin_operations: [],
+  health_check: [],
   record_analytics: ['p_event', 'p_fingerprint'],
   indication_groups: ['p_request_id', 'p_offset'],
 };
@@ -176,7 +233,12 @@ const server = createServer(async (req, res) => {
         u.id,
         {},
       ]);
-      mailbox.set(email, { user: u.id, tokenHash: randomBytes(32).toString('hex'), type: 'email' });
+      mailbox.set(email, {
+        user: u.id,
+        tokenHash: randomBytes(32).toString('hex'),
+        type: 'email',
+        redirectTo: url.searchParams.get('redirect_to') || undefined,
+      });
       json(res, authUser(u));
       return;
     }
@@ -262,6 +324,30 @@ const server = createServer(async (req, res) => {
     }
     const bearer = req.headers.authorization?.replace(/^Bearer /, '') || '';
     const user = userFromToken(bearer);
+    if (url.pathname.startsWith('/auth/v1/admin/users/') && bearer === serviceKey) {
+      const target = users.get(url.pathname.split('/').pop()!);
+      if (!target) {
+        json(res, { message: 'User not found' }, 404);
+        return;
+      }
+      if (req.method === 'DELETE') {
+        const input = await body(req);
+        if (!input.should_soft_delete) throw new Error('Soft deletion required');
+        target.deletedAt = new Date().toISOString();
+        target.name = 'Conta encerrada';
+        target.email = 'closed-' + target.id + '@test.invalid';
+        await db.pool.query("update auth.users set raw_user_meta_data='{}' where id=$1", [
+          target.id,
+        ]);
+      }
+      if (req.method === 'PUT') {
+        const input = await body(req);
+        if (input.email) target.email = String(input.email);
+        if (input.user_metadata) target.name = 'Conta encerrada';
+      }
+      json(res, authUser(target));
+      return;
+    }
     if (url.pathname === '/auth/v1/user') {
       if (!user) {
         json(res, { message: 'Unauthorized' }, 401);
@@ -269,7 +355,8 @@ const server = createServer(async (req, res) => {
       }
       if (req.method === 'PUT') {
         const input = await body(req);
-        user.passwordHash = passwordHash(String(input.password));
+        if (input.password) user.passwordHash = passwordHash(String(input.password));
+        if (input.email) user.email = String(input.email);
       }
       json(res, authUser(user));
       return;
@@ -277,6 +364,36 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/auth/v1/logout') {
       res.statusCode = 204;
       res.end();
+      return;
+    }
+    if (url.pathname === '/test-scenario' && req.method === 'POST' && user) {
+      const request = (
+        await db.as(
+          'authenticated',
+          user.id,
+          "select public.create_request('Paginação independente dos estabelecimentos',3549805) id",
+        )
+      ).rows[0].id;
+      for (let i = 0; i < 26; i++) {
+        const id = randomUUID();
+        await db.pool.query('insert into auth.users(id) values($1)', [id]);
+        await db.as('authenticated', id, 'select public.save_profile($1,$2,3549805,false)', [
+          'pagination_' + id.replaceAll('-', '').slice(0, 10),
+          'Participante ' + String(i).padStart(2, '0'),
+        ]);
+        await db.as(
+          'service_role',
+          null,
+          'select public.submit_verified_indication($1,$2,$3,3549805,$4)',
+          [
+            id,
+            request,
+            i === 25 ? 'test_place_b' : 'test_place_a',
+            i === 25 ? 'Participante do segundo local' : 'Participante do primeiro local',
+          ],
+        );
+      }
+      json(res, { id: request });
       return;
     }
     if (!url.pathname.startsWith('/rest/v1/')) {
@@ -299,14 +416,28 @@ const server = createServer(async (req, res) => {
         'account_state',
         'is_admin',
         'create_request',
+        'create_request_with_photo',
+        'request_photo',
         'submit_verified_indication',
         'resolve_request',
         'profile_stats',
         'admin_metrics',
+        'member_summary',
+        'export_account',
+        'admin_operations',
+        'health_check',
+        'request_support',
+        'prepare_account_closure',
       ].includes(fn);
       const value = scalar
         ? (result.rows[0]?.[fn] ?? null)
-        : ['city_ranking', 'admin_accounts', 'indication_groups'].includes(fn)
+        : [
+              'city_ranking',
+              'admin_accounts',
+              'indication_groups',
+              'search_requests',
+              'search_unanswered_requests',
+            ].includes(fn)
           ? result.rows
           : null;
       json(res, value);
@@ -342,6 +473,7 @@ const server = createServer(async (req, res) => {
       const op = filter.slice(0, dot),
         value = filter.slice(dot + 1);
       if (op === 'eq') where.push(column + '=' + param(value));
+      else if (op === 'is' && value === 'null') where.push(column + ' is null');
       else if (op === 'gt') where.push(column + '>' + param(value));
       else if (op === 'ilike') where.push(column + ' ilike ' + param(value));
       else if (op === 'in') {

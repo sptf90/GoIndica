@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase/server';
 import { appUrl, configured } from '@/lib/env';
+import { callbackDestination } from '@/lib/return-path';
 
 // Only these two purposes are accepted; no caller-controlled redirect URL is used.
 export async function GET(request: NextRequest) {
@@ -19,7 +20,12 @@ export async function GET(request: NextRequest) {
       const { error } = await db.auth.verifyOtp({ type, token_hash: tokenHash });
       if (!error) {
         await db.rpc('log_login');
-        return NextResponse.redirect(appUrl() + (type === 'recovery' ? '/nova-senha' : '/app'));
+        return NextResponse.redirect(
+          appUrl() +
+            (type === 'recovery'
+              ? '/nova-senha'
+              : callbackDestination(request.nextUrl.searchParams.get('next'), appUrl())),
+        );
       }
     } catch {
       // Treat invalid links and unavailable providers as a recoverable authentication error.
