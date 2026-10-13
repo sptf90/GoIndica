@@ -9,10 +9,10 @@ import { RequestCard } from '@/components/request-card';
 import { Empty, Pagination } from '@/components/ui';
 export const metadata = { title: 'Minhas atividades' };
 const tabs = {
-  requests: 'Minhas solicitações',
-  decision: 'Aguardando minha decisão',
-  indications: 'Indicações que fiz',
-  confirmed: 'Indicações confirmadas',
+  requests: 'Meus pedidos',
+  decision: 'Para decidir',
+  indications: 'Minhas indicações',
+  confirmed: 'Confirmadas',
   closed: 'Encerrados',
 };
 export default async function Activities({
@@ -74,7 +74,7 @@ export default async function Activities({
       <div className="heading-action">
         <h1>Minhas atividades</h1>
         <Link href="/pedidos/novo" className="button">
-          Novo pedido +
+          Novo pedido
         </Link>
       </div>
       <ScrollableTabs active={tab} label="Tipo de atividade" className="activity-tabs">

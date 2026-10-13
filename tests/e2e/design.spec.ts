@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { context } from './helpers';
 
-const widths = [320, 375, 390, 414, 768, 1024, 1280, 1440];
+const widths = [320, 375, 390, 430, 768, 1024, 1280, 1440];
 
 test('identidade GoIndica e contexto do pedido se adaptam aos oito tamanhos', async ({
   browser,
@@ -37,7 +37,7 @@ test('identidade GoIndica e contexto do pedido se adaptam aos oito tamanhos', as
           fits: document.documentElement.scrollWidth <= innerWidth,
         };
       });
-      expect(appearance.canvas).toBe('rgb(244, 247, 241)');
+      expect(appearance.canvas).toBe(width < 768 ? 'rgb(255, 255, 255)' : 'rgb(245, 246, 244)');
       expect(appearance.surface).toBe('rgb(255, 255, 255)');
       expect(appearance.font).toContain('Inter Variable');
       expect(appearance.loaded).toBe(true);
@@ -56,7 +56,7 @@ test('identidade GoIndica e contexto do pedido se adaptam aos oito tamanhos', as
       const illustration = (await ana.page
         .locator('.response-gate .location-illustration')
         .boundingBox())!;
-      expect(illustration.height).toBe(104);
+      expect(illustration.height).toBe(64);
       await ana.page.screenshot({
         path: `test-results/prototipo-pedido-vazio-${width}.png`,
         fullPage: true,
@@ -67,47 +67,48 @@ test('identidade GoIndica e contexto do pedido se adaptam aos oito tamanhos', as
   }
 });
 
-test('menu do celular navega, responde ao teclado e mantém acesso à administração', async ({
+test('barra inferior possui quatro destinos e administração continua acessível pelo perfil', async ({
   browser,
 }) => {
   const admin = await context(browser, 'Administrador', 'admin_teste');
   try {
-    const menu = admin.page.locator('.mobile-menu');
-    const trigger = menu.locator('summary');
-    for (const width of [320, 375, 390, 414]) {
+    for (const width of [320, 375, 390, 430]) {
       await admin.page.setViewportSize({ width, height: 850 });
-      await expect(menu.locator('nav')).not.toBeVisible();
-      await trigger.click();
-      await expect(menu.locator('nav')).toBeVisible();
-      await expect(menu.getByRole('link', { name: 'Administração', exact: true })).toBeVisible();
-      await admin.page.screenshot({
-        path: `test-results/prototipo-menu-${width}.png`,
-        fullPage: true,
-      });
-      await menu.getByRole('link', { name: 'Ranking', exact: true }).focus();
-      await admin.page.keyboard.press('Escape');
-      await expect(menu.locator('nav')).not.toBeVisible();
-      await expect(trigger).toBeFocused();
-      await trigger.press('Enter');
-      await expect(menu.locator('nav')).toBeVisible();
-      // The dropdown covers the heading; click the visible surface below it.
-      await admin.page.locator('.app-main').click({ position: { x: 8, y: 400 } });
-      await expect(menu.locator('nav')).not.toBeVisible();
-    }
-    await trigger.click();
-    await menu.getByRole('link', { name: 'Minhas atividades', exact: true }).click();
-    await expect(admin.page).toHaveURL(/\/atividades$/);
-    await expect(menu.locator('nav')).not.toBeVisible();
-    await trigger.click();
-    await menu.getByRole('link', { name: 'Administração', exact: true }).click();
-    await expect(admin.page).toHaveURL(/\/admin$/);
-    for (const width of [768, 1024, 1280, 1440]) {
-      await admin.page.setViewportSize({ width, height: 850 });
-      await expect(admin.page.locator('.desktop-nav')).toBeVisible();
-      await expect(trigger).not.toBeVisible();
+      await admin.page.goto('/app');
+      const nav = admin.page.locator('.bottom-nav');
+      await expect(nav).toBeVisible();
+      await expect(nav.getByRole('link')).toHaveCount(4);
+      await expect(nav.getByRole('link', { name: 'Início', exact: true })).toHaveAttribute(
+        'aria-current',
+        'page',
+      );
+      await nav.getByRole('link', { name: 'Atividades', exact: true }).click();
+      await expect(admin.page).toHaveURL(/\/atividades$/);
+      await expect(nav.getByRole('link', { name: 'Atividades', exact: true })).toHaveAttribute(
+        'aria-current',
+        'page',
+      );
+      await nav.getByRole('link', { name: 'Perfil', exact: true }).focus();
+      await admin.page.keyboard.press('Enter');
+      await expect(admin.page).toHaveURL(/\/perfil$/);
+      await admin.page
+        .locator('.profile-menu')
+        .getByRole('link', { name: 'Administração', exact: true })
+        .click();
+      await expect(admin.page).toHaveURL(/\/admin$/);
       expect(
         await admin.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
       ).toBe(true);
+    }
+    for (const width of [768, 1024, 1440]) {
+      await admin.page.setViewportSize({ width, height: 850 });
+      await expect(admin.page.locator('.desktop-nav')).toBeVisible();
+      await expect(admin.page.locator('.bottom-nav')).not.toBeVisible();
+      await expect(
+        admin.page
+          .locator('.desktop-nav')
+          .getByRole('link', { name: 'Administração', exact: true }),
+      ).toBeVisible();
     }
   } finally {
     await admin.ctx.close();

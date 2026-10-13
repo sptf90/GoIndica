@@ -27,10 +27,7 @@ export default async function Ranking({
   return (
     <>
       <p className="eyebrow">Conhecimento que fez a diferença</p>
-      <h1>
-        Quem ajuda a cidade
-        <br />a encontrar.
-      </h1>
+      <h1>Quem ajuda a cidade</h1>
       <p className="muted">
         Somente indicações confirmadas contam. Os pontos pertencem à cidade do pedido.
       </p>

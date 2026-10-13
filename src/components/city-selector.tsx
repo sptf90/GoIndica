@@ -36,9 +36,14 @@ export function CitySelector({
       const viewport = window.visualViewport;
       const viewportTop = viewport?.offsetTop || 0;
       const viewportBottom = viewportTop + (viewport?.height || window.innerHeight);
-      const panel = input.current.closest('.app-content')?.getBoundingClientRect();
-      const top = Math.max(viewportTop, panel?.top || viewportTop);
-      const bottom = Math.min(viewportBottom, panel?.bottom || viewportBottom);
+      const header = document.querySelector('.app-header')?.getBoundingClientRect();
+      const navigation = document.querySelector('.bottom-nav');
+      const navBounds =
+        navigation && getComputedStyle(navigation).visibility !== 'hidden'
+          ? navigation.getBoundingClientRect()
+          : null;
+      const top = Math.max(viewportTop, header?.bottom || viewportTop);
+      const bottom = Math.min(viewportBottom, navBounds?.top || viewportBottom);
       const below = bottom - rect.bottom - 12;
       const above = rect.top - top - 12;
       const upwards = below < 160 && above > below;

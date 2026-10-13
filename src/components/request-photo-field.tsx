@@ -1,5 +1,6 @@
 'use client';
 import { useId, useRef, useState } from 'react';
+import { Icon } from './icon';
 
 export function RequestPhotoField({ existingUrl }: { existingUrl?: string }) {
   const id = useId();
@@ -15,37 +16,42 @@ export function RequestPhotoField({ existingUrl }: { existingUrl?: string }) {
         Foto do que você procura <span className="muted">(opcional)</span>
       </label>
       <input type="hidden" name="removePhoto" value={String(removed)} />
-      <input
-        ref={input}
-        id={id}
-        type="file"
-        name="photo"
-        accept="image/jpeg,image/png,image/webp"
-        aria-describedby={id + '-hint'}
-        onChange={(event) => {
-          const current = ++selection.current;
-          const file = event.target.files?.[0];
-          setError('');
-          setPreview('');
-          if (!file) return;
-          if (
-            file.size > 5 * 1024 * 1024 ||
-            !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)
-          ) {
-            setError('Escolha uma foto JPG, PNG ou WebP de até 5 MB.');
-            event.target.value = '';
-            return;
-          }
-          const reader = new FileReader();
-          reader.onload = () => {
-            if (selection.current === current) {
-              setPreview(String(reader.result));
-              setRemoved(false);
+      <div className="photo-picker">
+        <Icon name="camera" size={20} />
+        <span aria-hidden="true">{source ? 'Trocar foto' : 'Adicionar foto'}</span>
+        <input
+          className="photo-input"
+          ref={input}
+          id={id}
+          type="file"
+          name="photo"
+          accept="image/jpeg,image/png,image/webp"
+          aria-describedby={id + '-hint'}
+          onChange={(event) => {
+            const current = ++selection.current;
+            const file = event.target.files?.[0];
+            setError('');
+            setPreview('');
+            if (!file) return;
+            if (
+              file.size > 5 * 1024 * 1024 ||
+              !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)
+            ) {
+              setError('Escolha uma foto JPG, PNG ou WebP de até 5 MB.');
+              event.target.value = '';
+              return;
             }
-          };
-          reader.readAsDataURL(file);
-        }}
-      />
+            const reader = new FileReader();
+            reader.onload = () => {
+              if (selection.current === current) {
+                setPreview(String(reader.result));
+                setRemoved(false);
+              }
+            };
+            reader.readAsDataURL(file);
+          }}
+        />
+      </div>
       <p className="hint" id={id + '-hint'}>
         JPG, PNG ou WebP, até 5 MB. A foto ajuda a identificar o item. Se sair desta tela, selecione
         a foto novamente.

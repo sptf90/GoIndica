@@ -169,7 +169,7 @@ export default async function Landing() {
               </div>
             ))
           ) : (
-            <Empty title="A próxima descoberta pode começar com você.">
+            <Empty headingLevel={3} title="A próxima descoberta pode começar com você.">
               O ranking aparece quando a comunidade confirma suas primeiras indicações.
             </Empty>
           )}

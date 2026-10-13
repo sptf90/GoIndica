@@ -1,6 +1,65 @@
 import type { ReactNode } from 'react';
 
 const paths = {
+  share: (
+    <>
+      <path d="M12 15V3m-4 4 4-4 4 4M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8" />
+    </>
+  ),
+  camera: (
+    <>
+      <path d="M8 5 9 3h6l1 2h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" />
+      <circle cx="12" cy="12" r="4" />
+    </>
+  ),
+  eye: (
+    <>
+      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </>
+  ),
+  eyeClosed: (
+    <>
+      <path d="m3 3 18 18M9 5.5A12 12 0 0 1 12 5c7 0 10 7 10 7a17 17 0 0 1-3 4M6 6a20 20 0 0 0-4 6s3 7 10 7c2 0 4-.6 5.5-1.5" />
+      <path d="m10 10 4 4" />
+    </>
+  ),
+  plus: <path d="M12 5v14M5 12h14" />,
+  arrow: <path d="M5 12h14m-5-5 5 5-5 5" />,
+  bookmark: <path d="M6 4h12v17l-6-4-6 4V4Z" />,
+  person: (
+    <>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21v-2a8 8 0 0 1 16 0v2" />
+    </>
+  ),
+  activity: (
+    <>
+      <rect x="4" y="3" width="16" height="18" rx="3" />
+      <path d="M8 8h8M8 12h8M8 16h5" />
+    </>
+  ),
+  award: (
+    <>
+      <circle cx="12" cy="9" r="6" />
+      <path d="m8 14-2 7 6-3 6 3-2-7M10 9l1.5 1.5L14 8" />
+    </>
+  ),
+  message: <path d="M21 11a8 8 0 0 1-8 8H8l-5 3 1-6a8 8 0 0 1-1-5 9 9 0 0 1 18 0Z" />,
+  check: <path d="m5 12 4 4L19 6" />,
+  shield: (
+    <>
+      <path d="m12 3 8 3v6c0 5-8 9-8 9S4 17 4 12V6l8-3Z" />
+      <path d="m8 12 3 3 5-6" />
+    </>
+  ),
+  settings: (
+    <>
+      <path d="M4 7h16M4 17h16" />
+      <circle cx="9" cy="7" r="3" fill="var(--surface)" />
+      <circle cx="15" cy="17" r="3" fill="var(--surface)" />
+    </>
+  ),
   bell: (
     <>
       <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />

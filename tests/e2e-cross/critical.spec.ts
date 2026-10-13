@@ -23,15 +23,16 @@ test('login, rascunho, cidade, publicação, privacidade e menu em outro navegad
   await expect(page.getByLabel('Bairro ou região')).toHaveValue('Centro');
   await page.getByRole('button', { name: 'Publicar pedido' }).click();
   await page.waitForURL(/\/pedidos\/[a-f0-9-]+$/);
+  await page.locator('.request-options > summary').click();
   await expect(page.getByRole('button', { name: 'Salvar pedido', exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   const status = await page.request.get('/api/request-status?id=' + page.url().split('/').pop());
   expect(await status.json()).toEqual({ status: 'OPEN', indication_count: 0 });
   await page.getByRole('button', { name: 'Salvar pedido', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Remover dos salvos' })).toBeVisible();
-  await page.getByLabel('Menu de navegação').click();
+  await page.locator('.bottom-nav').getByRole('link', { name: 'Perfil', exact: true }).click();
   await page
-    .locator('.mobile-nav')
+    .locator('.profile-menu')
     .getByRole('link', { name: 'Pedidos salvos', exact: true })
     .click();
   await expect(page.locator('.request-list')).toContainText('Peça para café');

@@ -21,12 +21,8 @@ export default async function NewRequest({
         ← Voltar para a cidade
       </Link>
       <p className="eyebrow">Vamos perguntar</p>
-      <h1>
-        Alguém pode saber
-        <br />
-        onde encontrar.
-      </h1>
-      <p className="muted">Seja específico. Não precisa de preço, foto ou categoria.</p>
+      <h1>Novo pedido</h1>
+      <p className="muted">Conte o que precisa encontrar. Quem conhece a cidade pode ajudar.</p>
       <RequestComposer
         city={city}
         initialDescription={(params.q || '').trim().slice(0, 300)}

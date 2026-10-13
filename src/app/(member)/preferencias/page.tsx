@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { PageHeading } from '@/components/page-heading';
 import { member } from '@/server/auth';
 import { check } from '@/lib/errors';
 import { preferences, followCity } from '@/server/community-actions';
@@ -30,7 +31,10 @@ export default async function Preferences() {
   const cityMap = new Map(allCities.map((c) => [c.id, c]));
   return (
     <div className="form-page settings-page">
-      <h1>Preferências</h1>
+      <PageHeading
+        title="Preferências"
+        description="Escolha as conversas e cidades que quer acompanhar."
+      />
       <h2>Lembretes</h2>
       <ActionForm action={preferences} label="Salvar preferências">
         <label className="checkbox">

@@ -18,7 +18,7 @@ export default async function PublicProfile({ params }: { params: Promise<{ user
   const city = check(cityResult),
     stats = check(statsResult);
   return (
-    <div className="form-page">
+    <div className="form-page profile-page">
       <Link className="back-link" href="/ranking">
         ← Comunidade
       </Link>

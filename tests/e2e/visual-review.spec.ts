@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { context } from './helpers';
 
-const widths = [320, 375, 390, 414, 768, 1024, 1280, 1440];
+const widths = [320, 375, 390, 430, 768, 1024, 1280, 1440];
 async function inspect(page: Page, name: string) {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   for (const width of widths) {
@@ -98,6 +98,7 @@ test('nome longo não quebra cabeçalho, perfil, ranking ou histórico de recomp
   const longName = 'Pessoa' + 'x'.repeat(54);
   try {
     await joao.page.goto('/perfil');
+    await joao.page.locator('.profile-editor > summary').click();
     await joao.page.getByLabel('Nome de exibição', { exact: true }).fill(longName);
     await joao.page.getByRole('button', { name: 'Salvar perfil', exact: true }).click();
     await expect(joao.page.locator('.action-form .notice.success')).toContainText(
@@ -116,6 +117,7 @@ test('nome longo não quebra cabeçalho, perfil, ranking ou histórico de recomp
     }
   } finally {
     await joao.page.goto('/perfil');
+    await joao.page.locator('.profile-editor > summary').click();
     await joao.page.getByLabel('Nome de exibição', { exact: true }).fill('João');
     await joao.page.getByRole('button', { name: 'Salvar perfil', exact: true }).click();
     await expect(joao.page.getByRole('heading', { name: 'João', exact: true })).toBeVisible();

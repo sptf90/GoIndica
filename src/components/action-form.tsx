@@ -61,6 +61,7 @@ export function ActionForm({
       action={formAction}
       className={`action-form ${className}`}
       aria-describedby={state.error ? errorId : undefined}
+      aria-busy={pending}
       onReset={(event) => {
         if (preserveValues.current) event.preventDefault();
       }}
@@ -91,6 +92,7 @@ export function ActionForm({
         className="button"
         aria-describedby={state.error ? errorId : undefined}
       >
+        {pending ? <span className="button-spinner" aria-hidden="true" /> : null}
         {pending ? pendingLabel : label}
       </button>
     </form>

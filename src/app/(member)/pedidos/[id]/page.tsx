@@ -1,3 +1,4 @@
+import { RequestJourney } from '@/components/request-journey';
 import { LiveRequest } from '@/components/community-status';
 import { interest } from '@/server/community-actions';
 import Link from 'next/link';
@@ -116,6 +117,7 @@ export default async function Detail({
         <Link href="/app" className="back-link">
           <Icon name="back" size={18} /> Pedidos da cidade
         </Link>
+        <RequestJourney status={request.status} />
         <div className="request-toolbar">
           <div className="row-meta">
             <Status status={request.status} />
@@ -132,26 +134,34 @@ export default async function Detail({
               </Link>
             ) : null}
             <ShareRequest description={request.description} compact />
-            {(['saved', 'following'] as const).map((kind) => (
-              <ActionForm
-                key={kind}
-                action={interest}
-                label={
-                  kind === 'saved'
-                    ? interests?.saved
-                      ? 'Remover dos salvos'
-                      : 'Salvar pedido'
-                    : interests?.following
-                      ? 'Deixar de acompanhar'
-                      : 'Acompanhar pedido'
-                }
-                className="compact quiet"
-              >
-                <input type="hidden" name="requestId" value={id} />
-                <input type="hidden" name="kind" value={kind} />
-                <input type="hidden" name="enabled" value={String(!interests?.[kind])} />
-              </ActionForm>
-            ))}
+            <details className="request-options">
+              <summary>
+                <Icon name="bookmark" size={18} /> <span>Opções</span>
+                <Icon name="chevron" size={14} />
+              </summary>
+              <div className="request-options-content">
+                {(['saved', 'following'] as const).map((kind) => (
+                  <ActionForm
+                    key={kind}
+                    action={interest}
+                    label={
+                      kind === 'saved'
+                        ? interests?.saved
+                          ? 'Remover dos salvos'
+                          : 'Salvar pedido'
+                        : interests?.following
+                          ? 'Deixar de acompanhar'
+                          : 'Acompanhar pedido'
+                    }
+                    className="compact quiet"
+                  >
+                    <input type="hidden" name="requestId" value={id} />
+                    <input type="hidden" name="kind" value={kind} />
+                    <input type="hidden" name="enabled" value={String(!interests?.[kind])} />
+                  </ActionForm>
+                ))}
+              </div>
+            </details>
           </div>
         </div>
         <h1>{request.description}</h1>
@@ -445,7 +455,9 @@ export default async function Detail({
                   ) : null}
                 </article>
               ))}
-              {!groups.length ? <Empty title="Nenhuma indicação disponível nesta página." /> : null}
+              {!groups.length ? (
+                <Empty headingLevel={3} title="Nenhuma indicação disponível nesta página." />
+              ) : null}
               <Pagination page={page} hasMore={rawGroups.length > 10} base={'/pedidos/' + id} />
             </section>
           ) : null}

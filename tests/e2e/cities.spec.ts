@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import type { City } from '../../src/lib/types';
 import { login } from './helpers';
 
-const widths = [320, 375, 390, 414, 768, 1024, 1280, 1440];
+const widths = [320, 375, 390, 430, 768, 1024, 1280, 1440];
 
 test('API nacional: acentos, partes do nome, UF e municípios de todas as regiões', async ({
   request,
@@ -95,6 +95,7 @@ test('falha de rede informa o problema e permite tentar novamente sem apagar a p
 }) => {
   await login(page, 'Ana', 'ana_teste');
   await page.goto('/perfil');
+  await page.locator('.profile-editor > summary').click();
   let fail = true;
   await page.route('**/api/cities?**', async (route) => {
     if (fail) await route.fulfill({ status: 503, json: { error: 'indisponível' } });
@@ -118,6 +119,7 @@ test('resposta atrasada não substitui as sugestões de uma pesquisa mais recent
 }) => {
   await login(page, 'Ana', 'ana_teste');
   await page.goto('/app');
+  await page.locator('.city-disclosure > summary').click();
   let release!: () => void;
   const blocked = new Promise<void>((resolve) => {
     release = resolve;
@@ -160,22 +162,25 @@ test('filtros alinhados e sugestões sem deslocar o formulário nos oito tamanho
   for (const width of widths) {
     await page.setViewportSize({ width, height: 850 });
     await page.goto('/app');
+    await page.locator('.city-disclosure > summary').click();
     const text = page.getByLabel('Buscar pedidos');
     const city = page.getByRole('combobox', { name: 'Cidade', exact: true });
-    const submit = page.getByRole('button', { name: 'Buscar na cidade', exact: true });
+    const submit = page
+      .locator('.city-disclosure-content')
+      .getByRole('button', { name: 'Buscar na cidade', exact: true });
     await expect(text).toBeVisible();
     await expect(city).toBeVisible();
     await expect(submit).toBeVisible();
     const a = (await text.boundingBox())!;
     const b = (await city.boundingBox())!;
     const c = (await submit.boundingBox())!;
-    expect(Math.abs(a.height - b.height)).toBeLessThanOrEqual(1);
+    expect(a.height).toBeGreaterThanOrEqual(44);
     expect(Math.abs(b.height - c.height)).toBeLessThanOrEqual(1);
-    if (width >= 768) expect(Math.abs(a.y - b.y)).toBeLessThanOrEqual(1);
-    if (width >= 1024) expect(Math.abs(b.y - c.y)).toBeLessThanOrEqual(1);
+    expect(b.y).toBeGreaterThan(a.y + a.height);
+    if (width >= 768) expect(Math.abs(b.y - c.y)).toBeLessThanOrEqual(1);
     if (width < 768) {
       expect(b.y).toBeGreaterThan(a.y + a.height);
-      expect(c.width).toBeCloseTo(b.width, 0);
+      expect(c.width).toBeLessThanOrEqual(b.width);
     }
     await page.screenshot({ path: `test-results/feed-aligned-${width}.png`, fullPage: true });
     await city.fill('Bom Jesus');
@@ -202,7 +207,7 @@ test('filtros alinhados e sugestões sem deslocar o formulário nos oito tamanho
       .boundingBox())!;
     expect(Math.abs(rcity.height - rbutton.height)).toBeLessThanOrEqual(1);
     if (width >= 768) expect(Math.abs(rcity.y - rbutton.y)).toBeLessThanOrEqual(1);
-    else expect(rbutton.width).toBeCloseTo(rcity.width, 0);
+    else expect(rbutton.width).toBeLessThanOrEqual(rcity.width);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
@@ -219,13 +224,18 @@ test('seleção por toque funciona no formulário de celular', async ({ browser 
     const page = await mobile.newPage();
     await login(page, 'Ana', 'ana_teste');
     await page.goto('/app');
+    await page.locator('.city-disclosure > summary').click();
     const city = page.getByRole('combobox', { name: 'Cidade', exact: true });
     await city.tap();
     await city.fill('Recife PE');
     await page.getByRole('option', { name: 'Recife PE', exact: true }).tap();
     await expect(city).toHaveValue('Recife — PE');
     await expect(page.locator('input[name="city"]')).toHaveValue('2611606');
-    await page.getByRole('button', { name: 'Buscar na cidade', exact: true }).tap();
+    await page
+      .locator('.city-disclosure-content')
+      .getByRole('button', { name: 'Buscar na cidade', exact: true })
+      .tap();
+    await page.locator('.city-disclosure > summary').click();
     await expect(page).toHaveURL(/city=2611606/);
     await expect(page.getByRole('combobox', { name: 'Cidade', exact: true })).toHaveValue(
       'Recife — PE',

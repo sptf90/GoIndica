@@ -49,7 +49,7 @@ export function ShareRequest({
         disabled={busy}
         aria-label={compact ? 'Compartilhar pedido' : undefined}
       >
-        <Icon name="users" size={17} />
+        <Icon name="share" size={19} />
         {compact ? null : 'Compartilhar com a comunidade'}
       </button>
       {message && !manualUrl ? (

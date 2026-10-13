@@ -1,6 +1,7 @@
-@import "./styles/foundation.css";
-@import "./styles/application.css";
-@import "./styles/components.css";
-@import "./styles/responsive.css";
-@import "./styles/community.css";
-@import "./styles/discovery.css";
+@import './styles/foundation.css';
+@import './styles/public.css';
+@import './styles/application.css';
+@import './styles/components.css';
+@import './styles/community.css';
+@import './styles/discovery.css';
+@import './styles/responsive.css';

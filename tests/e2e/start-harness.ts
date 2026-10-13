@@ -4,6 +4,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { randomUUID, randomBytes, createHmac, createHash, timingSafeEqual } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { testDatabase } from '../integration/database';
 import { types } from 'pg';
 // PostgREST serializa bigint como número JSON; o driver pg usa string por padrão.
@@ -543,7 +544,7 @@ const app = spawn(
       GOOGLE_OAUTH_ENABLED: 'true',
       SUPABASE_SERVICE_ROLE_KEY: serviceKey,
       GOOGLE_PLACES_API_KEY: 'test-google-key',
-      NODE_OPTIONS: `--import ${resolve('tests/e2e/google-preload.mjs')}`,
+      NODE_OPTIONS: `--import ${pathToFileURL(resolve('tests/e2e/google-preload.mjs')).href}`,
     },
   },
 );

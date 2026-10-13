@@ -1,0 +1,137 @@
+[
+  {
+    "width": 390,
+    "route": "/app",
+    "issues": []
+  },
+  {
+    "width": 390,
+    "route": "/perfil",
+    "issues": []
+  },
+  {
+    "width": 390,
+    "route": "/atividades",
+    "issues": []
+  },
+  {
+    "width": 390,
+    "route": "/salvos",
+    "issues": []
+  },
+  {
+    "width": 390,
+    "route": "/notificacoes",
+    "issues": []
+  },
+  {
+    "width": 390,
+    "route": "/ranking",
+    "issues": []
+  },
+  {
+    "width": 390,
+    "route": "/preferencias",
+    "issues": []
+  },
+  {
+    "width": 390,
+    "route": "/conta",
+    "issues": []
+  },
+  {
+    "width": 390,
+    "route": "/pedidos/novo",
+    "issues": []
+  },
+  {
+    "width": 390,
+    "route": "/pedidos/3d7ec955-a1bc-4343-953b-54856cc69063",
+    "issues": []
+  },
+  {
+    "width": 390,
+    "route": "/pedidos/3d7ec955-a1bc-4343-953b-54856cc69063/editar",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/app",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/perfil",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/atividades",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/salvos",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/notificacoes",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/ranking",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/preferencias",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/conta",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/pedidos/novo",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/pedidos/3d7ec955-a1bc-4343-953b-54856cc69063",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/pedidos/3d7ec955-a1bc-4343-953b-54856cc69063/editar",
+    "issues": []
+  },
+  {
+    "width": 390,
+    "route": "/entrar",
+    "issues": []
+  },
+  {
+    "width": 390,
+    "route": "/cadastro",
+    "issues": []
+  },
+  {
+    "width": 390,
+    "route": "/recuperar-senha",
+    "issues": []
+  },
+  {
+    "width": 390,
+    "route": "/termos",
+    "issues": []
+  },
+  {
+    "width": 390,
+    "route": "/privacidade",
+    "issues": []
+  }
+]

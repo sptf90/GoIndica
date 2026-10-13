@@ -13,11 +13,20 @@ export const statusLabels: Record<RequestStatus, string> = {
 export function Status({ status }: { status: RequestStatus }) {
   return <span className={`status status-${status.toLowerCase()}`}>{statusLabels[status]}</span>;
 }
-export function Empty({ title, children }: { title: string; children?: React.ReactNode }) {
+export function Empty({
+  title,
+  children,
+  headingLevel = 2,
+}: {
+  title: string;
+  children?: React.ReactNode;
+  headingLevel?: 2 | 3;
+}) {
+  const Heading = headingLevel === 3 ? 'h3' : 'h2';
   return (
     <div className="empty">
       <LocationIllustration />
-      <h3>{title}</h3>
+      <Heading>{title}</Heading>
       {children ? <div className="muted">{children}</div> : null}
     </div>
   );

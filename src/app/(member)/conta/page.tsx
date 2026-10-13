@@ -1,5 +1,6 @@
 import { LocalDraftControls } from '@/components/local-draft-controls';
 import Link from 'next/link';
+import { PageHeading } from '@/components/page-heading';
 import { member } from '@/server/auth';
 import { check } from '@/lib/errors';
 import { timestamp } from '@/server/queries';
@@ -30,7 +31,7 @@ export default async function Account() {
   ) : null;
   return (
     <div className="form-page settings-page">
-      <h1>Minha conta</h1>
+      <PageHeading title="Minha conta" description="Seu acesso, sua privacidade e seus dados." />
       <p className="muted">E-mail atual: {user.email}</p>
       <h2>Exportar meus dados</h2>
       <p>Baixe seus dados, pedidos, indicações e histórico de pontos em JSON.</p>

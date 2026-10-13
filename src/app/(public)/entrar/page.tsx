@@ -26,10 +26,7 @@ export default async function Login({
   return (
     <main id="conteudo" className="auth-page wrap">
       <p className="eyebrow">Sua cidade sabe mais do que parece</p>
-      <h1>
-        Vamos encontrar
-        <br />o caminho?
-      </h1>
+      <h1>Bom ter você por aqui.</h1>
       <p className="lead small">
         Entre para perguntar, compartilhar o que sabe e acompanhar suas descobertas.
       </p>

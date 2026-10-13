@@ -20,7 +20,7 @@ export default async function Onboarding({
       ? raw
       : null;
   return (
-    <div className="app-shell">
+    <div className="onboarding-shell">
       <header className="public-header">
         <div className="wrap">
           <Brand />
@@ -30,11 +30,7 @@ export default async function Onboarding({
         <ViewportContent>
           <div className="form-page onboarding-form">
             <p className="eyebrow">Só falta se apresentar</p>
-            <h1>
-              Como a cidade
-              <br />
-              vai conhecer você?
-            </h1>
+            <h1>Vamos nos conhecer?</h1>
             <p className="muted">
               Seu e-mail fica privado. A comunidade vê seu nome, foto e nome de usuário.
             </p>

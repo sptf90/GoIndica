@@ -176,7 +176,9 @@ A suíte completa roda no Chromium; Firefox/WebKit cobrem fluxos críticos. `ver
 - [Operação, lembretes e recuperação](./docs/OPERACAO.md)
 - [Decisões, concorrência e permissões](./docs/ARQUITETURA.md)
 - [Revisão de interface e sugestões de cidades](./docs/REVISAO_INTERFACE.md)
-- [Identidade visual do GoIndica](./docs/PADRAO_VISUAL.md)
+- [Identidade visual e design system](./docs/PADRAO_VISUAL.md)
+- [Auditoria e refatoração mobile UX/UI](./docs/REFATORACAO_UX_UI.md)
+- [Validação da nova interface](./docs/VERIFICACAO_UX_UI.md)
 - [Verificação e seus limites](./docs/VERIFICACAO.md)
 - [Homologação com provedores reais](./docs/HOMOLOGACAO.md)
 

@@ -1,4 +1,4 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 const localWebkitLibraries = [
@@ -19,14 +19,25 @@ export default defineConfig({
   workers: 1,
   timeout: 90000,
   use: {
-    baseURL: 'http://localhost:3100',
+    baseURL: process.env.E2E_BASE_URL || 'http://localhost:3100',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
   projects: [
-    { name: 'firefox', use: { browserName: 'firefox' } },
+    {
+      name: 'android-chrome',
+      testMatch: '**/mobile-ux.spec.ts',
+      use: { ...devices['Pixel 7'], browserName: 'chromium' },
+    },
+    {
+      name: 'ios-safari',
+      testMatch: '**/mobile-ux.spec.ts',
+      use: { ...devices['iPhone 13'], browserName: 'webkit' },
+    },
+    { name: 'firefox', testIgnore: '**/mobile-ux.spec.ts', use: { browserName: 'firefox' } },
     {
       name: 'webkit',
+      testIgnore: '**/mobile-ux.spec.ts',
       use: {
         browserName: 'webkit',
         launchOptions: webkitPreload
@@ -44,10 +55,12 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command: 'tsx tests/e2e/start-harness.ts',
-    url: 'http://localhost:3100',
-    reuseExistingServer: false,
-    timeout: 60000,
-  },
+  webServer: process.env.E2E_BASE_URL
+    ? undefined
+    : {
+        command: 'tsx tests/e2e/start-harness.ts',
+        url: 'http://localhost:3100',
+        reuseExistingServer: false,
+        timeout: 60000,
+      },
 });

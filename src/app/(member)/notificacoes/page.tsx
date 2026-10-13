@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { PageHeading } from '@/components/page-heading';
+import { Icon } from '@/components/icon';
 import { member } from '@/server/auth';
 import { check } from '@/lib/errors';
 import { pageNumber } from '@/lib/pagination';
@@ -44,11 +46,10 @@ export default async function Notifications({
   const descriptions = new Map(requests.map((r) => [r.id, r.description]));
   return (
     <>
-      <p className="eyebrow">A comunidade continua a conversa</p>
-      <h1>Notificações</h1>
-      <p className="muted">
-        Locais e pessoas continuam privados enquanto as indicações não forem abertas.
-      </p>
+      <PageHeading
+        title="Notificações"
+        description="Indicações, descobertas e reconhecimento. Tudo por aqui."
+      />
       <Link className="text-link" href="/atividades?tab=decision">
         Pedidos aguardando minha decisão ↗
       </Link>
@@ -61,9 +62,14 @@ export default async function Notifications({
         <div className="community-list">
           {rows.slice(0, 20).map((r) => (
             <article className="community-row" key={r.id}>
+              <span className="notification-event">
+                <Icon name={r.kind === 'REWARD_RECEIVED' ? 'award' : 'message'} size={22} />
+              </span>
               <div>
                 <p>
-                  {!r.read_at ? <span className="unread-dot" aria-label="Não lida" /> : null}
+                  {!r.read_at ? (
+                    <span className="unread-dot" role="img" aria-label="Não lida" />
+                  ) : null}
                   <strong>{labels[r.kind as keyof typeof labels]}</strong>
                 </p>
                 <Link href={'/pedidos/' + r.request_id}>
@@ -84,7 +90,12 @@ export default async function Notifications({
           ))}
         </div>
       ) : (
-        <Empty title="Nenhuma notificação por enquanto." />
+        <Empty title="Você está em dia.">
+          <p>Novas indicações e confirmações aparecem aqui.</p>
+          <Link href="/app" className="text-link">
+            Ver pedidos da cidade
+          </Link>
+        </Empty>
       )}
       <Pagination page={page} hasMore={rows.length > 20} base="/notificacoes" />
     </>

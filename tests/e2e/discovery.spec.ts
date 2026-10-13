@@ -81,6 +81,7 @@ test('foto, pedidos sem ajuda, também procuro, alertas, reconfirmação e card 
     await expect(
       helper.page.getByRole('button', { name: 'Deixar de procurar junto', exact: true }),
     ).toBeVisible();
+    await helper.page.locator('.request-options > summary').click();
     await expect(
       helper.page.getByRole('button', { name: 'Deixar de acompanhar', exact: true }),
     ).toBeVisible();

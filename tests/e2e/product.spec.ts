@@ -9,7 +9,7 @@ test('busca, rascunho, publicação, favoritos, cidades, indicação e notifica�
     helper = await context(browser, 'Bruno', 'bruno_teste');
   try {
     await owner.page.goto('/app?q=Peça%20de%20café&city=3549805');
-    await owner.page.getByRole('link', { name: 'Publicar esta busca' }).click();
+    await owner.page.getByRole('button', { name: 'Publicar esta busca' }).click();
     await expect(owner.page.getByLabel('O que você está procurando?')).toHaveValue('Peça de café');
     await owner.page.getByLabel('Bairro ou região').fill('Centro');
     await expect
@@ -38,6 +38,9 @@ test('busca, rascunho, publicação, favoritos, cidades, indicação e notifica�
         ),
       )
       .toBe(0);
+    await owner.page.locator('.request-options').evaluate((el: HTMLDetailsElement) => {
+      el.open = true;
+    });
     await owner.page.getByRole('button', { name: 'Salvar pedido', exact: true }).click();
     await expect(owner.page.getByRole('button', { name: 'Remover dos salvos' })).toBeVisible();
     await owner.page.goto('/salvos');
@@ -66,6 +69,9 @@ test('busca, rascunho, publicação, favoritos, cidades, indicação e notifica�
     await owner.page.clock.install();
     await owner.page.goto(url);
     await helper.page.goto(url);
+    await helper.page.locator('.request-options').evaluate((el: HTMLDetailsElement) => {
+      el.open = true;
+    });
     await helper.page.getByRole('button', { name: 'Acompanhar pedido', exact: true }).click();
     await helper.page.getByRole('link', { name: 'Indicar local' }).click();
     await helper.page.getByLabel('Nome do estabelecimento').fill('Empório');

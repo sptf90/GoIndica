@@ -38,10 +38,10 @@ export function CommunityStatus({ initial }: { initial: MemberSummary }) {
     <Link
       href="/notificacoes"
       className="notification-link"
-      aria-label={`Notificações: ${summary.unread} não lidas. ${summary.pending} pedidos aguardando decisão.`}
+      aria-label={`Notificações ${summary.unread > 99 ? '99+' : summary.unread} não lidas. ${summary.pending} pedidos aguardando decisão.`}
     >
       <Icon name="bell" size={18} />
-      <span className="notification-label">Notificações</span>
+      <span className="notification-label">Notificações</span>{' '}
       {summary.unread ? (
         <span className="notification-count">{summary.unread > 99 ? '99+' : summary.unread}</span>
       ) : null}

@@ -1,5 +1,6 @@
 import { InstallApp } from '@/components/install-app';
-import Link from 'next/link';
+import { ProfileMenu } from '@/components/profile-menu';
+import { Icon } from '@/components/icon';
 import { member } from '@/server/auth';
 import { check } from '@/lib/errors';
 import { ProfileForm } from '@/components/profile-form';
@@ -19,13 +20,16 @@ export default async function MyProfile() {
   const city = check(cityResult),
     stats = check(statsResult);
   return (
-    <div className="form-page">
+    <div className="form-page profile-page">
       <div className="profile-heading">
         <Avatar name={profile.display_name} url={profile.avatar_url} size={72} />
         <div>
           <p className="eyebrow">Seu lugar na comunidade</p>
           <h1>{profile.display_name}</h1>
           <p className="muted">@{profile.username}</p>
+          <p className="profile-city">
+            <Icon name="pin" size={14} /> {city.name} — {city.state_code}
+          </p>
         </div>
       </div>
       <div className="profile-stats">
@@ -51,21 +55,17 @@ export default async function MyProfile() {
               : 'Primeira indicação confirmada'}
         </p>
       ) : null}
-      <nav className="profile-links">
-        <Link href="/atividades?tab=decision">
-          Pedidos aguardando decisão ({summary.pending}) ↗
-        </Link>
-        <Link href="/salvos">Pedidos salvos ↗</Link>
-        <Link href="/notificacoes">Notificações ↗</Link>
-        <Link href="/preferencias">Preferências ↗</Link>
-        <Link href="/conta">Conta e dados ↗</Link>
-        <Link href={'/perfil/' + profile.username}>Ver perfil público ↗</Link>
-        <Link href="/atividades?tab=confirmed">Histórico de pontos ↗</Link>
-        {admin ? <Link href="/admin">Administração ↗</Link> : null}
-      </nav>
+      <ProfileMenu pending={summary.pending} username={profile.username} admin={admin} />
+      <details className="profile-editor">
+        <summary>
+          <Icon name="edit" size={20} />
+          <span>Editar perfil</span>
+          <Icon name="chevron" size={18} />
+        </summary>
+        <h2>Seus dados</h2>
+        <ProfileForm profile={profile} city={city} googlePhotoAvailable={googlePhotoAvailable} />
+      </details>
       <InstallApp />
-      <h2>Seus dados</h2>
-      <ProfileForm profile={profile} city={city} googlePhotoAvailable={googlePhotoAvailable} />
       <form action={logout} className="logout-form">
         <button className="button secondary">Sair da conta</button>
       </form>

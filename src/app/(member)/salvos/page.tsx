@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { PageHeading } from '@/components/page-heading';
+import { ScrollableTabs } from '@/components/scrollable-tabs';
 import { member } from '@/server/auth';
 import { check } from '@/lib/errors';
 import { pageNumber } from '@/lib/pagination';
@@ -31,16 +33,18 @@ export default async function Saved({
   const [cities, resolutions] = await Promise.all([citiesFor(rows), resolutionsFor(rows)]);
   return (
     <>
-      <h1>{following ? 'Pedidos que acompanho' : 'Pedidos salvos'}</h1>
-      <nav className="profile-links">
+      <PageHeading
+        title={following ? 'Pedidos que acompanho' : 'Pedidos salvos'}
+        description="Guarde os caminhos que quer explorar e acompanhe novas indicações."
+      />
+      <ScrollableTabs active={following ? 'following' : 'saved'} label="Itens da sua lista">
         <Link aria-current={!following ? 'page' : undefined} href="/salvos">
           Salvos
         </Link>
         <Link aria-current={following ? 'page' : undefined} href="/salvos?tab=following">
           Acompanhando
         </Link>
-      </nav>
-      <p className="muted">Abra um pedido para salvar, acompanhar ou remover da sua lista.</p>
+      </ScrollableTabs>
       {rows.length ? (
         <div className="request-list">
           {rows.map((r) => (
@@ -53,7 +57,12 @@ export default async function Saved({
           ))}
         </div>
       ) : (
-        <Empty title="Sua lista está vazia." />
+        <Empty title="Sua lista está vazia.">
+          <p>Salve um pedido para voltar a ele depois.</p>
+          <Link href="/app" className="text-link">
+            Explorar pedidos
+          </Link>
+        </Empty>
       )}
       <Pagination
         page={page}

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { PasswordInput } from './password-input';
 
 export function EmailField() {
   return (
@@ -23,10 +24,9 @@ export function PasswordFields({ creating = false }: { creating?: boolean }) {
     <>
       <div className="field">
         <label htmlFor="password">{creating ? 'Crie uma senha' : 'Senha'}</label>
-        <input
+        <PasswordInput
           id="password"
           name="password"
-          type="password"
           autoComplete={creating ? 'new-password' : 'current-password'}
           minLength={creating ? 12 : 1}
           maxLength={128}
@@ -42,10 +42,9 @@ export function PasswordFields({ creating = false }: { creating?: boolean }) {
       {creating ? (
         <div className="field">
           <label htmlFor="passwordConfirmation">Repita a senha</label>
-          <input
+          <PasswordInput
             id="passwordConfirmation"
             name="passwordConfirmation"
-            type="password"
             autoComplete="new-password"
             minLength={12}
             maxLength={128}

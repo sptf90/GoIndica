@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { City, LocalRequest, Resolution } from '@/lib/types';
 import { Status } from './ui';
 import { date } from '@/server/queries';
+import { Icon } from './icon';
 import { DiscoveryPlace } from './discovery-place';
 export function RequestCard({
   request,
@@ -14,15 +15,16 @@ export function RequestCard({
 }) {
   return (
     <article className="request-row">
-      <div>
+      <div className="request-summary">
         <div className="row-meta">
           <Status status={request.status} />
           <span>{date(request.created_at)}</span>
         </div>
-        <h3>
+        <h2>
           <Link href={'/pedidos/' + request.id}>{request.description}</Link>
-        </h3>
-        <p className="muted">
+        </h2>
+        <p className="muted request-location">
+          <Icon name="pin" size={14} />
           {city ? `${city.name} — ${city.state_code}` : ''}
           {request.neighborhood ? ` · ${request.neighborhood}` : ''}
         </p>
@@ -66,10 +68,12 @@ export function RequestCard({
       <Link
         href={'/pedidos/' + request.id}
         className="request-count"
-        aria-label={`Abrir pedido: ${request.description}. ${request.indication_count} indicações`}
+        aria-label={`${request.indication_count} ${request.indication_count === 1 ? 'indicação' : 'indicações'} — Abrir pedido: ${request.description}`}
       >
-        {request.indication_count}
-        <span>{request.indication_count === 1 ? 'indicação' : 'indicações'} ↗</span>
+        <Icon name="message" size={17} />
+        <strong>{request.indication_count}</strong>{' '}
+        <span>{request.indication_count === 1 ? 'indicação' : 'indicações'}</span>
+        <Icon name="arrow" size={16} />
       </Link>
     </article>
   );
