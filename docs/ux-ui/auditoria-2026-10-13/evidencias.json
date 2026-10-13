@@ -1,0 +1,74 @@
+[
+  {
+    "id": "profile-back",
+    "url": "http://localhost:3100/ranking"
+  },
+  {
+    "id": "draft-ignored",
+    "restored": "Pedido rascunho de auditoria"
+  },
+  {
+    "id": "request-back",
+    "url": "http://localhost:3100/app"
+  },
+  {
+    "id": "unsaved-edit",
+    "restored": "Pedido da auditoria para verificar retorno"
+  },
+  {
+    "id": "recovery-next",
+    "href": "/recuperar-senha"
+  },
+  {
+    "id": "field-error",
+    "text": "Informe seu nome.",
+    "fields": {
+      "invalid": null,
+      "description": null,
+      "focused": true
+    }
+  },
+  {
+    "id": "empty-query",
+    "text": "Nenhum pedido encontrado.\n\nVeja os outros pedidos da cidade ou publique o que você procura.\n\nPublicar um pedido ↗"
+  },
+  {
+    "id": "invalid-tab",
+    "selected": 0,
+    "url": "http://localhost:3100/atividades?tab=toString"
+  },
+  {
+    "id": "share-fallback-bounds",
+    "bounds": {
+      "x": -165,
+      "y": 257,
+      "width": 270,
+      "height": 48
+    }
+  },
+  {
+    "id": "notifications-read",
+    "before": "Notificações 1 não lidas. 1 pedidos aguardando decisão.",
+    "after": "Notificações 0 não lidas. 1 pedidos aguardando decisão."
+  },
+  {
+    "id": "false-submitted-banner",
+    "ownerSees": true,
+    "url": "http://localhost:3100/pedidos/b7a7c321-e146-48a7-a241-9b6f5722073d?enviado=1"
+  },
+  {
+    "id": "composer-layout-shift",
+    "before": {
+      "x": 502,
+      "y": 341.1875,
+      "width": 660,
+      "height": 100
+    },
+    "after": {
+      "x": 502,
+      "y": 405.1875,
+      "width": 320,
+      "height": 100
+    }
+  }
+]
