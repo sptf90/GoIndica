@@ -58,7 +58,7 @@
 .demo-board {
   border: 1px solid var(--line);
   border-radius: 22px;
-  background: white;
+  background: var(--surface);
   padding: 28px;
 }
 .demo-top {
@@ -79,7 +79,7 @@
   padding-top: 28px;
 }
 .demo-question .eyebrow {
-  color: var(--brand-blue);
+  color: var(--orange-strong);
 }
 .demo-question h2 {
   font-size: 28px;
@@ -126,7 +126,7 @@
   margin-top: 18px;
 }
 .demo-people > span {
-  background: white;
+  background: var(--surface);
   border: 2px solid var(--wash);
   border-radius: 50%;
   width: 30px;

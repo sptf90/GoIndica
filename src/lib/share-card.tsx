@@ -27,10 +27,10 @@ export async function renderShareCard({
         width: '100%',
         height: '100%',
         padding: '72px',
-        background: '#f9fbf7',
-        color: '#1c2b18',
+        background: '#fdfdf1',
+        color: '#29231f',
         fontFamily: 'sans-serif',
-        borderTop: '20px solid #347d25',
+        borderTop: '20px solid #ec5e27',
       }}
     >
       <img src={logo} width={400} height={97} alt="GoIndica" />
@@ -49,7 +49,7 @@ export async function renderShareCard({
       >
         {description}
       </div>
-      <div style={{ display: 'flex', marginTop: 32, fontSize: 30, color: '#52644c' }}>{city}</div>
+      <div style={{ display: 'flex', marginTop: 32, fontSize: 30, color: '#6c6158' }}>{city}</div>
       <div
         style={{
           display: 'flex',
@@ -57,7 +57,7 @@ export async function renderShareCard({
           alignItems: 'center',
           gap: 32,
           paddingTop: 40,
-          borderTop: '2px solid #dbe5d5',
+          borderTop: '2px solid #e6ddcf',
         }}
       >
         <img src={qr} width={260} height={260} alt="QR code do pedido" />
@@ -68,7 +68,7 @@ export async function renderShareCard({
           <div style={{ display: 'flex', marginTop: 18, fontSize: 25, lineHeight: 1.4 }}>
             Leia o QR code para abrir o pedido e participar.
           </div>
-          <div style={{ display: 'flex', marginTop: 24, fontSize: 20, color: '#52644c' }}>
+          <div style={{ display: 'flex', marginTop: 24, fontSize: 20, color: '#6c6158' }}>
             {new URL(url).host}
           </div>
         </div>

@@ -37,8 +37,8 @@ test('identidade GoIndica e contexto do pedido se adaptam aos oito tamanhos', as
           fits: document.documentElement.scrollWidth <= innerWidth,
         };
       });
-      expect(appearance.canvas).toBe(width < 768 ? 'rgb(255, 255, 255)' : 'rgb(245, 246, 244)');
-      expect(appearance.surface).toBe('rgb(255, 255, 255)');
+      expect(appearance.canvas).toBe('rgb(253, 253, 241)');
+      expect(appearance.surface).toBe('rgb(253, 253, 241)');
       expect(appearance.font).toContain('Inter Variable');
       expect(appearance.loaded).toBe(true);
       expect(appearance.fits, `${width}px`).toBe(true);

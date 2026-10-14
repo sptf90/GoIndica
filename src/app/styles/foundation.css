@@ -1,38 +1,36 @@
 /* Brand primitives, semantic colors and shared interaction contracts. */
 :root {
-  --brand-green: #347d25;
-  --brand-lime: #85c808;
-  --brand-blue: #0252dc;
-  --green-strong: #347d25;
-  --green-dark: #245719;
-  --green-soft: #eef6eb;
-  --green-pale: #f6f9f4;
-  --green-line: #d8e8d2;
-  --green-tint: #e6f0e1;
-  --blue-soft: #edf3ff;
-  --canvas: #f5f6f4;
-  --surface: #fff;
-  --surface-subtle: #f4f5f2;
-  --ink: #20251f;
-  --ink-soft: #646b61;
-  --line: #e3e6df;
-  --line-soft: #eef0eb;
-  --line-strong: #b8c1b3;
+  --brand-orange: #ec5e27;
+  --brand-white: #fdfdf1;
+  --orange-strong: #b54115;
+  --orange-dark: #92330f;
+  --orange-soft: #fceee3;
+  --orange-pale: #fdf7ee;
+  --orange-line: #f1cbb7;
+  --orange-tint: #f9dfcf;
+  --canvas: var(--brand-white);
+  --surface: var(--brand-white);
+  --surface-subtle: #f6f2e7;
+  --ink: #29231f;
+  --ink-soft: #6c6158;
+  --line: #e6ddcf;
+  --line-soft: #f0eade;
+  --line-strong: #bfb09f;
   --paper: var(--canvas);
   --muted: var(--ink-soft);
-  --accent: var(--green-strong);
-  --accent-dark: var(--green-dark);
-  --wash: var(--green-soft);
+  --accent: var(--orange-strong);
+  --accent-dark: var(--orange-dark);
+  --wash: var(--orange-soft);
   --danger: #a12732;
-  --button-primary: var(--brand-green);
-  --button-primary-hover: #2d6b1f;
-  --button-primary-active: #245719;
+  --button-primary: var(--brand-orange);
+  --button-primary-hover: var(--orange-strong);
+  --button-primary-active: var(--orange-dark);
   --button-neutral-ink: var(--ink);
   --button-neutral-border: var(--line-strong);
   --button-soft-hover: var(--surface-subtle);
-  --button-disabled-bg: #eef0eb;
-  --button-disabled-ink: #66705f;
-  --button-disabled-border: #dce3d5;
+  --button-disabled-bg: #f0eade;
+  --button-disabled-ink: #71665c;
+  --button-disabled-border: #e2d8ca;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -47,7 +45,7 @@
   --radius-control: 12px;
   --body: 'Inter Variable', sans-serif;
   --display: var(--body);
-  --shadow-menu: 0 8px 28px rgb(32 37 31 / 12%);
+  --shadow-menu: 0 8px 28px rgb(41 35 31 / 12%);
   --motion-fast: 160ms;
 }
 * {
@@ -130,10 +128,10 @@ img {
   max-width: 100%;
 }
 ::selection {
-  background: var(--green-line);
+  background: var(--orange-line);
 }
 :focus-visible {
-  outline: 3px solid var(--brand-blue);
+  outline: 3px solid var(--orange-strong);
   outline-offset: 3px;
   border-radius: 4px;
 }
@@ -154,10 +152,10 @@ img {
 }
 .button {
   --button-bg: var(--button-primary);
-  --button-ink: #fff;
+  --button-ink: var(--ink);
   --button-border: var(--button-primary);
   --button-hover-bg: var(--button-primary-hover);
-  --button-hover-ink: #fff;
+  --button-hover-ink: var(--brand-white);
   --button-hover-border: var(--button-primary-hover);
   --button-active-bg: var(--button-primary-active);
   display: inline-flex;
@@ -186,6 +184,7 @@ img {
 }
 .button:where(:active):not(:disabled):not([aria-disabled='true']) {
   background: var(--button-active-bg);
+  color: var(--button-hover-ink);
   transform: scale(0.98);
 }
 .button.secondary {
@@ -195,7 +194,7 @@ img {
   --button-hover-bg: var(--surface-subtle);
   --button-hover-ink: var(--accent-dark);
   --button-hover-border: var(--line-strong);
-  --button-active-bg: var(--green-tint);
+  --button-active-bg: var(--orange-tint);
 }
 .quiet > .button {
   --button-bg: transparent;
@@ -204,7 +203,7 @@ img {
   --button-hover-bg: var(--surface-subtle);
   --button-hover-ink: var(--accent-dark);
   --button-hover-border: transparent;
-  --button-active-bg: var(--green-tint);
+  --button-active-bg: var(--orange-tint);
 }
 .button:disabled,
 .button[aria-disabled='true'] {

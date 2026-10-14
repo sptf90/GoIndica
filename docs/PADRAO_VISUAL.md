@@ -1,6 +1,6 @@
 # GoIndica — design system
 
-Atualizado em 13 de outubro de 2026. Auditoria e direção: [REFATORACAO_UX_UI.md](./REFATORACAO_UX_UI.md). A especificação mestre continua governando as regras do produto.
+Atualizado em 14 de outubro de 2026. Auditoria e direção: [REFATORACAO_UX_UI.md](./REFATORACAO_UX_UI.md). A especificação mestre continua governando as regras do produto.
 
 ## Identidade e tokens
 
@@ -8,14 +8,14 @@ A marca preserva os dois balões entrelaçados e a logo vetorial em `public/goin
 
 | Papel                | Token / valor                                            |
 | -------------------- | -------------------------------------------------------- |
-| Ação / marca         | `--brand-green: #347d25`                                 |
-| Atenção / descoberta | `--brand-blue: #0252dc`                                  |
-| Texto                | `--ink: #20251f`                                         |
-| Texto auxiliar       | `--muted: #646b61`                                       |
-| Superfície           | `--surface: #fff`                                        |
-| Fundo desktop        | `--canvas: #f5f6f4`                                      |
-| Divisória            | `--line: #e3e6df`                                        |
-| Confirmação          | `--wash: #eef6eb`                                        |
+| Ação / marca         | `--brand-orange: #ec5e27`                                |
+| Atenção / descoberta | `--accent: #b54115`                                      |
+| Texto                | `--ink: #29231f`                                         |
+| Texto auxiliar       | `--muted: #6c6158`                                       |
+| Superfície           | `--surface: #fdfdf1`                                     |
+| Fundo desktop        | `--canvas: #fdfdf1`                                      |
+| Divisória            | `--line: #e6ddcf`                                        |
+| Confirmação          | `--wash: #fceee3`                                        |
 | Erro                 | `--danger: #a12732`                                      |
 | Fonte                | Inter Variable, servida localmente                       |
 | Espaçamento          | `--space-1/2/3/4/6/8`: 4/8/12/16/24/32 px                |
@@ -24,7 +24,7 @@ A marca preserva os dois balões entrelaçados e a logo vetorial em `public/goin
 | Navegação            | header 60 px, bottom nav 68 px, acrescidos de safe areas |
 | Movimento            | `--motion-fast: 160ms`, sem animação em reduced motion   |
 
-Usar tokens semânticos para papéis. Verde não é o fundo padrão: identifica ações e resultados. Azul é pontual. Texto auxiliar deve continuar legível em branco. Não usar gradientes ornamentais ou elevar cada linha com sombra. Sombras apenas em popovers e ação flutuante.
+Usar tokens semânticos para papéis. A paleta principal combina laranja `#EC5E27` e branco suave `#FDFDF1`. A logo usa laranja sobre superfícies claras. Botões principais usam o laranja exato com texto escuro; links e textos pequenos usam laranja escuro para manter o contraste. Não usar gradientes ornamentais ou elevar cada linha com sombra. Sombras apenas em popovers e ação flutuante.
 
 ## Navegação e templates
 
@@ -52,7 +52,7 @@ Usar tokens semânticos para papéis. Verde não é o fundo padrão: identifica 
 | Profile editor | Atualização de identidade | Details nativo; edição explícita, formulário e labels preservados                                                            |
 | ScrollableTabs | Filtros locais            | Navegação por links/deep links, aba atual visível; scroll horizontal exclusivamente na lista                                 |
 
-Áreas clicáveis principais ≥44 px; inputs ≥48 px e fonte de 16 px. Foco azul visível; labels reais; SVGs decorativos com aria-hidden. Não criar interação dependente de hover. `details` preserva teclado e leitura sem biblioteca. Confirmações definitivas continuam usando o diálogo nativo do navegador e as mesmas mensagens de consequências.
+Áreas clicáveis principais ≥44 px; inputs ≥48 px e fonte de 16 px. Foco laranja escuro visível; labels reais; SVGs decorativos com aria-hidden. Não criar interação dependente de hover. `details` preserva teclado e leitura sem biblioteca. Confirmações definitivas continuam usando o diálogo nativo do navegador e as mesmas mensagens de consequências.
 
 ## Organização e evolução
 

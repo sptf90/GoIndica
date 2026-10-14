@@ -99,7 +99,7 @@
   font-weight: 650;
 }
 .bottom-nav a[aria-current='page'] .nav-icon {
-  background: var(--green-tint);
+  background: var(--orange-tint);
 }
 .bottom-nav a:active .nav-icon {
   background: var(--surface-subtle);
@@ -248,7 +248,7 @@
   z-index: 25;
   right: max(20px, env(safe-area-inset-right));
   bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 16px);
-  box-shadow: 0 4px 14px rgb(32 37 31 / 16%);
+  box-shadow: 0 4px 14px rgb(41 35 31 / 16%);
   border-radius: 999px;
 }
 .decision-banner {
@@ -265,8 +265,8 @@
   width: 40px;
   height: 40px;
   flex-shrink: 0;
-  background: var(--blue-soft);
-  color: var(--brand-blue);
+  background: var(--orange-soft);
+  color: var(--orange-strong);
   border-radius: 12px;
 }
 .decision-banner > span:nth-child(2) {
@@ -378,7 +378,7 @@
   color: var(--accent);
 }
 .status-revealed {
-  color: var(--brand-blue);
+  color: var(--orange-strong);
 }
 .status-resolved {
   color: var(--accent-dark);
@@ -424,7 +424,7 @@
   height: 64px;
   margin: 0 auto 20px;
   border-radius: 20px;
-  background: var(--green-soft);
+  background: var(--orange-soft);
   color: var(--accent);
 }
 .location-illustration-core {
@@ -510,7 +510,7 @@
   }
   .desktop-nav a[aria-current='page'] {
     color: var(--accent-dark);
-    background: var(--green-soft);
+    background: var(--orange-soft);
     font-weight: 600;
   }
   .desktop-nav a:hover {
@@ -627,8 +627,8 @@
     width: 52px;
     height: 52px;
     border-radius: 18px;
-    background: var(--blue-soft);
-    color: var(--brand-blue);
+    background: var(--orange-soft);
+    color: var(--orange-strong);
     margin-bottom: 24px;
   }
   .feed-aside h2 {
@@ -687,7 +687,7 @@ textarea {
   width: 100%;
   padding: 11px 14px;
   border: 1px solid var(--line-strong);
-  background: white;
+  background: var(--surface);
   border-radius: var(--radius-control);
   color: var(--ink);
   min-height: var(--control-height);
@@ -718,7 +718,7 @@ textarea {
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
   overflow: hidden;
-  background: white;
+  background: var(--surface);
 }
 .search-results li + li {
   border-top: 1px solid var(--line);
@@ -803,7 +803,7 @@ textarea {
 .city-retry {
   border: 0;
   background: transparent;
-  color: var(--button-primary);
+  color: var(--accent);
   text-decoration: underline;
   padding: 6px 0;
   display: block;

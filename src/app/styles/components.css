@@ -153,7 +153,7 @@
 }
 .request-journey .reached > span {
   color: var(--accent-dark);
-  background: var(--green-tint);
+  background: var(--orange-tint);
 }
 .request-journey li[aria-current='step'] {
   font-weight: 650;
@@ -348,7 +348,7 @@
   align-items: center;
   padding: 28px 20px;
   text-align: center;
-  background: var(--green-pale);
+  background: var(--orange-pale);
   border-radius: var(--radius);
 }
 .response-gate h3 {
@@ -495,7 +495,7 @@
 .convergence {
   font-size: 12px;
   color: var(--accent-dark);
-  background: var(--green-soft);
+  background: var(--orange-soft);
   border-radius: 6px;
   padding: 5px 8px;
 }
@@ -630,7 +630,7 @@
   flex-shrink: 0;
   border-radius: 50%;
   object-fit: cover;
-  background: var(--green-tint);
+  background: var(--orange-tint);
 }
 .avatar-letter {
   display: flex;

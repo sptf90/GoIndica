@@ -11,7 +11,7 @@
   font-size: 14px;
 }
 .photo-picker:focus-within {
-  outline: 3px solid var(--brand-blue);
+  outline: 3px solid var(--orange-strong);
   outline-offset: 3px;
 }
 .photo-picker .photo-input {
@@ -30,7 +30,7 @@
 }
 .photo-preview img {
   object-fit: contain;
-  background: var(--surface, #f6f8f4);
+  background: var(--surface);
   border-radius: 10px;
   max-width: 100%;
 }
@@ -43,7 +43,7 @@
   height: auto;
   max-height: 420px;
   object-fit: contain;
-  background: #f6f8f4;
+  background: var(--surface-subtle);
   border-radius: 12px;
 }
 .request-photo figcaption {
@@ -67,7 +67,7 @@
 .discovery-reconfirmations {
   margin: 1.25rem 0;
   padding-top: 1rem;
-  border-top: 1px solid #dbe5d5;
+  border-top: 1px solid var(--line);
 }
 .share-card-control {
   margin-bottom: 1.5rem;
