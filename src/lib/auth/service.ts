@@ -6,6 +6,7 @@ import { rate } from '@/lib/database/rate';
 import { hashPassword, verifyPassword, hashToken, newToken } from './crypto';
 import { appUrl, secureCookies } from '@/lib/env';
 import { sendMail } from '@/lib/mail/smtp';
+import { confirmationEmail } from '@/lib/mail/confirmation';
 import { returnPath } from '@/lib/return-path';
 export const SESSION_COOKIE = 'goindica_session';
 export interface LocalUser {
@@ -140,12 +141,17 @@ export class LocalAuth {
       appUrl() +
       '/auth/confirm?' +
       new URLSearchParams({ type: purpose, token_hash: token, next: returnPath(next) });
+    const confirmation =
+      purpose === 'recovery' ? undefined : confirmationEmail(url, purpose === 'email_change');
     await sendMail(
       email,
       purpose === 'recovery'
         ? 'Defina sua nova senha · GoIndica'
         : 'Confirme seu e-mail · GoIndica',
-      `Para ${purpose === 'recovery' ? 'definir uma nova senha' : 'confirmar seu e-mail'}, abra o link abaixo. Ele expira em uma hora.\n\n${url}\n\nSe você não solicitou esta mensagem, ignore-a.`,
+      confirmation?.text ??
+        `Para ${purpose === 'recovery' ? 'definir uma nova senha' : 'confirmar seu e-mail'}, abra o link abaixo. Ele expira em uma hora.\n\n${url}\n\nSe você não solicitou esta mensagem, ignore-a.`,
+      undefined,
+      confirmation,
     );
   }
   async signUp({

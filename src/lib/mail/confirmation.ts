@@ -1,0 +1,68 @@
+import { join } from 'node:path';
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]!;
+  });
+}
+
+export function confirmationEmail(url: string, emailChange = false) {
+  const link = escapeHtml(url);
+  const title = emailChange ? 'Confirme seu novo e-mail' : 'Boas-vindas ao GoIndica!';
+  const introduction = emailChange
+    ? 'Confirme este endereço para usá-lo no acesso à sua conta do GoIndica.'
+    : 'Falta só confirmar seu e-mail para começar a trocar indicações com pessoas da sua cidade.';
+  const text = `${title}\n\n${introduction}\n\nConfirmar meu e-mail:\n${url}\n\nEste link expira em uma hora e só pode ser usado uma vez.\n\nSe você não solicitou esta confirmação, pode ignorar esta mensagem.\n\nGoIndica · Boas indicações aproximam pessoas.`;
+
+  return {
+    text,
+    attachments: [
+      {
+        filename: 'goindica-logo.png',
+        path: join(process.cwd(), 'public', 'goindica-logo.png'),
+        cid: 'goindica-logo',
+        contentDisposition: 'inline' as const,
+      },
+    ],
+    html: `<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>${title}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#FDFDF1;color:#24251F;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;">
+<div style="display:none;font-size:1px;color:#FDFDF1;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">Confirme seu e-mail e faça parte da comunidade GoIndica. O link é válido por uma hora.</div>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#FDFDF1">
+<tr><td align="center" style="padding:32px 16px;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;">
+<tr><td style="padding:0 8px 28px;">
+<img src="cid:goindica-logo" alt="GoIndica" width="186" height="45" style="display:block;border:0;width:186px;height:45px;">
+</td></tr>
+<tr><td bgcolor="#FFFFFF" style="border:1px solid #E8E8DC;border-top:5px solid #EC5E27;border-radius:16px;padding:32px 24px;">
+<h1 style="margin:0 0 20px;font-size:30px;line-height:1.2;letter-spacing:-0.8px;color:#24251F;">${title}</h1>
+<p style="margin:0 0 28px;font-size:16px;line-height:1.65;color:#55564D;">${introduction}</p>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+<tr><td align="center" bgcolor="#EC5E27" style="border-radius:10px;mso-padding-alt:18px 20px;">
+<a href="${link}" style="display:block;padding:18px 20px;border:1px solid #EC5E27;border-radius:10px;color:#24251F;font-size:16px;line-height:20px;font-weight:bold;text-decoration:none;">Confirmar meu e-mail</a>
+</td></tr>
+</table>
+<p style="margin:16px 0 28px;font-size:13px;line-height:1.6;color:#626359;">Este link expira em <strong>uma hora</strong> e só pode ser usado uma vez.</p>
+<div style="border-top:1px solid #E8E8DC;padding-top:24px;">
+<p style="margin:0 0 10px;font-size:13px;line-height:1.6;color:#626359;">Se o botão não abrir, copie e cole este link no navegador:</p>
+<p style="margin:0;font-size:12px;line-height:1.7;word-break:break-all;overflow-wrap:anywhere;"><a href="${link}" style="color:#A63B12;text-decoration:underline;word-break:break-all;">${link}</a></p>
+</div>
+</td></tr>
+<tr><td style="padding:24px 8px 0;">
+<p style="margin:0 0 16px;font-size:13px;line-height:1.7;color:#626359;">Se você não solicitou esta confirmação, pode ignorar esta mensagem.</p>
+<p style="margin:0;font-size:14px;font-weight:bold;line-height:1.6;color:#24251F;">Boas indicações aproximam pessoas.</p>
+<p style="margin:4px 0 0;font-size:12px;line-height:1.6;color:#626359;">GoIndica</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`,
+  };
+}
