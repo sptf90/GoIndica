@@ -1,7 +1,6 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { ActionForm } from './action-form';
-import { GoogleAttribution } from './ui';
 import { indicate } from '@/server/actions';
 interface Prediction {
   id: string;
@@ -17,11 +16,12 @@ export function PlaceSearch({
   cityName: string;
 }) {
   const [input, setInput] = useState('');
-  const [token] = useState(() => crypto.randomUUID());
   const [results, setResults] = useState<Prediction[]>([]);
   const [selected, setSelected] = useState<Prediction | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [newName, setNewName] = useState('');
+  const [newAddress, setNewAddress] = useState('');
   const request = useRef<AbortController | null>(null);
   useEffect(() => () => request.current?.abort(), []);
   async function search() {
@@ -34,8 +34,7 @@ export function PlaceSearch({
     setResults([]);
     try {
       const response = await fetch(
-        '/api/places?' +
-          new URLSearchParams({ input, cityId: String(cityId), sessionToken: token }),
+        '/api/places?' + new URLSearchParams({ input, cityId: String(cityId) }),
         { signal: controller.signal },
       );
       const data = (await response.json()) as Prediction[] | { error: string };
@@ -57,11 +56,32 @@ export function PlaceSearch({
       if (!controller.signal.aborted) setBusy(false);
     }
   }
+  async function register(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      const response = await fetch('/api/places', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName, address: newAddress, cityId }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Não foi possível cadastrar o local.');
+      setSelected(data);
+      setResults([]);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Não foi possível cadastrar o local.');
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
     <div>
       <p className="muted">
-        Indique um estabelecimento em {cityName} que você conhece. A localização será verificada
-        antes do envio.
+        Indique um estabelecimento em {cityName} que você conhece. Escolha um local do cadastro da
+        cidade ou adicione um estabelecimento.
       </p>
       <div className="field">
         <label htmlFor="place-search">Nome do estabelecimento</label>
@@ -120,15 +140,45 @@ export function PlaceSearch({
           ))}
         </ul>
       ) : null}
-      <GoogleAttribution />
+      <details className="place-registration">
+        <summary>Não encontrou? Cadastrar estabelecimento</summary>
+        <form onSubmit={register}>
+          <label className="field">
+            Nome do novo estabelecimento
+            <input
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              minLength={2}
+              maxLength={160}
+              required
+            />
+          </label>
+          <label className="field">
+            Endereço em {cityName}
+            <input
+              value={newAddress}
+              onChange={(e) => setNewAddress(e.target.value)}
+              minLength={5}
+              maxLength={300}
+              required
+              placeholder="Rua, número e bairro"
+            />
+          </label>
+          <p className="hint">
+            Informe um endereço nesta cidade. Os dados são fornecidos pela comunidade.
+          </p>
+          <button className="button secondary" disabled={busy}>
+            {busy ? 'Cadastrando…' : 'Cadastrar e selecionar'}
+          </button>
+        </form>
+      </details>
       {selected ? (
         <div className="selected-place">
           <p className="eyebrow">Local selecionado</p>
           <strong>{selected.label}</strong>
-          <ActionForm action={indicate} label="Confirmar indicação" pendingLabel="Validando local…">
+          <ActionForm action={indicate} label="Confirmar indicação" pendingLabel="Enviando…">
             <input type="hidden" name="requestId" value={requestId} />
-            <input type="hidden" name="googlePlaceId" value={selected.id} />
-            <input type="hidden" name="sessionToken" value={token} />
+            <input type="hidden" name="placeId" value={selected.id} />
             <div className="field">
               <label htmlFor="comment">
                 Como você sabe? <span className="muted">(opcional)</span>

@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import type { GooglePlace } from '@/lib/google/places';
 import type { RequestStatus } from '@/lib/types';
 import { Icon } from './icon';
 export const statusLabels: Record<RequestStatus, string> = {
@@ -55,6 +54,7 @@ export function Avatar({
   return url ? (
     <Image
       className="avatar"
+      unoptimized
       src={url}
       alt=""
       width={size}
@@ -90,19 +90,6 @@ export function Brand() {
     </Link>
   );
 }
-export function GoogleAttribution() {
-  return (
-    <div className="google-attribution">
-      <Image
-        src="/google-attribution.svg"
-        width={98}
-        height={18}
-        alt="Google Maps"
-        translate="no"
-      />
-    </div>
-  );
-}
 export function Pagination({
   page,
   hasMore,
@@ -132,23 +119,5 @@ export function Pagination({
         </Link>
       ) : null}
     </nav>
-  );
-}
-
-export function PlaceAttributions({ place }: { place: GooglePlace }) {
-  return (
-    <>
-      {place.attributions.map((a, i) => (
-        <p className="hint" key={a.provider + String(i)}>
-          {a.providerUri?.startsWith('https://') ? (
-            <a href={a.providerUri} target="_blank" rel="noopener noreferrer">
-              {a.provider}
-            </a>
-          ) : (
-            a.provider
-          )}
-        </p>
-      ))}
-    </>
   );
 }

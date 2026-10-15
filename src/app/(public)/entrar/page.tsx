@@ -1,15 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { login } from '@/server/actions';
 import { loginWithEmail } from '@/server/password-auth';
-import { configured, googleLoginEnabled } from '@/lib/env';
+import { configured } from '@/lib/env';
 import { ActionForm } from '@/components/action-form';
 import { EmailField, PasswordFields, AuthTerms } from '@/components/auth-fields';
 import { accessLink, returnPath } from '@/lib/return-path';
 export const metadata: Metadata = { title: 'Entrar', robots: { index: false, follow: false } };
 const reasons: Record<string, string> = {
-  configuracao:
-    'A conexão com o Supabase ainda não foi configurada. Consulte o README para ativar o login.',
+  configuracao: 'O acesso está temporariamente indisponível. Tente novamente em instantes.',
   banco:
     'O banco ainda precisa ser preparado. Aplique as migrations do projeto para concluir o acesso.',
   bloqueado: 'Esta conta está bloqueada ou indisponível. Entre em contato com a administração.',
@@ -59,17 +57,6 @@ export default async function Login({
         <Link href={accessLink('/cadastro', next)}>Criar uma conta</Link>
         <Link href="/recuperar-senha">Esqueci minha senha</Link>
       </nav>
-      {googleLoginEnabled() ? (
-        <>
-          <p className="auth-divider">ou</p>
-          <form action={login}>
-            <input type="hidden" name="next" value={next} />
-            <button className="button secondary google-login" disabled={!configured()}>
-              <span aria-hidden="true">G</span>Continuar com Google
-            </button>
-          </form>
-        </>
-      ) : null}
       <AuthTerms />
     </main>
   );

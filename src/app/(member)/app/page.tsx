@@ -1,3 +1,4 @@
+import { memberSummary } from '@/server/queries';
 import { ScrollableTabs } from '@/components/scrollable-tabs';
 import Link from 'next/link';
 import { pageNumber } from '@/lib/pagination';
@@ -31,12 +32,12 @@ export default async function Feed({
     check(await db.from('cities').select('*').eq('id', profile.home_city_id).single());
   const requests = check(
     status === 'UNANSWERED'
-      ? await db.rpc('search_unanswered_requests', {
+      ? await db.call('search_unanswered_requests', {
           p_city_id: city.id,
           p_query: q,
           p_offset: (page - 1) * 20,
         })
-      : await db.rpc('search_requests', {
+      : await db.call('search_requests', {
           p_city_id: city.id,
           p_query: q,
           p_status: status,
@@ -58,7 +59,7 @@ export default async function Feed({
           ),
       )
     : [];
-  const summary = check(await db.rpc('member_summary'));
+  const summary = await memberSummary();
   const more = requests.length > 20;
   return (
     <>

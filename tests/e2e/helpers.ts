@@ -1,12 +1,13 @@
 import { expect, type Page, type Browser } from '@playwright/test';
+export const password = 'Senha longa de teste 123!';
 export async function login(page: Page, name: string, username: string) {
   await page.goto('/entrar');
-  await page.getByRole('button', { name: 'Continuar com Google' }).click();
-  await expect(
-    page.getByRole('heading', { name: 'Google OAuth — ambiente de teste' }),
-  ).toBeVisible();
-  await page.getByRole('link', { name, exact: true }).click();
-  await page.waitForURL(/\/(onboarding|app)/);
+  await page.getByLabel('E-mail', { exact: true }).fill(username + '@test.invalid');
+  await page.getByLabel('Senha', { exact: true }).fill(password);
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+    /Vamos nos conhecer\?|O que você está procurando\?/,
+  );
   if (page.url().includes('/onboarding')) {
     await page.getByLabel('Nome de exibição', { exact: true }).fill(name);
     await page.getByLabel('Nome de usuário', { exact: true }).fill(username);
@@ -24,8 +25,8 @@ export async function login(page: Page, name: string, username: string) {
   }
 }
 export async function context(browser: Browser, name: string, username: string) {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
-  const page = await ctx.newPage();
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } }),
+    page = await ctx.newPage();
   await login(page, name, username);
   return { ctx, page };
 }

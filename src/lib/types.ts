@@ -1,4 +1,4 @@
-import type { Database } from './supabase/database.types';
+import type { Database } from './database/types';
 export type RequestStatus = 'OPEN' | 'REVEALED' | 'RESOLVED' | 'CLOSED_NO_RESULT' | 'CANCELED';
 export type ResolutionType = 'INDICATED_PLACE' | 'OTHER_PLACE' | 'NOT_FOUND';
 export type City = Database['public']['Tables']['cities']['Row'];

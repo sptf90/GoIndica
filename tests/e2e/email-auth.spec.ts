@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { test, expect, type Page, type APIRequestContext } from '@playwright/test';
+import { test, expect } from './fixtures';
+import type { Page, APIRequestContext } from '@playwright/test';
 
 const password = 'Minha senha de teste 123!';
 const newPassword = 'Minha outra senha de teste 456!';

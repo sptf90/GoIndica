@@ -2,9 +2,9 @@ import Link from 'next/link';
 import { Empty, Avatar } from '@/components/ui';
 import { LandingAnalytics } from '@/components/landing-analytics';
 import { configured, pilotCityId } from '@/lib/env';
-import { supabase } from '@/lib/supabase/server';
+import { database } from '@/lib/database/server';
 export default async function Landing() {
-  const db = configured() ? await supabase() : null;
+  const db = configured() ? await database() : null;
   const pilot = pilotCityId();
   const cityResult = db
     ? await db.from('cities').select('name,state_code').eq('id', pilot).maybeSingle()
@@ -14,7 +14,7 @@ export default async function Landing() {
     : pilot === 3549805
       ? 'São José do Rio Preto — SP'
       : 'Comunidade local';
-  const ranking = db ? await db.rpc('city_ranking', { p_city_id: pilot }) : null;
+  const ranking = db ? await db.call('city_ranking', { p_city_id: pilot }) : null;
   return (
     <main id="conteudo">
       <LandingAnalytics />

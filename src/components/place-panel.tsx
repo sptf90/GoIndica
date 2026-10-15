@@ -1,16 +1,14 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { ActionForm } from './action-form';
-import { GoogleAttribution, PlaceAttributions } from './ui';
 import { resolve } from '@/server/actions';
-import { safeMapsUrl } from '@/lib/maps-url';
-import type { GooglePlace } from '@/lib/google/places';
+import type { LocalPlace } from '@/lib/places';
 
 async function obtain(
   requestId: string,
   placeId: string,
   signal?: AbortSignal,
-): Promise<GooglePlace> {
+): Promise<LocalPlace> {
   const response = await fetch(
     '/api/place-details?' + new URLSearchParams({ requestId, placeId }),
     { signal },
@@ -25,7 +23,7 @@ async function obtain(
     throw new Error(body.error || 'Não foi possível consultar o local. Tente novamente.');
   if (!body?.displayName?.text || !body?.formattedAddress)
     throw new Error('Não foi possível consultar o local. Tente novamente.');
-  return body as GooglePlace;
+  return body as LocalPlace;
 }
 
 export function PlacePanel({
@@ -43,7 +41,7 @@ export function PlacePanel({
   allowResolve?: boolean;
   count?: number;
 }) {
-  const [place, setPlace] = useState<GooglePlace | null>(null);
+  const [place, setPlace] = useState<LocalPlace | null>(null);
   const [busy, setBusy] = useState(autoLoad);
   const [error, setError] = useState('');
   useEffect(() => {
@@ -115,20 +113,6 @@ export function PlacePanel({
         <button type="button" className="button secondary" onClick={load}>
           {error ? 'Tentar consultar novamente' : 'Ver estabelecimento'}
         </button>
-      ) : null}
-      {place ? (
-        <>
-          <a
-            href={safeMapsUrl(place)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-link"
-          >
-            {confirmed ? 'Abrir no Google Maps ↗' : 'Ver no Google Maps ↗'}
-          </a>
-          <GoogleAttribution />
-          <PlaceAttributions place={place} />
-        </>
       ) : null}
       {allowResolve && place ? (
         <ActionForm

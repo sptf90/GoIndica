@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 const widths = [320, 375, 390, 414, 768, 1024, 1280, 1440];
 test('páginas públicas usam rolagem natural e rodapé acessível fora do painel do app', async ({
   page,
@@ -72,11 +72,11 @@ test('visitante é redirecionado nos fluxos privados', async ({ page }) => {
     await page.goto(path);
     await expect(page).toHaveURL(/\/entrar/);
   }
-  await expect(page.getByRole('button', { name: 'Continuar com Google' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Continuar com Google' })).toHaveCount(0);
 });
 test('callback adulterado não autentica nem permite redirecionamento externo', async ({ page }) => {
   await page.goto('/auth/callback?next=https://evil.example');
-  await expect(page).toHaveURL(/\/entrar\?motivo=falha/);
+  await expect(page).toHaveURL(/\/entrar\?motivo=link_expirado/);
 });
 test('páginas legais e metadata pública', async ({ page, request }) => {
   await page.goto('/privacidade');

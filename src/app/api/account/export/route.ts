@@ -7,7 +7,7 @@ export async function GET() {
     const ctx = await apiMember();
     if (!ctx)
       return NextResponse.json({ error: 'Entre para exportar seus dados.' }, { status: 401 });
-    const data = check(await ctx.db.rpc('export_account'));
+    const data = check(await ctx.db.call('export_account'));
     return new NextResponse(
       JSON.stringify(
         {

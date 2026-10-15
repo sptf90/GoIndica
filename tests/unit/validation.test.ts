@@ -18,7 +18,6 @@ test('valida comprimentos, cidade e username', () => {
       username: 'Nome com espaço',
       displayName: 'Pessoa',
       cityId: 3549805,
-      useGooglePhoto: true,
     }).success,
   ).toBe(false);
 });
@@ -37,13 +36,13 @@ test('local exige ID verificável e descarta nome, cidade e coordenadas enviados
   expect(
     indicationSchema.parse({
       requestId,
-      googlePlaceId: 'place_id',
+      placeId: requestId,
       cityId: 'outra',
       name: 'Nome forjado',
       latitude: 0,
     }),
-  ).toEqual({ requestId, googlePlaceId: 'place_id', comment: '' });
-  expect(indicationSchema.safeParse({ requestId, googlePlaceId: '../../malicious' }).success).toBe(
+  ).toEqual({ requestId, placeId: requestId, comment: '' });
+  expect(indicationSchema.safeParse({ requestId, placeId: '../../malicious' }).success).toBe(
     false,
   );
 });

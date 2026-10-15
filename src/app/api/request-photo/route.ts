@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     const auth = await apiMember();
     if (!auth) throw new Error('AUTH_REQUIRED');
     const id = uuid.parse(new URL(request.url).searchParams.get('id'));
-    const photo = check(await auth.db.rpc('request_photo', { p_request_id: id }));
+    const photo = check(await auth.db.call('request_photo', { p_request_id: id }));
     if (!photo)
       return new NextResponse(null, {
         status: 404,

@@ -1,6 +1,7 @@
 import 'server-only';
+import { cache } from 'react';
 import { check } from '@/lib/errors';
-import { supabase } from '@/lib/supabase/server';
+import { database } from '@/lib/database/server';
 import type { LocalRequest, City } from '@/lib/types';
 import type { Resolution } from '@/lib/types';
 export function date(value: string) {
@@ -18,7 +19,7 @@ export function timestamp(value: string) {
 }
 export async function citiesFor(requests: LocalRequest[]) {
   if (!requests.length) return new Map<number, City>();
-  const db = await supabase();
+  const db = await database();
   const rows = check(
     await db
       .from('cities')
@@ -32,7 +33,12 @@ export async function resolutionsFor(requests: LocalRequest[]) {
     .filter((r) => r.status === 'RESOLVED' || r.status === 'CLOSED_NO_RESULT')
     .map((r) => r.id);
   if (!ids.length) return new Map<string, Resolution>();
-  const db = await supabase();
+  const db = await database();
   const rows = check(await db.from('request_resolutions').select('*').in('request_id', ids));
   return new Map(rows.map((r) => [r.request_id, r]));
 }
+
+export const memberSummary = cache(async () => {
+  const db = await database();
+  return check(await db.call('member_summary'));
+});

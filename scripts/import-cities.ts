@@ -9,12 +9,12 @@ const result = cityMigration(await response.json());
 console.log(
   `${result.total} municípios, ${result.states} UFs. Municípios antigos não são excluídos automaticamente.`,
 );
-const changes = await cityChanges('supabase/migrations', result.sql);
+const changes = await cityChanges('database/migrations', result.sql);
 console.log(
   `Comparado às migrations locais: ${changes.added} novos, ${changes.updated} alterados, ${changes.unchanged} sem alteração e ${changes.retained} antigos preservados.`,
 );
 if (process.argv.includes('--dry-run')) console.log('Prévia concluída: nenhum arquivo alterado.');
 else
   console.log(
-    `Nova migration: ${await writeCityMigration('supabase/migrations', result.sql)}. Revise antes de aplicar.`,
+    `Nova migration: ${await writeCityMigration('database/migrations', result.sql)}. Revise antes de aplicar.`,
   );

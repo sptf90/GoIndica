@@ -2,13 +2,13 @@ import { redirect } from 'next/navigation';
 import { ActionForm } from '@/components/action-form';
 import { PasswordFields } from '@/components/auth-fields';
 import { updatePassword } from '@/server/password-auth';
-import { supabase } from '@/lib/supabase/server';
+import { database } from '@/lib/database/server';
 import { configured } from '@/lib/env';
 
 export const metadata = { title: 'Nova senha', robots: { index: false, follow: false } };
 export default async function NewPassword() {
   if (!configured()) redirect('/entrar?motivo=configuracao');
-  const db = await supabase();
+  const db = await database();
   const {
     data: { user },
     error,

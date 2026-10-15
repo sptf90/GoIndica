@@ -42,17 +42,11 @@ export const profileSchema = z.object({
     .regex(/^[a-z][a-z0-9_]{2,23}$/, 'Use 3 a 24 letras, números ou _. Comece com uma letra.'),
   displayName: z.string().trim().min(2, 'Informe seu nome.').max(60),
   cityId,
-  useGooglePhoto: z.boolean(),
 });
 export const indicationSchema = z.object({
   requestId: uuid,
-  googlePlaceId: z
-    .string()
-    .min(5)
-    .max(255)
-    .regex(/^[A-Za-z0-9_-]+$/),
+  placeId: uuid,
   comment: z.string().trim().max(300).default(''),
-  sessionToken: z.uuid().optional(),
 });
 export const resolutionSchema = z
   .object({
@@ -81,7 +75,6 @@ export const adminSchema = z.object({
 export const searchSchema = z.object({
   input: z.string().trim().min(3).max(120),
   cityId,
-  sessionToken: z.uuid(),
 });
 export function normalizeCity(value: string) {
   return value
@@ -91,3 +84,9 @@ export function normalizeCity(value: string) {
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
 }
+
+export const placeSchema = z.object({
+  name: z.string().trim().min(2, 'Informe o nome do estabelecimento.').max(160),
+  address: z.string().trim().min(5, 'Informe o endereço completo.').max(300),
+  cityId,
+});

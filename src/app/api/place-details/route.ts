@@ -3,7 +3,7 @@ import { apiMember } from '@/server/api-auth';
 import { uuid } from '@/lib/validation/schemas';
 import { check } from '@/lib/errors';
 import { apiError } from '@/lib/http';
-import { placeDetails } from '@/lib/google/places';
+import { placeDetails } from '@/lib/places';
 export async function GET(request: NextRequest) {
   try {
     const ctx = await apiMember();
@@ -49,13 +49,11 @@ export async function GET(request: NextRequest) {
       allowed = resolution?.place_id === placeId;
     }
     if (!allowed) throw new Error('NOT_ALLOWED');
-    // RLS remains a second boundary even when the request's owner is authorized.
-    const place = check(
-      await ctx.db.from('places').select('google_place_id').eq('id', placeId).maybeSingle(),
-    );
+    // The database client applies the same visibility rules to every read.
+    const place = check(await ctx.db.from('places').select('id').eq('id', placeId).maybeSingle());
     if (!place) throw new Error('NOT_ALLOWED');
-    check(await ctx.db.rpc('consume_api_limit', { p_bucket: 'places_view' }));
-    return NextResponse.json(await placeDetails(place.google_place_id), {
+    check(await ctx.db.call('consume_api_limit', { p_bucket: 'places_view' }));
+    return NextResponse.json(await placeDetails(place.id), {
       headers: { 'Cache-Control': 'no-store' },
     });
   } catch (error) {

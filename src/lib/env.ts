@@ -4,8 +4,9 @@ export function optionalEnv(name: string): string | undefined {
   return process.env[name];
 }
 export function configured() {
-  const key = optionalEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY');
-  return validUrl(optionalEnv('NEXT_PUBLIC_SUPABASE_URL')) && Boolean(key && !placeholder(key));
+  return ['MYSQL_HOST', 'MYSQL_DATABASE', 'MYSQL_USER', 'MYSQL_PASSWORD'].every((name) =>
+    Boolean(optionalEnv(name) && !placeholder(optionalEnv(name)!)),
+  );
 }
 function placeholder(value: string) {
   return /your-|example\.com|your-project/i.test(value);
@@ -33,17 +34,12 @@ export function environmentStatus() {
   return {
     authentication: configured(),
     app_url: validUrl(optionalEnv('NEXT_PUBLIC_APP_URL')),
-    places: present('GOOGLE_PLACES_API_KEY'),
-    service: present('SUPABASE_SERVICE_ROLE_KEY'),
-    email: present('RESEND_API_KEY') && present('EMAIL_FROM'),
+    database: configured(),
+    email: ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASSWORD', 'EMAIL_FROM'].every(present),
     scheduler: (optionalEnv('CRON_SECRET')?.length || 0) >= 32,
-    google_login: googleLoginEnabled(),
     support: present('NEXT_PUBLIC_SUPPORT_EMAIL'),
     pilot_city: /^\d{7}$/.test(optionalEnv('PILOT_CITY_ID') || '3549805'),
   };
-}
-export function googleLoginEnabled() {
-  return process.env.GOOGLE_OAUTH_ENABLED === 'true';
 }
 export function requiredEnv(name: string): string {
   const value = optionalEnv(name);

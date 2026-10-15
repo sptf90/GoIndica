@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { context } from './helpers';
 import sharp from 'sharp';
 import jsQR from 'jsqr';

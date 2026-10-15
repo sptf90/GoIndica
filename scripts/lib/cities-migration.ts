@@ -38,7 +38,7 @@ export function cityMigration(input: unknown, now = new Date(), minimum = 5500) 
   return {
     total: rows.length,
     states: states.size,
-    sql: `-- Municípios oficiais do IBGE. Atualizado em ${now.toISOString().slice(0, 10)}.\ninsert into public.cities(id,name,normalized_name,state_name,state_code,slug) values\n${values.join(',\n')}\non conflict(id) do update set name=excluded.name,normalized_name=excluded.normalized_name,state_name=excluded.state_name,state_code=excluded.state_code,slug=excluded.slug;\n`,
+    sql: `-- Municípios oficiais do IBGE. Atualizado em ${now.toISOString().slice(0, 10)}.\ninsert into cities(id,name,normalized_name,state_name,state_code,slug) values\n${values.join(',\n')}\nON DUPLICATE KEY UPDATE name=VALUES(name),normalized_name=VALUES(normalized_name),state_name=VALUES(state_name),state_code=VALUES(state_code),slug=VALUES(slug);\n`,
   };
 }
 

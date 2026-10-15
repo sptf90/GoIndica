@@ -14,11 +14,6 @@ export default async function Onboarding({
   const { profile, user } = await session();
   if (profile) redirect(next);
   const name = typeof user.user_metadata.full_name === 'string' ? user.user_metadata.full_name : '';
-  const raw = user.user_metadata.avatar_url;
-  const avatar =
-    typeof raw === 'string' && /^https:\/\/lh[0-9]+\.googleusercontent\.com\//.test(raw)
-      ? raw
-      : null;
   return (
     <div className="onboarding-shell">
       <header className="public-header">
@@ -32,10 +27,10 @@ export default async function Onboarding({
             <p className="eyebrow">Só falta se apresentar</p>
             <h1>Vamos nos conhecer?</h1>
             <p className="muted">
-              Seu e-mail fica privado. A comunidade vê seu nome, foto e nome de usuário.
+              Seu e-mail fica privado. A comunidade vê seu nome e nome de usuário.
             </p>
-            <Avatar name={name || 'Você'} url={avatar} size={64} />
-            <ProfileForm defaultName={name} googlePhotoAvailable={Boolean(avatar)} next={next} />
+            <Avatar name={name || 'Você'} size={64} />
+            <ProfileForm defaultName={name} next={next} />
           </div>
         </ViewportContent>
       </main>

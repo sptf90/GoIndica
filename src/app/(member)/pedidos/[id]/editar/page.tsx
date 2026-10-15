@@ -13,7 +13,7 @@ export default async function Edit({ params }: { params: Promise<{ id: string }>
     request.requester_id !== user.id ||
     request.status !== 'OPEN' ||
     request.indication_count > 0 ||
-    !check(await db.rpc('request_editable', { p_request_id: id }))
+    !check(await db.call('request_editable', { p_request_id: id }))
   )
     redirect('/pedidos/' + id);
   const city = check(await db.from('cities').select('*').eq('id', request.city_id).single());

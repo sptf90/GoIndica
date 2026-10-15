@@ -1,10 +1,10 @@
 import 'server-only';
-import { supabase } from '@/lib/supabase/server';
+import { database } from '@/lib/database/server';
 import { configured } from '@/lib/env';
 import { operationalError } from '@/lib/observability';
 export async function apiMember() {
   if (!configured()) return null;
-  const db = await supabase();
+  const db = await database();
   const {
     data: { user },
     error,
@@ -19,13 +19,14 @@ export async function apiMember() {
     operationalError('api.auth', error);
     throw new Error('SERVICE_UNAVAILABLE');
   }
-  if (!user) return null;
-  const state = await db.rpc('account_state');
+  if (!user || user.sessionPurpose === 'recovery') return null;
+  const state = await db.call('account_state');
   if (state.error) {
     if (/ACCOUNT_BLOCKED|AUTH_REQUIRED/.test(state.error.message)) return null;
     operationalError('api.account', state.error);
     throw new Error('SERVICE_UNAVAILABLE');
   }
+  if (!state.data) throw new Error('SERVICE_UNAVAILABLE');
   if (!state.data.onboarded) return null;
   return { db, user, admin: state.data.admin };
 }

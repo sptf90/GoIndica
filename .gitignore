@@ -13,3 +13,11 @@ supabase/.temp/
 supabase/.branches/
 
 .test-tools/
+
+.migration-data/
+.hostinger-package/
+goindica-hostinger.tar.gz
+goindica-hostinger.zip
+.hostinger-source/
+goindica-hostinger-fonte.zip
+!.env.hostinger.example

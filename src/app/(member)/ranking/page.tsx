@@ -22,7 +22,7 @@ export default async function Ranking({
     found.data ||
     check(await db.from('cities').select('*').eq('id', profile.home_city_id).single());
   const entries = check(
-    await db.rpc('city_ranking', { p_city_id: city.id, p_offset: (page - 1) * 30 }),
+    await db.call('city_ranking', { p_city_id: city.id, p_offset: (page - 1) * 30 }),
   );
   return (
     <>

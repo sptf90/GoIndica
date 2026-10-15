@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase/server';
+import { database } from '@/lib/database/server';
 import { citySearch } from '@/lib/city-search';
 import { safeError } from '@/lib/errors';
 export async function GET(request: NextRequest) {
   const { query: q, state } = citySearch(request.nextUrl.searchParams.get('q') || '');
   if (q.length < 2) return NextResponse.json([]);
   try {
-    const db = await supabase();
+    const db = await database();
     let query = db
       .from('cities')
       .select('*')

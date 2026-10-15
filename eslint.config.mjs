@@ -6,6 +6,9 @@ import a11y from 'eslint-plugin-jsx-a11y';
 export default ts.config(
   {
     ignores: [
+      'legacy/**',
+      '.hostinger-source/**',
+      '.hostinger-package/**',
       '.next/**',
       '.next-review/**',
       'node_modules/**',
@@ -16,6 +19,10 @@ export default ts.config(
     ],
   },
   js.configs.recommended,
+  {
+    files: ['scripts/*.mjs'],
+    languageOptions: { globals: { process: 'readonly', console: 'readonly' } },
+  },
   {
     files: ['public/sw.js'],
     languageOptions: {

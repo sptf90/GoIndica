@@ -22,7 +22,7 @@ export default async function Notifications({
   searchParams: Promise<{ page?: string }>;
 }) {
   const { db } = await member();
-  check(await db.rpc('refresh_reminders'));
+  check(await db.call('refresh_reminders'));
   const page = pageNumber((await searchParams).page);
   const rows = check(
     await db

@@ -1,5 +1,5 @@
+import { memberSummary } from '@/server/queries';
 import { CommunityStatus } from '@/components/community-status';
-import { check } from '@/lib/errors';
 import Link from 'next/link';
 import { AppChrome } from '@/components/app-chrome';
 import { member } from '@/server/auth';
@@ -7,8 +7,8 @@ import { Avatar } from '@/components/ui';
 import { Icon } from '@/components/icon';
 export const metadata = { robots: { index: false, follow: false } };
 export default async function MemberLayout({ children }: { children: React.ReactNode }) {
-  const { db, profile, admin } = await member();
-  const summary = check(await db.rpc('member_summary'));
+  const { profile, admin } = await member();
+  const summary = await memberSummary();
   return (
     <AppChrome
       admin={admin}

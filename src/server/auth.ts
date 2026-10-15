@@ -2,14 +2,14 @@ import 'server-only';
 import { cache } from 'react';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
-import { supabase } from '@/lib/supabase/server';
+import { database } from '@/lib/database/server';
 import { configured } from '@/lib/env';
 import { accessLink, returnPath } from '@/lib/return-path';
 import { operationalError } from '@/lib/observability';
 export const session = cache(async () => {
   const destination = returnPath((await headers()).get('x-auth-destination'));
   if (!configured()) redirect('/entrar?motivo=configuracao');
-  const db = await supabase();
+  const db = await database();
   const {
     data: { user },
     error,
@@ -24,8 +24,8 @@ export const session = cache(async () => {
     operationalError('auth.user', error);
     throw new Error('SERVICE_UNAVAILABLE');
   }
-  if (!user) redirect(accessLink('/entrar', destination));
-  const state = await db.rpc('account_state');
+  if (!user || user.sessionPurpose === 'recovery') redirect(accessLink('/entrar', destination));
+  const state = await db.call('account_state');
   if (state.error) {
     if (state.error.code === 'PGRST202' || state.error.code === '42P01')
       redirect('/entrar?motivo=banco');
@@ -34,6 +34,7 @@ export const session = cache(async () => {
     operationalError('auth.account', state.error);
     throw new Error('SERVICE_UNAVAILABLE');
   }
+  if (!state.data) throw new Error('SERVICE_UNAVAILABLE');
   const profile = await db.from('profiles').select('*').eq('id', user.id).maybeSingle();
   if (profile.error) {
     operationalError('auth.profile', profile.error);

@@ -6,18 +6,17 @@ export default function Privacy() {
   const contact = address && !address.endsWith('@example.com') ? address : null;
   return (
     <main id="conteudo" className="legal-page wrap">
-      <p className="eyebrow">Atualizado em 10 de outubro de 2026</p>
+      <p className="eyebrow">Atualizado em 14 de outubro de 2026</p>
       <h1>Privacidade</h1>
       <p>
-        Usamos o Supabase para autenticar sua conta por e-mail e senha ou, quando disponível, pelo
-        Google. As senhas são gerenciadas pelo Supabase e não ficam nas tabelas da comunidade. O
-        e-mail da conta não é mostrado publicamente.
+        Sua conta usa e-mail e senha. A aplicação e o banco são hospedados na Hostinger. Guardamos
+        somente um hash da senha, e o e-mail da conta não é mostrado publicamente.
       </p>
       <h2>Dados usados pelo serviço</h2>
       <p>
-        Seu nome de exibição, nome de usuário, foto escolhida e cidade principal compõem seu perfil.
-        Pedidos, indicações, resoluções e recompensas são registrados para oferecer o serviço e
-        manter a integridade da pontuação.
+        Seu nome de exibição, nome de usuário e cidade principal compõem seu perfil. Pedidos,
+        indicações, resoluções e recompensas são registrados para oferecer o serviço e manter a
+        integridade da pontuação.
       </p>
       <p>
         Antes da revelação, os locais indicados por outras pessoas ficam privados. Depois da
@@ -31,24 +30,15 @@ export default function Privacy() {
       </p>
       <h2>Fornecedores e cookies</h2>
       <p>
-        O Supabase processa autenticação e banco de dados. O Google fornece login opcional e dados
-        dos estabelecimentos. Cookies essenciais mantêm sua sessão. Contamos visitas e ações
-        importantes de forma agregada, sem ferramentas de publicidade ou rastreamento entre sites.
-        Para reduzir abuso nesses contadores, usamos uma fingerprint técnica temporária, sem
-        armazenar o endereço IP bruto.
-      </p>
-      <p>
-        Buscas e identificadores de estabelecimentos são enviados ao Google Maps Platform para
-        identificar os locais. Consulte a{' '}
-        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">
-          Política de Privacidade do Google
-        </a>
-        .
+        A Hostinger hospeda a aplicação, o banco de dados e o envio de e-mails. Cookies essenciais
+        mantêm sua sessão. Contamos visitas e ações de forma agregada, sem ferramentas de
+        publicidade. Para limitar abuso, usamos identificadores técnicos derivados do endereço IP e
+        do e-mail, sem registrar esses valores brutos nos contadores temporários.
       </p>
       <h2>Preferências, lembretes e dados no dispositivo</h2>
       <p>
         Notificações internas avisam sobre indicações e resultados. Lembretes por e-mail só são
-        enviados quando você ativa essa preferência; o Resend entrega essas mensagens. Você pode
+        enviados quando você ativa essa preferência; a Hostinger entrega essas mensagens. Você pode
         desativá-los em Preferências. Os sinais de utilidade das descobertas são associados à sua
         conta para evitar avaliações repetidas.
       </p>

@@ -11,7 +11,7 @@ export async function wanted(_state: ActionState, form: FormData): Promise<Actio
   try {
     const id = uuid.parse(form.get('requestId'));
     const enabled = z.enum(['true', 'false']).parse(form.get('wanted')) === 'true';
-    check(await db.rpc('set_request_wanted', { p_request_id: id, p_wanted: enabled }));
+    check(await db.call('set_request_wanted', { p_request_id: id, p_wanted: enabled }));
     revalidatePath('/', 'layout');
     return {
       success: enabled
@@ -27,7 +27,7 @@ export async function reconfirm(_state: ActionState, form: FormData): Promise<Ac
   const { db } = await member();
   try {
     const id = uuid.parse(form.get('requestId'));
-    check(await db.rpc('reconfirm_discovery', { p_request_id: id }));
+    check(await db.call('reconfirm_discovery', { p_request_id: id }));
     revalidatePath('/', 'layout');
     return { success: 'Sua descoberta foi registrada. Obrigado por atualizar o histórico!' };
   } catch (error) {
@@ -45,7 +45,7 @@ export async function addTopicAlert(_state: ActionState, form: FormData): Promis
       .max(80, 'Use até 80 caracteres.')
       .parse(form.get('term'));
     check(
-      await db.rpc('add_topic_alert', {
+      await db.call('add_topic_alert', {
         p_city_id: cityId.parse(form.get('cityId')),
         p_term: term,
       }),
@@ -62,7 +62,7 @@ export async function addTopicAlert(_state: ActionState, form: FormData): Promis
 export async function removeTopicAlert(_state: ActionState, form: FormData): Promise<ActionState> {
   const { db } = await member();
   try {
-    check(await db.rpc('remove_topic_alert', { p_id: uuid.parse(form.get('id')) }));
+    check(await db.call('remove_topic_alert', { p_id: uuid.parse(form.get('id')) }));
     revalidatePath('/preferencias');
     return { success: 'Alerta removido.' };
   } catch (error) {

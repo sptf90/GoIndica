@@ -1,3 +1,4 @@
+import { memberSummary } from '@/server/queries';
 import { InstallApp } from '@/components/install-app';
 import { ProfileMenu } from '@/components/profile-menu';
 import { Icon } from '@/components/icon';
@@ -8,15 +9,12 @@ import { Avatar } from '@/components/ui';
 import { logout } from '@/server/actions';
 export const metadata = { title: 'Meu perfil' };
 export default async function MyProfile() {
-  const { db, profile, admin, user } = await member();
-  const avatar = user.user_metadata.avatar_url;
-  const googlePhotoAvailable =
-    typeof avatar === 'string' && /^https:\/\/lh[0-9]+\.googleusercontent\.com\//.test(avatar);
+  const { db, profile, admin } = await member();
   const [cityResult, statsResult] = await Promise.all([
     db.from('cities').select('*').eq('id', profile.home_city_id).single(),
-    db.rpc('profile_stats', { p_username: profile.username }),
+    db.call('profile_stats', { p_username: profile.username }),
   ]);
-  const summary = check(await db.rpc('member_summary'));
+  const summary = await memberSummary();
   const city = check(cityResult),
     stats = check(statsResult);
   return (
@@ -63,7 +61,7 @@ export default async function MyProfile() {
           <Icon name="chevron" size={18} />
         </summary>
         <h2>Seus dados</h2>
-        <ProfileForm profile={profile} city={city} googlePhotoAvailable={googlePhotoAvailable} />
+        <ProfileForm profile={profile} city={city} />
       </details>
       <InstallApp />
       <form action={logout} className="logout-form">

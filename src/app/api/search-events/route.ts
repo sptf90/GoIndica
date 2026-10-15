@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     if (!ctx) return new NextResponse(null, { status: 401 });
     const input = schema.parse(await smallJson(request));
     check(
-      await ctx.db.rpc('record_search_event', {
+      await ctx.db.call('record_search_event', {
         p_kind: input.kind,
         p_city_id: input.cityId,
         p_request_id: input.requestId,

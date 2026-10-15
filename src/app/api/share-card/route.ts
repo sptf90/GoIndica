@@ -17,7 +17,7 @@ export async function GET(request: Request) {
       .maybeSingle();
     if (result.error) throw result.error;
     if (!result.data || result.data.hidden_at) throw new Error('NOT_ALLOWED');
-    check(await auth.db.rpc('consume_share_card_limit'));
+    check(await auth.db.call('consume_share_card_limit'));
     const city = check(
       await auth.db.from('cities').select('name,state_code').eq('id', result.data.city_id).single(),
     );

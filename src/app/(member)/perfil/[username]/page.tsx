@@ -13,7 +13,7 @@ export default async function PublicProfile({ params }: { params: Promise<{ user
   if (!profile) notFound();
   const [cityResult, statsResult] = await Promise.all([
     db.from('cities').select('*').eq('id', profile.home_city_id).single(),
-    db.rpc('profile_stats', { p_username: username }),
+    db.call('profile_stats', { p_username: username }),
   ]);
   const city = check(cityResult),
     stats = check(statsResult);

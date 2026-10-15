@@ -1,7 +1,7 @@
 'use server';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { supabase } from '@/lib/supabase/server';
+import { database } from '@/lib/database/server';
 import { appUrl, configured } from '@/lib/env';
 import {
   emailLoginSchema,
@@ -26,11 +26,11 @@ export async function loginWithEmail(_state: ActionState, form: FormData): Promi
       email: value(form, 'email'),
       password: value(form, 'password'),
     });
-    const db = await supabase();
+    const db = await database();
     const { data, error } = await db.auth.signInWithPassword(input);
     if (error) return authError(error);
     if (!data.user || !data.session) return { error: 'Não foi possível entrar. Tente novamente.' };
-    await db.rpc('log_login');
+    await db.call('log_login');
   } catch (error) {
     return authError(error);
   }
@@ -46,7 +46,7 @@ export async function signupWithEmail(_state: ActionState, form: FormData): Prom
       password: value(form, 'password'),
       passwordConfirmation: value(form, 'passwordConfirmation'),
     });
-    const db = await supabase();
+    const db = await database();
     const next = returnPath(form.get('next'));
     const { data, error } = await db.auth.signUp({
       email: input.email,
@@ -63,9 +63,9 @@ export async function signupWithEmail(_state: ActionState, form: FormData): Prom
         return { success: confirmation };
       return authError(error);
     }
-    // Honor the Supabase project's confirmation policy; never bypass it using the service key.
+    // Local email confirmation is required before creating an access session.
     if (!data.session) return { success: confirmation };
-    await db.rpc('log_login');
+    await db.call('log_login');
   } catch (error) {
     return authError(error);
   }
@@ -80,7 +80,7 @@ export async function requestPasswordReset(
   try {
     if (!configured()) throw new Error('CONFIGURATION_REQUIRED');
     const { email } = emailSchema.parse({ email: value(form, 'email') });
-    const db = await supabase();
+    const db = await database();
     const { error } = await db.auth.resetPasswordForEmail(email, {
       redirectTo: appUrl() + '/auth/callback?destino=senha',
     });
@@ -98,7 +98,7 @@ export async function updatePassword(_state: ActionState, form: FormData): Promi
       password: value(form, 'password'),
       passwordConfirmation: value(form, 'passwordConfirmation'),
     });
-    const db = await supabase();
+    const db = await database();
     const {
       data: { user },
       error: sessionError,

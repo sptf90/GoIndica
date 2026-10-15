@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import type { City } from '../../src/lib/types';
 import { login } from './helpers';
 

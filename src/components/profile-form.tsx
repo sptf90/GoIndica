@@ -6,13 +6,11 @@ export function ProfileForm({
   profile,
   city,
   defaultName = '',
-  googlePhotoAvailable = false,
   next = '/app',
 }: {
   profile?: Profile | null;
   city?: City | null;
   defaultName?: string;
-  googlePhotoAvailable?: boolean;
   next?: string;
 }) {
   return (
@@ -54,16 +52,6 @@ export function ProfileForm({
         </span>
       </div>
       <CitySelector initial={city} />
-      {googlePhotoAvailable ? (
-        <label className="checkbox">
-          <input
-            type="checkbox"
-            name="useGooglePhoto"
-            defaultChecked={profile ? Boolean(profile.avatar_url) : true}
-          />
-          Usar minha foto do Google
-        </label>
-      ) : null}
       <p className="hint">
         Sua cidade sugere onde procurar. Você pode perguntar e ajudar em outras cidades.
       </p>

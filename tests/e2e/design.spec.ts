@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { context } from './helpers';
 
 const widths = [320, 375, 390, 430, 768, 1024, 1280, 1440];

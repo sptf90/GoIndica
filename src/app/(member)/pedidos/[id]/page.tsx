@@ -73,11 +73,11 @@ export default async function Detail({
       : null;
   const editable =
     owner && request.status === 'OPEN'
-      ? check(await db.rpc('request_editable', { p_request_id: id }))
+      ? check(await db.call('request_editable', { p_request_id: id }))
       : false;
   const rawGroups =
     owner && ['REVEALED', 'RESOLVED', 'CLOSED_NO_RESULT'].includes(request.status)
-      ? check(await db.rpc('indication_groups', { p_request_id: id, p_offset: (page - 1) * 10 }))
+      ? check(await db.call('indication_groups', { p_request_id: id, p_offset: (page - 1) * 10 }))
       : [];
   const peopleResults = await Promise.all(
     rawGroups.slice(0, 10).map((g) => {

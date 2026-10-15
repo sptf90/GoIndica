@@ -6,6 +6,7 @@ import { check } from '@/lib/errors';
 import { reviewSupport } from '@/server/community-actions';
 import { environmentStatus } from '@/lib/env';
 import { CitySelector } from '@/components/city-selector';
+import { updatePlace } from '@/server/place-actions';
 import { moderate } from '@/server/actions';
 import { ActionForm } from '@/components/action-form';
 import { Empty, Pagination, Status } from '@/components/ui';
@@ -17,6 +18,7 @@ const tabs = {
   users: 'Usuários',
   requests: 'Pedidos',
   indications: 'Indicações',
+  places: 'Estabelecimentos',
   reports: 'Denúncias',
   rewards: 'Recompensas',
   logs: 'Logs',
@@ -74,7 +76,7 @@ export default async function Admin({
   let body: React.ReactNode;
   let more = false;
   if (tab === 'users') {
-    const rows = check(await db.rpc('admin_accounts', { p_search: q, p_offset: start }));
+    const rows = check(await db.call('admin_accounts', { p_search: q, p_offset: start }));
     more = rows.length === 30;
     body = rows.map((r) => (
       <article className="admin-row" key={r.id}>
@@ -91,6 +93,35 @@ export default async function Admin({
           label={r.blocked ? 'Desbloquear' : 'Bloquear'}
         />
       </article>
+    ));
+  } else if (tab === 'places') {
+    let query = db.from('places').select('*').order('name');
+    if (q) query = query.ilike('name', '%' + q + '%');
+    const rows = check(await query.range(start, start + 30));
+    more = rows.length > 30;
+    body = rows.slice(0, 30).map((place) => (
+      <details className="admin-row" key={place.id}>
+        <summary>
+          {place.name} — {place.address}
+        </summary>
+        <ActionForm action={updatePlace} label="Salvar estabelecimento">
+          <input type="hidden" name="placeId" value={place.id} />
+          <label className="field">
+            Nome
+            <input name="name" defaultValue={place.name} minLength={2} maxLength={160} required />
+          </label>
+          <label className="field">
+            Endereço
+            <input
+              name="address"
+              defaultValue={place.address}
+              minLength={5}
+              maxLength={300}
+              required
+            />
+          </label>
+        </ActionForm>
+      </details>
     ));
   } else if (tab === 'requests') {
     let query = db.from('requests').select('*').order('created_at', { ascending: false });
@@ -347,7 +378,7 @@ export default async function Admin({
       </article>
     ));
   } else if (tab === 'operations') {
-    const operations = check(await db.rpc('admin_operations'));
+    const operations = check(await db.call('admin_operations'));
     body = (
       <>
         <h2>Configuração dos serviços</h2>
@@ -390,7 +421,7 @@ export default async function Admin({
       : null;
     const validRange = !since || !until || since <= until;
     const m = check(
-      await db.rpc('admin_metrics', {
+      await db.call('admin_metrics', {
         ...(city ? { p_city_id: city.id } : {}),
         ...(since && validRange ? { p_since: since + 'T00:00:00Z' } : {}),
         ...(until && validRange
@@ -553,7 +584,7 @@ export default async function Admin({
           <button className="button secondary">Filtrar denúncias</button>
         </form>
       ) : null}
-      {['users', 'requests', 'indications'].includes(tab) ? (
+      {['users', 'requests', 'indications', 'places'].includes(tab) ? (
         <form action="/admin" className="admin-search">
           <input type="hidden" name="tab" value={tab} />
           <label className="field">

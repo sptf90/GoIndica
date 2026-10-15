@@ -16,5 +16,6 @@ export default defineConfig({
         url: 'http://localhost:3100',
         reuseExistingServer: false,
         timeout: 60000,
+        gracefulShutdown: { signal: 'SIGTERM', timeout: 15000 },
       },
 });

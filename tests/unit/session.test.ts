@@ -17,10 +17,10 @@ vi.mock('next/navigation', () => ({
 }));
 vi.mock('@/lib/env', () => ({ configured: () => true }));
 vi.mock('@/lib/observability', () => ({ operationalError: mocks.log }));
-vi.mock('@/lib/supabase/server', () => ({
-  supabase: async () => ({
+vi.mock('@/lib/database/server', () => ({
+  database: async () => ({
     auth: { getUser: mocks.user },
-    rpc: mocks.state,
+    call: mocks.state,
     from: () => ({ select: () => ({ eq: () => ({ maybeSingle: mocks.profile }) }) }),
   }),
 }));

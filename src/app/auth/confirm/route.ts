@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase/server';
+import { database } from '@/lib/database/server';
 import { appUrl, configured } from '@/lib/env';
 import { callbackDestination } from '@/lib/return-path';
 
@@ -11,15 +11,15 @@ export async function GET(request: NextRequest) {
     type === 'recovery' ? '/recuperar-senha?motivo=link_expirado' : '/entrar?motivo=link_expirado';
   if (
     configured() &&
-    (type === 'email' || type === 'recovery') &&
+    (type === 'email' || type === 'recovery' || type === 'email_change') &&
     tokenHash &&
     /^[A-Za-z0-9_-]{16,512}$/.test(tokenHash)
   ) {
     try {
-      const db = await supabase();
+      const db = await database();
       const { error } = await db.auth.verifyOtp({ type, token_hash: tokenHash });
       if (!error) {
-        await db.rpc('log_login');
+        if (type !== 'recovery') await db.call('log_login');
         return NextResponse.redirect(
           appUrl() +
             (type === 'recovery'

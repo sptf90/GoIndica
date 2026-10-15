@@ -18,10 +18,10 @@ export async function GET(request: NextRequest) {
     const q = (request.nextUrl.searchParams.get('q') || '').trim().slice(0, 300);
     if (q.length < 3) return NextResponse.json([]);
     const results = check(
-      await db.rpc('search_requests', { p_city_id: city, p_query: q, p_status: 'RESOLVED' }),
+      await db.call('search_requests', { p_city_id: city, p_query: q, p_status: 'RESOLVED' }),
     ).slice(0, 5);
     const resolutions = await resolutionsFor(results);
-    const event = await db.rpc('record_search_event', {
+    const event = await db.call('record_search_event', {
       p_kind: results.length ? 'MATCHED' : 'NO_RESULT',
       p_city_id: city,
     });
