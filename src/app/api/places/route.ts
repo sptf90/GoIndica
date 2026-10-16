@@ -5,6 +5,7 @@ import { autocomplete } from '@/lib/google-places';
 import { searchSchema, placeSchema, googleSelectionSchema } from '@/lib/validation/schemas';
 import { check } from '@/lib/errors';
 import { apiError, smallJson } from '@/lib/http';
+import { appUrl } from '@/lib/env';
 export async function GET(request: NextRequest) {
   try {
     const ctx = await apiMember();
@@ -27,7 +28,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    if (request.headers.get('origin') !== request.nextUrl.origin) throw new Error('NOT_ALLOWED');
+    // A reverse proxy may expose an internal HTTP origin to Next.js while the browser uses HTTPS.
+    const origin = request.headers.get('origin');
+    if (origin !== request.nextUrl.origin && origin !== appUrl()) throw new Error('NOT_ALLOWED');
     const ctx = await apiMember();
     if (!ctx)
       return NextResponse.json({ error: 'Entre para cadastrar um local.' }, { status: 401 });

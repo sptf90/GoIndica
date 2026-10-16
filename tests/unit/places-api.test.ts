@@ -1,4 +1,4 @@
-import { beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 const mocks = vi.hoisted(() => ({
   member: vi.fn(),
@@ -27,8 +27,10 @@ const post = (origin = 'http://localhost') =>
       name: 'forjado',
     }),
   });
+afterEach(() => vi.unstubAllEnvs());
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.stubEnv('NEXT_PUBLIC_APP_URL', 'https://goindica.com.br');
   const chain = {
     select: () => chain,
     eq: () => chain,
@@ -53,6 +55,19 @@ test('seleção usa somente ID e dados oficiais, sem cadastrar texto forjado', a
   expect(mocks.select).toHaveBeenCalledWith('actor', city, 'ChIJ_test', token);
   expect(mocks.register).not.toHaveBeenCalled();
 });
+test('aceita a origem pública configurada quando o proxy usa um endereço interno', async () => {
+  const response = await POST(post('https://goindica.com.br'));
+  expect(response.status).toBe(200);
+  expect(mocks.select).toHaveBeenCalledWith('actor', city, 'ChIJ_test', token);
+});
+test.each(['https://external.invalid', 'https://goindica.com.br.external.invalid', 'null', ''])(
+  'recusa origem não autorizada %s mesmo atrás do proxy',
+  async (origin) => {
+    expect((await POST(post(origin))).status).toBe(403);
+    expect(mocks.member).not.toHaveBeenCalled();
+    expect(mocks.select).not.toHaveBeenCalled();
+  },
+);
 test('nega acesso sem sessão, origem externa e cota excedida antes do Google', async () => {
   expect((await POST(post('https://external.invalid'))).status).toBe(403);
   mocks.member.mockResolvedValue(null);
