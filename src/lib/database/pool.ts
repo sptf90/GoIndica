@@ -68,8 +68,9 @@ export async function transaction<T>(
   for (let attempt = 0; attempt < 3; attempt++) {
     const connection = await pool().getConnection();
     try {
-      await connection.query("SET time_zone = '+00:00'");
-      await connection.query('SET @goindica_anonymizing=0, @goindica_importing=0');
+      await connection.query(
+        "SET time_zone = '+00:00', @goindica_anonymizing=0, @goindica_importing=0",
+      );
       await connection.query('SET TRANSACTION ISOLATION LEVEL ' + isolation);
       await connection.beginTransaction();
       const result = await action(connection);

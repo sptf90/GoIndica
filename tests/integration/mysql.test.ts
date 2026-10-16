@@ -19,6 +19,7 @@ import { registerPlace } from '@/lib/places';
 import { LocalAuth } from '@/lib/auth/service';
 import { hashPassword, verifyPassword } from '@/lib/auth/crypto';
 import { check } from '@/lib/errors';
+import * as reads from '@/lib/database/read-operations';
 let fixture: Awaited<ReturnType<typeof testDatabase>>;
 let ana: DatabaseClient, joao: DatabaseClient, maria: DatabaseClient, admin: DatabaseClient;
 const city = 3549805;
@@ -181,6 +182,66 @@ test('cidades incompatíveis, identidades forjadas e operações administrativas
   expect((await new DatabaseClient().from('requests').select('*')).error?.message).toBe(
     'AUTH_REQUIRED',
   );
+});
+test('leituras comuns dispensam transação e continuam exigindo conta e perfil ativos', async () => {
+  const connection = vi.spyOn(pool(), 'getConnection');
+  try {
+    expect(check(await joao.call('account_state')).onboarded).toBe(true);
+    expect(check(await joao.call('member_summary'))).toHaveProperty('unread');
+    expect(
+      check(await joao.call('search_requests', { p_city_id: city, p_query: '', p_offset: 0 })),
+    ).toBeInstanceOf(Array);
+    expect(connection).not.toHaveBeenCalled();
+    await fixture.pool.execute('UPDATE accounts SET blocked=TRUE WHERE id=?', [ids.joao]);
+    for (const name of ['account_state', 'is_admin', 'member_summary'] as const)
+      expect((await joao.call(name)).error?.message).toBe('ACCOUNT_BLOCKED');
+  } finally {
+    connection.mockRestore();
+    await fixture.pool.execute('UPDATE accounts SET blocked=FALSE WHERE id=?', [ids.joao]);
+  }
+  // A confirmed account that has not completed onboarding can inspect its state, not the feed.
+  const id = randomUUID();
+  await fixture.pool.execute('INSERT INTO users(id,email) VALUES(?,?)', [id, id + '@test.invalid']);
+  await fixture.pool.execute('INSERT INTO accounts(id) VALUES(?)', [id]);
+  const newcomer = new DatabaseClient(false, { id, admin: false });
+  expect(check(await newcomer.call('account_state')).onboarded).toBe(false);
+  expect((await newcomer.call('member_summary')).error?.message).toBe('ONBOARDING_REQUIRED');
+});
+test.each(['member_summary', 'search_requests', 'search_unanswered_requests'] as const)(
+  'bloqueio entre validação e leitura de %s não expõe dados',
+  async (name) => {
+    const original = reads.readOperation;
+    const read = vi.spyOn(reads, 'readOperation').mockImplementationOnce(async (...args) => {
+      await fixture.pool.execute('UPDATE accounts SET blocked=TRUE WHERE id=?', [ids.joao]);
+      return original(...args);
+    });
+    try {
+      const result = await joao.call(name, { p_city_id: city, p_query: '', p_offset: 0 });
+      if (name === 'member_summary') expect(result.error?.message).toBe('AUTH_REQUIRED');
+      else expect(check(result)).toEqual([]);
+      expect(read).toHaveBeenCalled();
+    } finally {
+      read.mockRestore();
+      await fixture.pool.execute('UPDATE accounts SET blocked=FALSE WHERE id=?', [ids.joao]);
+    }
+  },
+);
+test('perda de administração após validação não revela pedidos ocultos na busca', async () => {
+  const id = await create();
+  await fixture.pool.execute('UPDATE requests SET hidden_at=UTC_TIMESTAMP(3) WHERE id=?', [id]);
+  const args = { p_city_id: city, p_query: '', p_offset: 0 };
+  expect(check(await admin.call('search_requests', args)).some((r) => r.id === id)).toBe(true);
+  const original = reads.readOperation;
+  const read = vi.spyOn(reads, 'readOperation').mockImplementationOnce(async (...params) => {
+    await fixture.pool.execute('UPDATE accounts SET is_admin=FALSE WHERE id=?', [ids.admin]);
+    return original(...params);
+  });
+  try {
+    expect(check(await admin.call('search_requests', args))).toEqual([]);
+  } finally {
+    read.mockRestore();
+    await fixture.pool.execute('UPDATE accounts SET is_admin=TRUE WHERE id=?', [ids.admin]);
+  }
 });
 test('login, confirmação, token único e recuperação isolada das páginas de membro', async () => {
   browser.cookies.clear();

@@ -13,6 +13,10 @@ export async function readOperation(
 ): Promise<{ handled: boolean; value?: unknown }> {
   const id = actor?.id || null;
   const admin = actor?.admin || false;
+  // Check again in the data statement: an account may be blocked, lose its profile or be
+  // demoted after executeOperation's preflight. No cross-request permission cache is used.
+  const access = `EXISTS(SELECT 1 FROM accounts access_account JOIN profiles access_profile ON access_profile.id=access_account.id WHERE access_account.id=? AND access_account.blocked=FALSE AND (?=FALSE OR access_account.is_admin=TRUE))`;
+  const accessValues = [id, admin];
   let value: unknown;
   switch (name) {
     case 'health_check': {
@@ -35,9 +39,10 @@ export async function readOperation(
     case 'request_editable': {
       const [row] = await rows<{ editable: number }>(
         db,
-        `SELECT EXISTS(SELECT 1 FROM requests r WHERE r.id=? AND r.requester_id=? AND r.status='OPEN' AND r.hidden_at IS NULL AND NOT EXISTS(SELECT 1 FROM indications i WHERE i.request_id=r.id)) AS editable`,
-        [text(p.p_request_id), id],
+        `SELECT EXISTS(SELECT 1 FROM requests r WHERE r.id=? AND r.requester_id=? AND r.status='OPEN' AND r.hidden_at IS NULL AND NOT EXISTS(SELECT 1 FROM indications i WHERE i.request_id=r.id)) AS editable WHERE ${access}`,
+        [text(p.p_request_id), id, ...accessValues],
       );
+      if (!row) throw new Error('AUTH_REQUIRED');
       value = Boolean(row.editable);
       break;
     }
@@ -46,9 +51,10 @@ export async function readOperation(
         db,
         `SELECT (SELECT COUNT(*) FROM notifications n JOIN requests r ON r.id=n.request_id WHERE n.user_id=? AND n.read_at IS NULL AND r.hidden_at IS NULL) AS unread,
       (SELECT COUNT(*) FROM requests WHERE requester_id=? AND hidden_at IS NULL AND (status='REVEALED' OR (status='OPEN' AND indication_count>0))) AS pending,
-      (SELECT COUNT(*) FROM request_interests i JOIN requests r ON r.id=i.request_id WHERE i.user_id=? AND i.saved=TRUE AND r.hidden_at IS NULL) AS saved`,
-        [id, id, id],
+      (SELECT COUNT(*) FROM request_interests i JOIN requests r ON r.id=i.request_id WHERE i.user_id=? AND i.saved=TRUE AND r.hidden_at IS NULL) AS saved WHERE ${access}`,
+        [id, id, id, ...accessValues],
       );
+      if (!row) throw new Error('AUTH_REQUIRED');
       value = row;
       break;
     }
@@ -79,8 +85,8 @@ export async function readOperation(
       const unanswered = name === 'search_unanswered_requests';
       const query = text(p.p_query).trim().slice(0, 300);
       const status = unanswered ? 'OPEN' : text(p.p_status) || 'OPEN';
-      const conditions = ['r.city_id=?', 'r.status=?'];
-      const values: SqlValue[] = [Number(p.p_city_id), status];
+      const conditions = ['r.city_id=?', 'r.status=?', access];
+      const values: SqlValue[] = [Number(p.p_city_id), status, ...accessValues];
       if (unanswered || !admin) conditions.push('r.hidden_at IS NULL');
       if (unanswered) conditions.push('r.indication_count=0');
       // Token matching uses the UTF-8 accent-insensitive collation; short words remain searchable.
@@ -118,8 +124,8 @@ export async function readOperation(
     case 'request_photo': {
       const [row] = await rows<{ jpeg: Buffer }>(
         db,
-        `SELECT p.jpeg FROM request_photos p JOIN requests r ON r.id=p.request_id WHERE r.id=? AND (r.hidden_at IS NULL OR ?=TRUE)`,
-        [text(p.p_request_id), admin],
+        `SELECT p.jpeg FROM request_photos p JOIN requests r ON r.id=p.request_id WHERE r.id=? AND (r.hidden_at IS NULL OR ?=TRUE) AND ${access}`,
+        [text(p.p_request_id), admin, ...accessValues],
       );
       value = row?.jpeg?.toString('base64') || null;
       break;

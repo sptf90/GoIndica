@@ -26,7 +26,12 @@ export default async function Feed({
       : params.status === 'UNANSWERED'
         ? 'UNANSWERED'
         : 'OPEN';
-  const cityResult = await db.from('cities').select('*').eq('id', cityId).maybeSingle();
+  const [cityResult, followedResult, summary] = await Promise.all([
+    db.from('cities').select('*').eq('id', cityId).maybeSingle(),
+    db.from('followed_cities').select('city_id'),
+    memberSummary(),
+  ]);
+  const followed = check(followedResult);
   const city =
     cityResult.data ||
     check(await db.from('cities').select('*').eq('id', profile.home_city_id).single());
@@ -44,22 +49,21 @@ export default async function Feed({
           p_offset: (page - 1) * 20,
         }),
   );
-  const resolutions = await resolutionsFor(requests);
-  const newRequest =
-    '/pedidos/novo?' + new URLSearchParams({ city: String(city.id), ...(q ? { q } : {}) });
-  const followed = check(await db.from('followed_cities').select('city_id'));
-  const followedCities = followed.length
-    ? check(
-        await db
+  const [resolutions, followedCities] = await Promise.all([
+    resolutionsFor(requests),
+    followed.length
+      ? db
           .from('cities')
           .select('*')
           .in(
             'id',
             followed.map((f) => f.city_id),
-          ),
-      )
-    : [];
-  const summary = await memberSummary();
+          )
+          .then(check)
+      : Promise.resolve([]),
+  ]);
+  const newRequest =
+    '/pedidos/novo?' + new URLSearchParams({ city: String(city.id), ...(q ? { q } : {}) });
   const more = requests.length > 20;
   return (
     <>

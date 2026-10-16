@@ -25,7 +25,10 @@ export const session = cache(async () => {
     throw new Error('SERVICE_UNAVAILABLE');
   }
   if (!user || user.sessionPurpose === 'recovery') redirect(accessLink('/entrar', destination));
-  const state = await db.call('account_state');
+  const [state, profile] = await Promise.all([
+    db.call('account_state'),
+    db.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+  ]);
   if (state.error) {
     if (state.error.code === 'PGRST202' || state.error.code === '42P01')
       redirect('/entrar?motivo=banco');
@@ -35,7 +38,6 @@ export const session = cache(async () => {
     throw new Error('SERVICE_UNAVAILABLE');
   }
   if (!state.data) throw new Error('SERVICE_UNAVAILABLE');
-  const profile = await db.from('profiles').select('*').eq('id', user.id).maybeSingle();
   if (profile.error) {
     operationalError('auth.profile', profile.error);
     throw new Error('SERVICE_UNAVAILABLE');

@@ -1,7 +1,7 @@
 import 'server-only';
 import { randomUUID } from 'node:crypto';
 import type { PoolConnection } from 'mysql2/promise';
-import { rows, transaction } from './pool';
+import { pool, rows, transaction } from './pool';
 import { rate } from './rate';
 import { readOperation, text, int, type Args } from './read-operations';
 import type { DatabaseClient, Identity } from './client';
@@ -17,6 +17,14 @@ const serviceOnly = new Set([
 ]);
 const publicCalls = new Set(['city_ranking', 'profile_stats']);
 const withoutProfile = new Set(['account_state', 'save_profile', 'log_login', 'is_admin']);
+// These reads recheck account/profile access inside their data SELECT. They need no write transaction.
+const simpleReads = new Set([
+  'member_summary',
+  'search_requests',
+  'search_unanswered_requests',
+  'request_editable',
+  'request_photo',
+]);
 export async function executeOperation(
   client: DatabaseClient,
   name: string,
@@ -24,23 +32,44 @@ export async function executeOperation(
 ): Promise<unknown> {
   if (serviceOnly.has(name) && !client.privileged) throw new Error('NOT_ALLOWED');
   if (client.privileged && !serviceOnly.has(name)) throw new Error('NOT_ALLOWED');
-  const actor = client.privileged || publicCalls.has(name) ? null : await client.identity();
+  const identity = client.privileged || publicCalls.has(name) ? null : await client.identity();
+  // Parallel operations must not overwrite each other's freshly checked permissions.
+  const actor = identity ? { ...identity } : null;
   if (!client.privileged && !publicCalls.has(name) && !actor) throw new Error('AUTH_REQUIRED');
+  if (publicCalls.has(name) || name === 'health_check')
+    return (await readOperation(pool(), name, p as Args, actor)).value;
+  if (actor && (simpleReads.has(name) || name === 'account_state' || name === 'is_admin')) {
+    const [account] = await rows<{
+      blocked: boolean;
+      is_admin: boolean;
+      onboarded: boolean;
+    }>(
+      pool(),
+      'SELECT a.blocked,a.is_admin,EXISTS(SELECT 1 FROM profiles p WHERE p.id=a.id) AS onboarded FROM accounts a WHERE a.id=?',
+      [actor.id],
+    );
+    if (!account || account.blocked) throw new Error('ACCOUNT_BLOCKED');
+    actor.admin = account.is_admin;
+    if (name === 'account_state') return { admin: account.is_admin, onboarded: account.onboarded };
+    if (name === 'is_admin') return account.is_admin;
+    if (!account.onboarded) throw new Error('ONBOARDING_REQUIRED');
+    return (await readOperation(pool(), name, p as Args, actor)).value;
+  }
   return transaction(
     async (db) => {
       if (actor) {
-        const [account] = await rows<{ blocked: boolean; is_admin: boolean }>(
+        const [account] = await rows<{
+          blocked: boolean;
+          is_admin: boolean;
+          onboarded: boolean;
+        }>(
           db,
-          'SELECT blocked,is_admin FROM accounts WHERE id=? LOCK IN SHARE MODE',
+          'SELECT a.blocked,a.is_admin,EXISTS(SELECT 1 FROM profiles p WHERE p.id=a.id) AS onboarded FROM accounts a WHERE a.id=? LOCK IN SHARE MODE',
           [actor.id],
         );
         if (!account || account.blocked) throw new Error('ACCOUNT_BLOCKED');
         actor.admin = account.is_admin;
-        if (
-          !publicCalls.has(name) &&
-          !withoutProfile.has(name) &&
-          !(await rows(db, 'SELECT id FROM profiles WHERE id=?', [actor.id])).length
-        )
+        if (!publicCalls.has(name) && !withoutProfile.has(name) && !account.onboarded)
           throw new Error('ONBOARDING_REQUIRED');
       }
       const args = p as Args;
