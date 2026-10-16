@@ -36,7 +36,16 @@ const autocompleteSchema = z.object({
     .array(
       z.object({
         placePrediction: z
-          .object({ placeId: z.string(), text: z.object({ text: z.string() }) })
+          .object({
+            placeId: z.string(),
+            text: z.object({ text: z.string() }),
+            structuredFormat: z
+              .object({
+                mainText: z.object({ text: z.string() }).optional(),
+                secondaryText: z.object({ text: z.string() }).optional(),
+              })
+              .optional(),
+          })
           .optional(),
       }),
     )
@@ -90,12 +99,23 @@ export async function autocomplete(input: string, city: City, sessionToken: stri
         regionCode: 'BR',
         sessionToken,
       },
-      'suggestions.placePrediction.placeId,suggestions.placePrediction.text.text',
+      'suggestions.placePrediction.placeId,suggestions.placePrediction.text.text,suggestions.placePrediction.structuredFormat',
     ),
   );
   return result.suggestions.flatMap((s) =>
     s.placePrediction
-      ? [{ id: s.placePrediction.placeId, label: s.placePrediction.text.text }]
+      ? [
+          {
+            id: s.placePrediction.placeId,
+            label: s.placePrediction.text.text,
+            ...(s.placePrediction.structuredFormat
+              ? {
+                  mainText: s.placePrediction.structuredFormat.mainText?.text,
+                  secondaryText: s.placePrediction.structuredFormat.secondaryText?.text,
+                }
+              : {}),
+          },
+        ]
       : [],
   );
 }

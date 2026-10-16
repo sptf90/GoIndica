@@ -980,8 +980,163 @@
   color: #5e5e5e;
   margin: 10px 0;
 }
-.search-results [role='option'][aria-selected='true'] {
-  background: var(--wash);
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
+/* The suggestions float over the page and remain visually attached to their input. */
+.place-autocomplete {
+  position: relative;
+  min-width: 0;
+}
+.place-autocomplete[data-open='true'] {
+  z-index: 30;
+}
+.place-autocomplete-input {
+  position: relative;
+}
+.place-autocomplete-input input {
+  padding-inline: 44px 40px;
+  background: #fff;
+}
+.place-search-icon,
+.place-search-chevron {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--muted);
+}
+.place-search-icon {
+  left: 15px;
+}
+.place-search-chevron {
+  right: 14px;
+  transition: transform 140ms ease;
+}
+.place-autocomplete[data-open='true'] .place-search-chevron {
+  transform: translateY(-50%) rotate(180deg);
+  color: var(--accent);
+}
+.place-suggestions-menu {
+  position: absolute;
+  inset: calc(100% + 8px) 0 auto;
+  background: #fff;
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  box-shadow:
+    0 16px 40px rgb(41 35 31 / 18%),
+    0 3px 8px rgb(41 35 31 / 8%);
+  overflow: hidden;
+  animation: place-menu-open 140ms ease-out;
+}
+.place-suggestions-menu[hidden] {
+  display: none;
+}
+.place-suggestions-heading {
+  padding: 13px 16px 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--line);
+}
+.place-suggestions {
+  list-style: none;
+  padding: 5px;
+  margin: 0;
+  max-height: min(320px, 42dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding: 5px;
+}
+.place-suggestions button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 72px;
+  padding: 12px 10px;
+  border: 0;
+  border-radius: 9px;
+  text-align: left;
+  color: var(--ink);
+  background: #fff;
+  cursor: pointer;
+}
+.place-suggestions li + li {
+  border-top: 1px solid var(--line);
+}
+.place-option-pin {
+  display: grid;
+  place-items: center;
+  flex: 0 0 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f4f2ee;
+  color: var(--ink-soft);
+}
+.place-option-text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+.place-option-text strong {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.place-option-text > span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.place-option-arrow {
+  flex: 0 0 18px;
+  color: var(--muted);
+}
+.place-suggestions button:hover,
+.place-suggestions button[aria-selected='true'] {
+  background: #fff1e9;
+}
+.place-suggestions button[aria-selected='true'] .place-option-pin {
+  color: var(--accent);
+  background: #ffe1cf;
+}
+.place-suggestions button[aria-selected='true'] .place-option-arrow {
+  color: var(--accent);
+}
+.place-suggestions-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--line);
+  background: #faf9f6;
+  color: var(--muted);
+  font-size: 12px;
+}
+.place-suggestions-footer .google-maps-attribution {
+  margin: 0;
+}
+.place-search-status {
+  min-height: 20px;
+  margin: 8px 0 12px;
+}
+@keyframes place-menu-open {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .place-suggestions-menu {
+    animation: none;
+  }
+  .place-search-chevron {
+    transition: none;
+  }
 }

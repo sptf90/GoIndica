@@ -2,7 +2,7 @@ import { test, expect } from './fixtures';
 import { context, mockPlaceSuggestions } from './helpers';
 test('sugestões automáticas têm debounce, teclado, sessão e mensagens de erro', async ({
   browser,
-}) => {
+}, testInfo) => {
   const owner = await context(browser, 'Ana', 'ana_teste');
   const helper = await context(browser, 'João', 'joao_teste');
   try {
@@ -23,6 +23,23 @@ test('sugestões automáticas têm debounce, teclado, sessão e mensagens de err
     await input.fill('Empório');
     await expect(helper.page.getByRole('option')).toHaveCount(2);
     expect(fixture.searches).toHaveLength(1);
+    const menu = helper.page.locator('.place-suggestions-menu');
+    await expect(menu).toHaveCSS('position', 'absolute');
+    await expect(helper.page.getByRole('option').first().locator('strong')).toHaveText('Empório A');
+    for (const width of [390, 1280]) {
+      await helper.page.setViewportSize({ width, height: 900 });
+      const fieldBox = (await input.boundingBox())!;
+      const menuBox = (await menu.boundingBox())!;
+      expect(Math.abs(menuBox.x - fieldBox.x)).toBeLessThan(2);
+      expect(Math.abs(menuBox.width - fieldBox.width)).toBeLessThan(2);
+      expect(menuBox.y).toBeGreaterThanOrEqual(fieldBox.y + fieldBox.height);
+      expect(menuBox.y - fieldBox.y - fieldBox.height).toBeLessThan(12);
+      await helper.page.screenshot({
+        path: testInfo.outputPath(`dropdown-${width}.png`),
+        fullPage: true,
+      });
+    }
+
     const firstToken = fixture.searches[0].searchParams.get('sessionToken');
     expect(firstToken).toMatch(/^[a-f0-9-]{36}$/);
     await input.press('Escape');

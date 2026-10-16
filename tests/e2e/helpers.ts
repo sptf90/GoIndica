@@ -52,8 +52,18 @@ export async function mockPlaceSuggestions(page: Page) {
         input === 'Inexistente'
           ? []
           : [
-              { id: 'ChIJ_fixture_A', label: 'Empório A, Rua A, 10, Centro' },
-              { id: 'ChIJ_fixture_B', label: 'Empório B, Rua B, 20, Centro' },
+              {
+                id: 'ChIJ_fixture_A',
+                label: 'Empório A, Rua A, 10, Centro',
+                mainText: 'Empório A',
+                secondaryText: 'Rua A, 10, Centro — São José do Rio Preto, SP',
+              },
+              {
+                id: 'ChIJ_fixture_B',
+                label: 'Empório B, Rua B, 20, Centro',
+                mainText: 'Empório B',
+                secondaryText: 'Rua B, 20, Centro — São José do Rio Preto, SP',
+              },
             ],
     });
   });

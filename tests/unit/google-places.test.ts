@@ -39,19 +39,23 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 test('autocomplete usa Places New, cidade, idioma e sessão sem expor a chave nos resultados', async () => {
-  const fetch = vi
-    .fn()
-    .mockResolvedValue(
-      Response.json({
-        suggestions: [
-          { placePrediction: { placeId: place.id, text: { text: 'Empório A, Rua A' } } },
-          { queryPrediction: { text: { text: 'ignorar' } } },
-        ],
-      }),
-    );
+  const fetch = vi.fn().mockResolvedValue(
+    Response.json({
+      suggestions: [
+        {
+          placePrediction: {
+            placeId: place.id,
+            text: { text: 'Empório A, Rua A' },
+            structuredFormat: { mainText: { text: 'Empório A' }, secondaryText: { text: 'Rua A' } },
+          },
+        },
+        { queryPrediction: { text: { text: 'ignorar' } } },
+      ],
+    }),
+  );
   vi.stubGlobal('fetch', fetch);
   expect(await autocomplete('Empório', city, token)).toEqual([
-    { id: place.id, label: 'Empório A, Rua A' },
+    { id: place.id, label: 'Empório A, Rua A', mainText: 'Empório A', secondaryText: 'Rua A' },
   ]);
   const [url, options] = fetch.mock.calls[0];
   expect(url).toBe('https://places.googleapis.com/v1/places:autocomplete');

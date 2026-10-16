@@ -5,6 +5,8 @@ import { indicate } from '@/server/actions';
 interface Prediction {
   id: string;
   label: string;
+  mainText?: string;
+  secondaryText?: string;
   attributions?: { provider: string; providerUri?: string }[];
 }
 export function PlaceSearch({
@@ -30,6 +32,12 @@ export function PlaceSearch({
   const request = useRef<AbortController | null>(null);
   const sessionToken = useRef('');
   const selecting = useRef(false);
+  const menuOpen = open && results.length > 0;
+  useEffect(() => {
+    if (menuOpen && active >= 0) {
+      document.getElementById(`${listId}-${active}`)?.scrollIntoView({ block: 'nearest' });
+    }
+  }, [active, menuOpen, listId]);
   useEffect(() => {
     if (input.trim().length < 3 || selected || selecting.current) return;
     const controller = new AbortController();
@@ -140,101 +148,169 @@ export function PlaceSearch({
       </p>
       <div className="field">
         <label htmlFor="place-search">Nome do estabelecimento</label>
-        <input
-          id="place-search"
-          role="combobox"
-          aria-autocomplete="list"
-          aria-expanded={open && results.length > 0}
-          aria-controls={listId}
-          aria-activedescendant={open && active >= 0 ? `${listId}-${active}` : undefined}
-          aria-describedby={`${listId}-status`}
-          autoComplete="off"
-          value={input}
-          maxLength={120}
-          disabled={busy}
-          placeholder="Digite o nome do lugar"
-          onFocus={() => {
-            if (results.length) setOpen(true);
-          }}
-          onBlur={() => setOpen(false)}
-          onChange={(e) => {
-            request.current?.abort();
-            setInput(e.target.value);
-            setSelected(null);
-            setResults([]);
-            setOpen(false);
-            setActive(-1);
-            setError('');
-            setSearching(false);
-          }}
-          onKeyDown={(e) => {
-            if (e.nativeEvent.isComposing) return;
-            if (e.key === 'Escape') {
-              setOpen(false);
-              setActive(-1);
-            }
-            if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && results.length) {
-              e.preventDefault();
-              setOpen(true);
-              setActive((previous) =>
-                e.key === 'ArrowDown'
-                  ? (previous + 1) % results.length
-                  : previous <= 0
-                    ? results.length - 1
-                    : previous - 1,
-              );
-            }
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              if (open && active >= 0 && results[active]) void choose(results[active]);
-            }
-          }}
-        />
+        <div className="place-autocomplete" data-open={menuOpen}>
+          <div className="place-autocomplete-input">
+            <svg
+              className="place-search-icon"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              aria-hidden="true"
+            >
+              <circle cx="10.5" cy="10.5" r="6.5" />
+              <path d="m16 16 4 4" />
+            </svg>
+            <input
+              id="place-search"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded={menuOpen}
+              aria-controls={listId}
+              aria-activedescendant={open && active >= 0 ? `${listId}-${active}` : undefined}
+              aria-describedby={`${listId}-status`}
+              autoComplete="off"
+              value={input}
+              maxLength={120}
+              disabled={busy}
+              placeholder="Digite o nome do lugar"
+              onFocus={() => {
+                if (results.length) setOpen(true);
+              }}
+              onBlur={() => setOpen(false)}
+              onChange={(e) => {
+                request.current?.abort();
+                setInput(e.target.value);
+                setSelected(null);
+                setResults([]);
+                setOpen(false);
+                setActive(-1);
+                setError('');
+                setSearching(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.nativeEvent.isComposing) return;
+                if (e.key === 'Escape') {
+                  setOpen(false);
+                  setActive(-1);
+                }
+                if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && results.length) {
+                  e.preventDefault();
+                  setOpen(true);
+                  setActive((previous) =>
+                    e.key === 'ArrowDown'
+                      ? (previous + 1) % results.length
+                      : previous <= 0
+                        ? results.length - 1
+                        : previous - 1,
+                  );
+                }
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (open && active >= 0 && results[active]) void choose(results[active]);
+                }
+              }}
+            />
+
+            <svg
+              className="place-search-chevron"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              aria-hidden="true"
+            >
+              <path d="m7 10 5 5 5-5" />
+            </svg>
+          </div>
+          <div className="place-suggestions-menu" hidden={!menuOpen}>
+            <div className="place-suggestions-heading" aria-hidden="true">
+              Estabelecimentos sugeridos
+            </div>
+            <ul
+              id={listId}
+              className="place-suggestions"
+              role="listbox"
+              aria-label="Estabelecimentos sugeridos"
+            >
+              {menuOpen
+                ? results.map((p, index) => (
+                    <li key={p.id} role="presentation">
+                      <button
+                        id={`${listId}-${index}`}
+                        type="button"
+                        role="option"
+                        aria-label={p.label}
+                        aria-selected={active === index}
+                        tabIndex={-1}
+                        data-place-id={p.id}
+                        onMouseDown={(event) => event.preventDefault()}
+                        onPointerMove={() => setActive(index)}
+                        onClick={() => void choose(p)}
+                      >
+                        <span className="place-option-pin" aria-hidden="true">
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.6"
+                          >
+                            <path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z" />
+                            <circle cx="12" cy="10" r="2.5" />
+                          </svg>
+                        </span>
+                        <span className="place-option-text">
+                          <strong>{p.mainText || p.label}</strong>
+                          {p.secondaryText ? <span>{p.secondaryText}</span> : null}
+                        </span>
+                        <svg
+                          className="place-option-arrow"
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.7"
+                          aria-hidden="true"
+                        >
+                          <path d="M5 12h14m-5-5 5 5-5 5" />
+                        </svg>
+                      </button>
+                    </li>
+                  ))
+                : null}
+            </ul>
+            <div className="place-suggestions-footer">
+              <span>Escolha um local</span>
+              <GoogleAttribution />
+            </div>
+          </div>
+        </div>
       </div>
-      <p id={`${listId}-status`} className="hint" role="status">
-        {busy
-          ? 'Validando estabelecimento…'
-          : searching
-            ? 'Buscando no Google Maps…'
-            : results.length && open
-              ? `${results.length} sugestões. Use as setas e Enter para selecionar.`
-              : !selected
-                ? 'Digite pelo menos 3 caracteres para ver sugestões.'
-                : 'Estabelecimento selecionado.'}
+      <p id={`${listId}-status`} className="hint place-search-status" role="status">
+        <span className={menuOpen ? 'sr-only' : undefined}>
+          {busy
+            ? 'Validando estabelecimento…'
+            : searching
+              ? 'Buscando no Google Maps…'
+              : results.length && open
+                ? `${results.length} sugestões. Use as setas e Enter para selecionar.`
+                : !selected
+                  ? 'Digite pelo menos 3 caracteres para ver sugestões.'
+                  : 'Estabelecimento selecionado.'}
+        </span>
       </p>
       {error ? (
         <p className="notice error" role="alert">
           {error}
         </p>
       ) : null}
-      <ul
-        id={listId}
-        className="search-results"
-        role="listbox"
-        aria-label="Estabelecimentos sugeridos"
-        hidden={!open || !results.length}
-      >
-        {open
-          ? results.map((p, index) => (
-              <li key={p.id} role="presentation">
-                <button
-                  id={`${listId}-${index}`}
-                  type="button"
-                  role="option"
-                  aria-selected={active === index}
-                  tabIndex={-1}
-                  data-place-id={p.id}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => void choose(p)}
-                >
-                  {p.label}
-                  <span>Selecionar</span>
-                </button>
-              </li>
-            ))
-          : null}
-      </ul>
-      {open && results.length > 0 ? <GoogleAttribution /> : null}
       <details className="place-registration">
         <summary>Não encontrou? Cadastrar estabelecimento</summary>
         <form onSubmit={register}>
