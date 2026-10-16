@@ -35,6 +35,7 @@ export function environmentStatus() {
     authentication: configured(),
     app_url: validUrl(optionalEnv('NEXT_PUBLIC_APP_URL')),
     database: configured(),
+    google_places: present('GOOGLE_PLACES_API_KEY'),
     email: ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASSWORD', 'EMAIL_FROM'].every(present),
     scheduler: (optionalEnv('CRON_SECRET')?.length || 0) >= 32,
     support: present('NEXT_PUBLIC_SUPPORT_EMAIL'),

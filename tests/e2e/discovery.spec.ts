@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures';
-import { context } from './helpers';
+import { context, mockPlaceSuggestions } from './helpers';
 import sharp from 'sharp';
 import jsQR from 'jsqr';
 import { readFile } from 'node:fs/promises';
@@ -113,9 +113,9 @@ test('foto, pedidos sem ajuda, também procuro, alertas, reconfirmação e card 
     await expect(helper.page.locator('.request-list')).toContainText('Com foto');
     await helper.page.getByRole('link', { name: description, exact: true }).click();
     await helper.page.getByRole('link', { name: 'Indicar local' }).click();
+    await mockPlaceSuggestions(helper.page);
     await helper.page.getByLabel('Nome do estabelecimento').fill('Empório');
-    await helper.page.getByRole('button', { name: 'Buscar', exact: true }).click();
-    await helper.page.getByRole('button', { name: /Empório A,/ }).click();
+    await helper.page.getByRole('option', { name: /Empório A,/ }).click();
     await helper.page.getByRole('button', { name: 'Confirmar indicação' }).click();
     await expect(helper.page).toHaveURL(/enviado=1/);
     await helper.page.goto('/app?q=Peça%20especial%20máquina%20café&status=UNANSWERED');

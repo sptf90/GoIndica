@@ -6,7 +6,7 @@ export default function Privacy() {
   const contact = address && !address.endsWith('@example.com') ? address : null;
   return (
     <main id="conteudo" className="legal-page wrap">
-      <p className="eyebrow">Atualizado em 14 de outubro de 2026</p>
+      <p className="eyebrow">Atualizado em 16 de outubro de 2026</p>
       <h1>Privacidade</h1>
       <p>
         Sua conta usa e-mail e senha. A aplicação e o banco são hospedados na Hostinger. Guardamos
@@ -34,6 +34,13 @@ export default function Privacy() {
         mantêm sua sessão. Contamos visitas e ações de forma agregada, sem ferramentas de
         publicidade. Para limitar abuso, usamos identificadores técnicos derivados do endereço IP e
         do e-mail, sem registrar esses valores brutos nos contadores temporários.
+      </p>
+      <p>
+        Ao buscar um estabelecimento, enviamos o texto digitado, a cidade do pedido e um token
+        temporário de sessão ao Google Maps Platform para obter sugestões e validar o local. Não
+        enviamos seu e-mail ou senha nessa consulta. O identificador do estabelecimento é guardado;
+        os nomes e endereços do Google são consultados sem armazenamento permanente. Consulte também
+        a <a href="https://policies.google.com/privacy">Política de Privacidade do Google</a>.
       </p>
       <h2>Preferências, lembretes e dados no dispositivo</h2>
       <p>

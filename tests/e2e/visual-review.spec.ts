@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures';
 import type { Page } from '@playwright/test';
-import { context } from './helpers';
+import { context, mockPlaceSuggestions } from './helpers';
 
 const widths = [320, 375, 390, 430, 768, 1024, 1280, 1440];
 async function inspect(page: Page, name: string) {
@@ -46,9 +46,9 @@ test('admin, edição e indicação permanecem legíveis em celular e desktop', 
     await inspect(ana.page, 'editar-pedido');
     await joao.page.goto(url + '/indicar');
     await inspect(joao.page, 'indicar-local');
+    await mockPlaceSuggestions(joao.page);
     await joao.page.getByLabel('Nome do estabelecimento').fill('Empório');
-    await joao.page.getByRole('button', { name: 'Buscar', exact: true }).click();
-    await joao.page.getByRole('button', { name: /Empório A,/ }).click();
+    await joao.page.getByRole('option', { name: /Empório A,/ }).click();
     await inspect(joao.page, 'local-selecionado');
     await joao.page.getByLabel('Como você sabe?').fill('z'.repeat(300));
     await joao.page.getByRole('button', { name: 'Confirmar indicação' }).click();

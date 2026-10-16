@@ -3,7 +3,7 @@ export const metadata = { title: 'Termos de uso', alternates: { canonical: '/ter
 export default function Terms() {
   return (
     <main id="conteudo" className="legal-page wrap">
-      <p className="eyebrow">Atualizado em 14 de outubro de 2026</p>
+      <p className="eyebrow">Atualizado em 16 de outubro de 2026</p>
       <h1>Termos de uso</h1>
       <p>
         O GoIndica conecta pessoas que procuram algo a pessoas que conhecem estabelecimentos na
@@ -31,9 +31,11 @@ export default function Terms() {
       </p>
       <h2>Cadastro de estabelecimentos</h2>
       <p>
-        Nomes e endereços dos estabelecimentos são cadastrados pela comunidade. Informe dados
-        corretos e escolha a cidade correspondente. Esses registros não têm validação automática por
-        um serviço de mapas. Dados incorretos podem ser denunciados à administração.
+        A busca automática usa o Google Maps Platform e está sujeita aos{' '}
+        <a href="https://maps.google.com/help/terms_maps/">Termos de Serviço do Google Maps</a>.
+        Validamos os locais selecionados na cidade do pedido; isso não confirma estoque ou
+        disponibilidade. Também existem cadastros fornecidos pela comunidade, sem validação pelo
+        Google. Dados incorretos podem ser denunciados à administração.
       </p>
       <h2>Descobertas históricas</h2>
       <p>

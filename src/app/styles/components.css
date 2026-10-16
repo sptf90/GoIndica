@@ -969,3 +969,19 @@
   border-radius: 50%;
   animation: city-loading 0.7s linear infinite;
 }
+
+.google-maps-attribution {
+  font-family: sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 12px;
+  letter-spacing: normal;
+  white-space: nowrap;
+  color: #5e5e5e;
+  margin: 10px 0;
+}
+.search-results [role='option'][aria-selected='true'] {
+  background: var(--wash);
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}

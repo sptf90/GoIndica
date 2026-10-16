@@ -72,9 +72,20 @@ export const adminSchema = z.object({
   ]),
   targetId: uuid,
 });
+export const googlePlaceId = z
+  .string()
+  .min(1)
+  .max(255)
+  .regex(/^[A-Za-z0-9_-]+$/);
+export const googleSelectionSchema = z.object({
+  googlePlaceId,
+  cityId,
+  sessionToken: z.uuid(),
+});
 export const searchSchema = z.object({
   input: z.string().trim().min(3).max(120),
   cityId,
+  sessionToken: z.uuid(),
 });
 export function normalizeCity(value: string) {
   return value

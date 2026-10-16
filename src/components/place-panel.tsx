@@ -99,6 +99,27 @@ export function PlacePanel({
           </span>
         ) : null}
       </div>
+      {place?.googleMapsUri ? (
+        <div>
+          <p className="google-maps-attribution" translate="no">
+            Google Maps
+          </p>
+          <a className="text-link" href={place.googleMapsUri} target="_blank" rel="noreferrer">
+            Abrir no Google Maps
+          </a>
+          {place.attributions?.map((item, index) => (
+            <p className="hint" key={index}>
+              {item.providerUri?.startsWith('https://') ? (
+                <a href={item.providerUri} target="_blank" rel="noreferrer">
+                  {item.provider}
+                </a>
+              ) : (
+                item.provider
+              )}
+            </p>
+          ))}
+        </div>
+      ) : null}
       {busy ? (
         <p className="hint" role="status">
           Consultando estabelecimento…

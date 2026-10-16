@@ -1,10 +1,11 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useId } from 'react';
 import { ActionForm } from './action-form';
 import { indicate } from '@/server/actions';
 interface Prediction {
   id: string;
   label: string;
+  attributions?: { provider: string; providerUri?: string }[];
 }
 export function PlaceSearch({
   requestId,
@@ -22,43 +23,97 @@ export function PlaceSearch({
   const [error, setError] = useState('');
   const [newName, setNewName] = useState('');
   const [newAddress, setNewAddress] = useState('');
+  const listId = useId();
+  const [active, setActive] = useState(-1);
+  const [open, setOpen] = useState(false);
+  const [searching, setSearching] = useState(false);
   const request = useRef<AbortController | null>(null);
-  useEffect(() => () => request.current?.abort(), []);
-  async function search() {
-    if (busy || input.trim().length < 3) return;
+  const sessionToken = useRef('');
+  const selecting = useRef(false);
+  useEffect(() => {
+    if (input.trim().length < 3 || selected || selecting.current) return;
     const controller = new AbortController();
-    request.current?.abort();
     request.current = controller;
-    setBusy(true);
-    setError('');
-    setResults([]);
-    try {
-      const response = await fetch(
-        '/api/places?' + new URLSearchParams({ input, cityId: String(cityId) }),
-        { signal: controller.signal },
-      );
-      const data = (await response.json()) as Prediction[] | { error: string };
-      if (!response.ok || !Array.isArray(data))
-        throw new Error(!Array.isArray(data) ? data.error : 'Não foi possível buscar.');
-      if (!controller.signal.aborted) {
-        setResults(data);
-        if (!data.length) setError('Nenhum estabelecimento encontrado. Tente outro nome.');
-      }
-    } catch (e) {
-      if (!controller.signal.aborted) {
-        setError(
-          e instanceof Error && !(e instanceof TypeError) && !(e instanceof SyntaxError)
-            ? e.message
-            : 'Não foi possível buscar agora. Tente novamente.',
+    const timer = setTimeout(async () => {
+      if (controller.signal.aborted) return;
+      if (!sessionToken.current) sessionToken.current = crypto.randomUUID();
+      setSearching(true);
+      try {
+        const response = await fetch(
+          '/api/places?' +
+            new URLSearchParams({
+              input,
+              cityId: String(cityId),
+              sessionToken: sessionToken.current,
+            }),
+          { signal: controller.signal },
         );
+        const data = await response.json();
+        if (!response.ok || !Array.isArray(data))
+          throw new Error(data.error || 'Não foi possível buscar.');
+        if (!controller.signal.aborted) {
+          setResults(data);
+          setOpen(document.activeElement?.id === 'place-search');
+          setActive(-1);
+          if (!data.length) setError('Nenhum estabelecimento encontrado. Tente outro nome.');
+        }
+      } catch (e) {
+        if (!controller.signal.aborted)
+          setError(
+            e instanceof Error && !(e instanceof TypeError) && !(e instanceof SyntaxError)
+              ? e.message
+              : 'Não foi possível buscar agora. Tente novamente.',
+          );
+      } finally {
+        if (!controller.signal.aborted) setSearching(false);
       }
+    }, 350);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [input, cityId, selected]);
+  async function choose(prediction: Prediction) {
+    if (selecting.current) return;
+    request.current?.abort();
+    selecting.current = true;
+    setSearching(false);
+    setBusy(true);
+    setOpen(false);
+    setError('');
+    try {
+      const response = await fetch('/api/places', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          googlePlaceId: prediction.id,
+          cityId,
+          sessionToken: sessionToken.current || crypto.randomUUID(),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.error || 'Não foi possível selecionar este estabelecimento.');
+      setSelected(data);
+      setResults([]);
+    } catch (e) {
+      setError(
+        e instanceof Error && !(e instanceof TypeError)
+          ? e.message
+          : 'Não foi possível selecionar o local. Tente novamente.',
+      );
     } finally {
-      if (!controller.signal.aborted) setBusy(false);
+      sessionToken.current = '';
+      selecting.current = false;
+      setBusy(false);
     }
   }
   async function register(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
+    request.current?.abort();
+    setSearching(false);
+    setOpen(false);
     setBusy(true);
     setError('');
     try {
@@ -80,66 +135,106 @@ export function PlaceSearch({
   return (
     <div>
       <p className="muted">
-        Indique um estabelecimento em {cityName} que você conhece. Escolha um local do cadastro da
-        cidade ou adicione um estabelecimento.
+        Digite o nome de um estabelecimento em {cityName} e escolha uma das sugestões do Google
+        Maps.
       </p>
       <div className="field">
         <label htmlFor="place-search">Nome do estabelecimento</label>
-        <div className="input-with-button">
-          <input
-            id="place-search"
-            value={input}
-            maxLength={120}
-            placeholder="Busque pelo nome do lugar"
-            onChange={(e) => {
-              request.current?.abort();
-              setInput(e.target.value);
-              setSelected(null);
-              setResults([]);
-              setError('');
-              setBusy(false);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                void search();
-              }
-            }}
-          />
-          <button
-            className="button secondary"
-            type="button"
-            disabled={busy || input.trim().length < 3}
-            onClick={search}
-          >
-            {busy ? 'Buscando…' : 'Buscar'}
-          </button>
-        </div>
+        <input
+          id="place-search"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={open && results.length > 0}
+          aria-controls={listId}
+          aria-activedescendant={open && active >= 0 ? `${listId}-${active}` : undefined}
+          aria-describedby={`${listId}-status`}
+          autoComplete="off"
+          value={input}
+          maxLength={120}
+          disabled={busy}
+          placeholder="Digite o nome do lugar"
+          onFocus={() => {
+            if (results.length) setOpen(true);
+          }}
+          onBlur={() => setOpen(false)}
+          onChange={(e) => {
+            request.current?.abort();
+            setInput(e.target.value);
+            setSelected(null);
+            setResults([]);
+            setOpen(false);
+            setActive(-1);
+            setError('');
+            setSearching(false);
+          }}
+          onKeyDown={(e) => {
+            if (e.nativeEvent.isComposing) return;
+            if (e.key === 'Escape') {
+              setOpen(false);
+              setActive(-1);
+            }
+            if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && results.length) {
+              e.preventDefault();
+              setOpen(true);
+              setActive((previous) =>
+                e.key === 'ArrowDown'
+                  ? (previous + 1) % results.length
+                  : previous <= 0
+                    ? results.length - 1
+                    : previous - 1,
+              );
+            }
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              if (open && active >= 0 && results[active]) void choose(results[active]);
+            }
+          }}
+        />
       </div>
+      <p id={`${listId}-status`} className="hint" role="status">
+        {busy
+          ? 'Validando estabelecimento…'
+          : searching
+            ? 'Buscando no Google Maps…'
+            : results.length && open
+              ? `${results.length} sugestões. Use as setas e Enter para selecionar.`
+              : !selected
+                ? 'Digite pelo menos 3 caracteres para ver sugestões.'
+                : 'Estabelecimento selecionado.'}
+      </p>
       {error ? (
         <p className="notice error" role="alert">
           {error}
         </p>
       ) : null}
-      {results.length ? (
-        <ul className="search-results">
-          {results.map((p) => (
-            <li key={p.id}>
-              <button
-                type="button"
-                data-place-id={p.id}
-                onClick={() => {
-                  setSelected(p);
-                  setResults([]);
-                }}
-              >
-                {p.label}
-                <span>Selecionar</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      <ul
+        id={listId}
+        className="search-results"
+        role="listbox"
+        aria-label="Estabelecimentos sugeridos"
+        hidden={!open || !results.length}
+      >
+        {open
+          ? results.map((p, index) => (
+              <li key={p.id} role="presentation">
+                <button
+                  id={`${listId}-${index}`}
+                  type="button"
+                  role="option"
+                  aria-selected={active === index}
+                  tabIndex={-1}
+                  data-place-id={p.id}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => void choose(p)}
+                >
+                  {p.label}
+                  <span>Selecionar</span>
+                </button>
+              </li>
+            ))
+          : null}
+      </ul>
+      {open && results.length > 0 ? <GoogleAttribution /> : null}
       <details className="place-registration">
         <summary>Não encontrou? Cadastrar estabelecimento</summary>
         <form onSubmit={register}>
@@ -176,6 +271,8 @@ export function PlaceSearch({
         <div className="selected-place">
           <p className="eyebrow">Local selecionado</p>
           <strong>{selected.label}</strong>
+          {selected.attributions ? <GoogleAttribution /> : null}
+          <ProviderAttributions attributions={selected.attributions} />
           <ActionForm action={indicate} label="Confirmar indicação" pendingLabel="Enviando…">
             <input type="hidden" name="requestId" value={requestId} />
             <input type="hidden" name="placeId" value={selected.id} />
@@ -199,4 +296,25 @@ export function PlaceSearch({
       ) : null}
     </div>
   );
+}
+
+function GoogleAttribution() {
+  return (
+    <p className="google-maps-attribution" translate="no">
+      Google Maps
+    </p>
+  );
+}
+function ProviderAttributions({ attributions }: Pick<Prediction, 'attributions'>) {
+  return attributions?.map((attribution, index) => (
+    <p className="hint" key={index}>
+      {attribution.providerUri?.startsWith('https://') ? (
+        <a href={attribution.providerUri} target="_blank" rel="noreferrer">
+          {attribution.provider}
+        </a>
+      ) : (
+        attribution.provider
+      )}
+    </p>
+  ));
 }

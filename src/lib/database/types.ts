@@ -202,6 +202,7 @@ export type Database = {
           hidden_at: string | null;
           city_id: number;
           last_verified_at: string;
+          google_place_id: string | null;
           legacy_google_place_id: string | null;
         };
         Insert: {
@@ -213,6 +214,7 @@ export type Database = {
           hidden_at: string | null;
           city_id: number;
           last_verified_at?: string;
+          google_place_id?: string | null;
           legacy_google_place_id?: string | null;
         };
         Update: {
@@ -224,6 +226,7 @@ export type Database = {
           hidden_at?: string | null;
           city_id?: number;
           last_verified_at?: string;
+          google_place_id?: string | null;
           legacy_google_place_id?: string | null;
         };
         Relationships: [

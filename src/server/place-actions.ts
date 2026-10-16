@@ -20,8 +20,13 @@ export async function updatePlace(_state: ActionState, form: FormData): Promise<
         [user.id],
       );
       if (!account?.is_admin || account.blocked) throw new Error('NOT_ALLOWED');
-      const [place] = await rows(db, 'SELECT id FROM places WHERE id=? FOR UPDATE', [id]);
+      const [place] = await rows(
+        db,
+        'SELECT id,google_place_id FROM places WHERE id=? FOR UPDATE',
+        [id],
+      );
       if (!place) throw new Error('INVALID_PLACE');
+      if (place.google_place_id) throw new Error('NOT_ALLOWED');
       await db.execute(
         'UPDATE places SET name=?,address=?,normalized_name=?,last_verified_at=UTC_TIMESTAMP(3) WHERE id=?',
         [input.name, input.address, normalizeCity(input.name), id],

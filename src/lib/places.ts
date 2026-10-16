@@ -3,27 +3,46 @@ import { randomUUID } from 'node:crypto';
 import { pool, rows, transaction } from './database/pool';
 import { rate } from './database/rate';
 import { normalizeCity } from './validation/schemas';
+import {
+  placeDetails as googleDetails,
+  validatePlaceCity as validateGoogleCity,
+} from './google-places';
 import type { City } from './types';
 export interface LocalPlace {
   id: string;
   displayName: { text: string };
   formattedAddress: string;
   cityId: number;
-}
-export async function autocomplete(input: string, city: City) {
-  return rows<{ id: string; label: string }>(
-    pool(),
-    `SELECT id,CONCAT(name,', ',address) AS label FROM places WHERE city_id=? AND hidden_at IS NULL AND normalized_name LIKE ? ORDER BY name LIMIT 20`,
-    [city.id, '%' + normalizeCity(input).replace(/[\\%_]/g, '\\$&') + '%'],
-  );
+  googleMapsUri?: string;
+  attributions?: { provider: string; providerUri?: string }[];
 }
 export async function placeDetails(id: string): Promise<LocalPlace> {
-  const [place] = await rows<{ id: string; name: string; address: string; city_id: number }>(
+  const [place] = await rows<{
+    id: string;
+    name: string;
+    address: string;
+    city_id: number;
+    google_place_id: string | null;
+  }>(
     pool(),
-    'SELECT id,name,address,city_id FROM places WHERE id=? AND hidden_at IS NULL',
+    'SELECT id,name,address,city_id,google_place_id FROM places WHERE id=? AND hidden_at IS NULL',
     [id],
   );
   if (!place) throw new Error('INVALID_PLACE');
+  if (place.google_place_id) {
+    const details = await googleDetails(place.google_place_id);
+    const [city] = await rows<City>(pool(), 'SELECT * FROM cities WHERE id=?', [place.city_id]);
+    if (!city) throw new Error('INVALID_CITY');
+    validateGoogleCity(details, city);
+    return {
+      ...details,
+      googleMapsUri:
+        details.googleMapsUri ||
+        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(details.displayName.text)}&query_place_id=${encodeURIComponent(place.google_place_id)}`,
+      id: place.id,
+      cityId: place.city_id,
+    };
+  }
   return {
     id: place.id,
     displayName: { text: place.name },
@@ -59,4 +78,53 @@ export async function registerPlace(actor: string, cityId: number, name: string,
     );
     return id;
   });
+}
+
+export async function selectGooglePlace(
+  actor: string,
+  city: City,
+  googleId: string,
+  sessionToken: string,
+) {
+  const details = await googleDetails(googleId, sessionToken);
+  if (details.id !== googleId) throw new Error('INVALID_PLACE');
+  validateGoogleCity(details, city);
+  const id = await transaction(async (db) => {
+    const [account] = await rows<{ blocked: boolean }>(
+      db,
+      'SELECT blocked FROM accounts WHERE id=? FOR UPDATE',
+      [actor],
+    );
+    if (!account || account.blocked) throw new Error('ACCOUNT_BLOCKED');
+    const [existing] = await rows<{ id: string; hidden_at: string | null }>(
+      db,
+      'SELECT id,hidden_at FROM places WHERE google_place_id=?',
+      [googleId],
+    );
+    if (existing) {
+      if (existing.hidden_at) throw new Error('INVALID_PLACE');
+      return existing.id;
+    }
+    const id = randomUUID();
+    // Placeholder values satisfy the existing local catalog schema without storing Google content.
+    // The unique address marker prevents different Google places from collapsing into one local row.
+    await db.execute(
+      `INSERT INTO places(id,city_id,name,address,normalized_name,created_by,google_place_id)
+       VALUES(?,?,'Estabelecimento Google Maps',?,'google maps',?,?)
+       ON DUPLICATE KEY UPDATE google_place_id=VALUES(google_place_id)`,
+      [id, city.id, 'Referência: ' + googleId, actor, googleId],
+    );
+    const [saved] = await rows<{ id: string; hidden_at: string | null }>(
+      db,
+      'SELECT id,hidden_at FROM places WHERE google_place_id=?',
+      [googleId],
+    );
+    if (!saved || saved.hidden_at) throw new Error('INVALID_PLACE');
+    return saved.id;
+  });
+  return {
+    id,
+    label: details.displayName.text + ', ' + details.formattedAddress,
+    attributions: details.attributions,
+  };
 }

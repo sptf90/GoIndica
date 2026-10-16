@@ -1,6 +1,6 @@
 # GoIndica
 
-Aplicação Next.js com MySQL e autenticação própria, preparada para o plano **Web Unlimited da Hostinger**. O site, banco, fotos, sessões, catálogo de estabelecimentos e envio de e-mails ficam na Hostinger. Não há dependência de Supabase, Google Places, Google OAuth, Resend ou Vercel em execução.
+Aplicação Next.js com MySQL e autenticação própria, preparada para o plano **Web Unlimited da Hostinger**. O site, banco, fotos, sessões, catálogo de estabelecimentos e envio de e-mails ficam na Hostinger. A busca de estabelecimentos usa Google Places API (New), com chave privada no servidor. Não há dependência de Supabase, Google OAuth, Resend ou Vercel em execução.
 
 A identidade visual usa laranja `#EC5E27` e branco suave `#FDFDF1`.
 
@@ -16,7 +16,7 @@ npm run banco:migrar
 npm run dev
 ```
 
-As migrations em `database/migrations` criam o esquema e instalam os 5.571 municípios brasileiros. Não é necessário consultar um serviço externo para buscar cidades ou estabelecimentos.
+As migrations em `database/migrations` criam o esquema e instalam os 5.571 municípios brasileiros. A busca de cidades é local. As sugestões automáticas de estabelecimentos consultam o Google Places.
 
 ## Publicar na Hostinger
 
@@ -97,3 +97,15 @@ Os testes de integração e navegador usam um **MySQL 8.4 ou MariaDB 10.11 desca
 ## Histórico
 
 `legacy/` preserva a implementação, migrations e testes específicos da antiga arquitetura para consulta. Esses arquivos não são executados, não entram na aplicação standalone e são excluídos do lint e TypeScript. A especificação original e os documentos de Supabase/Google são históricos; para a infraestrutura atual, valem este README e [HOSTINGER.md](docs/HOSTINGER.md).
+
+## Google Places
+
+Ative **Places API (New)** e o faturamento no projeto do Google Cloud. Crie uma chave com restrição de API para Places API (New); como as chamadas partem do servidor, use restrição por IP do servidor quando houver IP de saída fixo, conforme a infraestrutura da hospedagem. Não use restrição de referenciador de navegador nesta chave.
+
+Preencha `GOOGLE_PLACES_API_KEY` no `.env.local` e nas variáveis da aplicação Node.js no hPanel. Reinicie a aplicação após alterar a configuração. A chave não deve usar prefixo `NEXT_PUBLIC_`.
+
+Execute `npm run banco:migrar` para aplicar `006_google_places.sql`. O autocomplete inicia após 3 caracteres e 350 ms sem digitação. Um token de sessão acompanha as buscas até a seleção e validação do local. A cidade do pedido é incluída na consulta; o servidor valida município, UF, país, tipo e situação do estabelecimento antes de aceitar a seleção. Os resultados e sua ordem vêm do Autocomplete do Google; podem diferir da interface do Google Maps.
+
+Apenas o ID do Google é persistido; nome e endereço oficiais são consultados sem cache persistente. Cadastros locais anteriores e cadastro comunitário continuam disponíveis. Falhas do Google não criam locais nem indicações. A confirmação da indicação mantém os controles de cidade, identidade e estado do pedido.
+
+Referências: [Autocomplete (New)](https://developers.google.com/maps/documentation/places/web-service/place-autocomplete), [sessões](https://developers.google.com/maps/documentation/places/web-service/place-session-tokens) e [atribuição e armazenamento](https://developers.google.com/maps/documentation/places/web-service/policies).

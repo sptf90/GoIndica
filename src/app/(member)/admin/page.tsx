@@ -104,23 +104,37 @@ export default async function Admin({
         <summary>
           {place.name} — {place.address}
         </summary>
-        <ActionForm action={updatePlace} label="Salvar estabelecimento">
-          <input type="hidden" name="placeId" value={place.id} />
-          <label className="field">
-            Nome
-            <input name="name" defaultValue={place.name} minLength={2} maxLength={160} required />
-          </label>
-          <label className="field">
-            Endereço
-            <input
-              name="address"
-              defaultValue={place.address}
-              minLength={5}
-              maxLength={300}
-              required
-            />
-          </label>
-        </ActionForm>
+        {place.google_place_id ? (
+          <p>
+            Dados consultados diretamente no Google Maps.{' '}
+            <a
+              className="text-link"
+              target="_blank"
+              rel="noreferrer"
+              href={`https://www.google.com/maps/search/?api=1&query=estabelecimento&query_place_id=${encodeURIComponent(place.google_place_id)}`}
+            >
+              Ver no Google Maps
+            </a>
+          </p>
+        ) : (
+          <ActionForm action={updatePlace} label="Salvar estabelecimento">
+            <input type="hidden" name="placeId" value={place.id} />
+            <label className="field">
+              Nome
+              <input name="name" defaultValue={place.name} minLength={2} maxLength={160} required />
+            </label>
+            <label className="field">
+              Endereço
+              <input
+                name="address"
+                defaultValue={place.address}
+                minLength={5}
+                maxLength={300}
+                required
+              />
+            </label>
+          </ActionForm>
+        )}
       </details>
     ));
   } else if (tab === 'requests') {
