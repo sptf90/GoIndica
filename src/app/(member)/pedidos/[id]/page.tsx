@@ -180,7 +180,7 @@ export default async function Detail({
           </div>
           {author ? (
             <Link className="byline" href={'/perfil/' + author.username}>
-              <Avatar name={author.display_name} url={author.avatar_url} size={38} />
+              <Avatar name={author.display_name} size={38} />
               <span>
                 <span className="metadata-label">Publicado por</span>
                 <strong>{author.display_name}</strong>{' '}
@@ -404,11 +404,7 @@ export default async function Detail({
                       const p = g.profiles.get(i.user_id);
                       return (
                         <li key={i.id}>
-                          <Avatar
-                            name={p?.display_name || 'Pessoa'}
-                            url={p?.avatar_url}
-                            size={32}
-                          />
+                          <Avatar name={p?.display_name || 'Pessoa'} size={32} />
                           <div>
                             {p ? (
                               <Link href={'/perfil/' + p.username}>

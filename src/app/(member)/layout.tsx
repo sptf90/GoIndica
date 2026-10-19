@@ -20,7 +20,7 @@ export default async function MemberLayout({ children }: { children: React.React
       }
       account={
         <Link href="/perfil" className="profile-link" title="Meu perfil">
-          <Avatar name={profile.display_name} url={profile.avatar_url} size={40} />
+          <Avatar name={profile.display_name} size={40} />
           <span className="profile-copy">
             <strong>{profile.display_name.split(' ')[0]}</strong> <span>@{profile.username}</span>
           </span>

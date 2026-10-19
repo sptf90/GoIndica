@@ -701,49 +701,6 @@ textarea {
 .field label .muted {
   font-weight: 400;
 }
-.input-with-button {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-}
-.input-with-button input {
-  min-width: 0;
-}
-.input-with-button .button {
-  padding-inline: 14px;
-  font-size: 13px;
-}
-.search-results {
-  margin: 12px 0;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  overflow: hidden;
-  background: var(--surface);
-}
-.search-results li + li {
-  border-top: 1px solid var(--line);
-}
-.search-results button {
-  border: 0;
-  background: var(--surface);
-  width: 100%;
-  padding: 14px;
-  text-align: left;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: space-between;
-  color: var(--button-neutral-ink);
-  min-height: 48px;
-}
-.search-results button:hover {
-  background: var(--button-soft-hover);
-  color: var(--button-primary-hover);
-}
-.search-results button span {
-  color: var(--muted);
-  font-size: 12px;
-}
 .field-error {
   font-size: 13px;
   color: var(--danger);

@@ -20,7 +20,7 @@ export default async function MyProfile() {
   return (
     <div className="form-page profile-page">
       <div className="profile-heading">
-        <Avatar name={profile.display_name} url={profile.avatar_url} size={72} />
+        <Avatar name={profile.display_name} size={72} />
         <div>
           <p className="eyebrow">Seu lugar na comunidade</p>
           <h1>{profile.display_name}</h1>

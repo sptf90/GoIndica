@@ -23,7 +23,7 @@ export default async function PublicProfile({ params }: { params: Promise<{ user
         ← Comunidade
       </Link>
       <div className="profile-heading">
-        <Avatar name={profile.display_name} url={profile.avatar_url} size={80} />
+        <Avatar name={profile.display_name} size={80} />
         <div>
           <h1>{profile.display_name}</h1>
           <p className="muted">@{profile.username}</p>

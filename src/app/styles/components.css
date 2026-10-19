@@ -105,17 +105,6 @@
   display: block;
   margin-top: 10px;
 }
-.google-attribution {
-  display: flex;
-  align-items: center;
-  margin: 14px 0;
-}
-.google-attribution img {
-  width: auto;
-  height: 18px;
-  max-width: none;
-  margin: 8px 0;
-}
 .detail-page {
   min-width: 0;
 }
@@ -736,19 +725,6 @@
 .profile-editor h2 {
   font-size: 20px;
   margin: 20px 0;
-}
-.profile-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-block: 20px;
-  font-size: 13px;
-  color: var(--accent);
-}
-.profile-links a {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
 }
 .logout-form {
   margin-top: 24px;

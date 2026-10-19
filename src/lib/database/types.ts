@@ -203,7 +203,6 @@ export type Database = {
           city_id: number;
           last_verified_at: string;
           google_place_id: string | null;
-          legacy_google_place_id: string | null;
         };
         Insert: {
           id?: string;
@@ -215,7 +214,6 @@ export type Database = {
           city_id: number;
           last_verified_at?: string;
           google_place_id?: string | null;
-          legacy_google_place_id?: string | null;
         };
         Update: {
           id?: string;
@@ -227,7 +225,6 @@ export type Database = {
           city_id?: number;
           last_verified_at?: string;
           google_place_id?: string | null;
-          legacy_google_place_id?: string | null;
         };
         Relationships: [
           {
@@ -244,7 +241,6 @@ export type Database = {
           id: string;
           username: string;
           display_name: string;
-          avatar_url: string | null;
           home_city_id: number;
           created_at: string;
           updated_at: string;
@@ -253,7 +249,6 @@ export type Database = {
           id: string;
           username: string;
           display_name: string;
-          avatar_url?: string | null;
           home_city_id: number;
           created_at?: string;
           updated_at?: string;
@@ -262,7 +257,6 @@ export type Database = {
           id?: string;
           username?: string;
           display_name?: string;
-          avatar_url?: string | null;
           home_city_id?: number;
           created_at?: string;
           updated_at?: string;
@@ -726,7 +720,6 @@ export type Database = {
           position: number;
           username: string;
           display_name: string;
-          avatar_url: string | null;
           points: number;
           confirmations: number;
         }[];

@@ -15,7 +15,6 @@ export interface RankingEntry {
   position: number;
   username: string;
   display_name: string;
-  avatar_url: string | null;
   points: number;
   confirmations: number;
 }

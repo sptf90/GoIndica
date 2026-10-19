@@ -75,8 +75,8 @@ export async function readOperation(
       value = await rows(
         db,
         `SELECT ROW_NUMBER() OVER(ORDER BY SUM(e.points) DESC,COUNT(*) DESC,MIN(e.created_at),p.id) AS position,
-      p.username,p.display_name,p.avatar_url,SUM(e.points) AS points,COUNT(*) AS confirmations FROM reward_events e JOIN profiles p ON p.id=e.user_id JOIN accounts a ON a.id=p.id
-      WHERE e.city_id=? AND a.blocked=FALSE GROUP BY p.id,p.username,p.display_name,p.avatar_url ORDER BY position LIMIT 30 OFFSET ${int(p.p_offset)}`,
+      p.username,p.display_name,SUM(e.points) AS points,COUNT(*) AS confirmations FROM reward_events e JOIN profiles p ON p.id=e.user_id JOIN accounts a ON a.id=p.id
+      WHERE e.city_id=? AND a.blocked=FALSE GROUP BY p.id,p.username,p.display_name ORDER BY position LIMIT 30 OFFSET ${int(p.p_offset)}`,
         [Number(p.p_city_id)],
       );
       break;

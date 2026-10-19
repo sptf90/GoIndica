@@ -22,7 +22,7 @@ As migrations em `database/migrations` criam o esquema e instalam os 5.571 munic
 
 As configurações conhecidas de `goindica.com.br` estão no arquivo privado `.env.hostinger`, ignorado pelo Git. Complete a senha do MySQL e a senha da caixa `contato@goindica.com.br` nesse arquivo. As senhas não são necessariamente iguais.
 
-No hPanel, adicione uma **aplicação Node.js**, selecione Next.js e Node 24 e configure as variáveis de ambiente descritas em `.env.example`. Use `npm run build` para build e `npm start` para execução do código-fonte. A publicação e a transferência dos dados reais ainda exigem credenciais e acesso à conta.
+No hPanel, adicione uma **aplicação Node.js**, selecione Next.js e Node 24 e configure as variáveis de ambiente descritas em `.env.example`. Use `npm run build` para build e `npm start` para execução do código-fonte. A publicação exige credenciais e acesso à conta.
 
 Para gerar um pacote de execução pronto:
 
@@ -34,24 +34,6 @@ npm run hostinger:pacote
 O ZIP e o TAR.GZ incluem o servidor standalone, dependências de execução e arquivos estáticos; não incluem arquivos `.env`. Esse pacote inicia com `node server.js`. Para o fluxo de upload de código-fonte do hPanel, use o pacote fonte descrito em [HOSTINGER.md](docs/HOSTINGER.md).
 
 O acesso por **SSH é opcional**. A aplicação pode ser publicada pelo hPanel, e o banco pode ser preparado a partir deste computador via Remote MySQL ou pelo phpMyAdmin.
-
-## Preservar os dados existentes
-
-A migração de código está separada da transferência dos dados reais. O sistema antigo não é apagado pelos scripts.
-
-```bash
-# Conexão direta PostgreSQL do projeto antigo, exclusivamente para exportação.
-# Coloque SOURCE_POSTGRES_URL no arquivo .env.hostinger, sem publicar essa variável no hPanel.
-npm run banco:exportar-origem -- --env=.env.hostinger
-npm run banco:migrar -- --env=.env.hostinger
-npm run banco:importar -- --env=.env.hostinger --input=.migration-data/supabase-export.json
-```
-
-A exportação usa um snapshot consistente e inclui usuários, hashes de senha, perfis, pedidos, indicações, resoluções, recompensas, denúncias, fotos, notificações, preferências, auditoria e fila de e-mails. Os IDs são preservados. A importação exige destino sem usuários e pedidos, usa transação e confere as contagens; uma falha nos dados causa rollback. Senhas bcrypt existentes continuam funcionando. Usuários sem senha usam a recuperação por e-mail. Sessões antigas são encerradas.
-
-As fotos de perfil externas são copiadas uma única vez para armazenamento local. Os estabelecimentos antigos guardavam apenas o identificador do Google, sem nome/endereço. Seus IDs e vínculos com pedidos e recompensas são mantidos, mas nome/endereço devem ser completados em **Administração → Estabelecimentos**. A importação não inventa dados nem consulta Google Places.
-
-Consulte o procedimento completo, incluindo manutenção, validação e retorno à versão anterior, em [HOSTINGER.md](docs/HOSTINGER.md).
 
 ## Acesso e administração
 
@@ -96,7 +78,7 @@ Os testes de integração e navegador usam um **MySQL 8.4 ou MariaDB 10.11 desca
 
 ## Histórico
 
-`legacy/` preserva a implementação, migrations e testes específicos da antiga arquitetura para consulta. Esses arquivos não são executados, não entram na aplicação standalone e são excluídos do lint e TypeScript. A especificação original e os documentos de Supabase/Google são históricos; para a infraestrutura atual, valem este README e [HOSTINGER.md](docs/HOSTINGER.md).
+A implementação anterior (Supabase/Google) foi removida do repositório e pode ser consultada no histórico do Git, até o commit `585485b`. A especificação original e os documentos de Supabase/Google são históricos; para a infraestrutura atual, valem este README e [HOSTINGER.md](docs/HOSTINGER.md).
 
 ## Google Places
 

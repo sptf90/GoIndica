@@ -43,7 +43,7 @@ export default async function Ranking({
           {entries.map((e) => (
             <li className="ranking-row" key={e.username}>
               <span className="rank-number">{e.position}</span>
-              <Avatar name={e.display_name} url={e.avatar_url} />
+              <Avatar name={e.display_name} />
               <div>
                 <Link href={'/perfil/' + e.username}>
                   <strong>{e.display_name}</strong>

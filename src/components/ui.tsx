@@ -42,26 +42,8 @@ export function LocationIllustration() {
     </div>
   );
 }
-export function Avatar({
-  name,
-  url,
-  size = 40,
-}: {
-  name: string;
-  url?: string | null;
-  size?: number;
-}) {
-  return url ? (
-    <Image
-      className="avatar"
-      unoptimized
-      src={url}
-      alt=""
-      width={size}
-      height={size}
-      referrerPolicy="no-referrer"
-    />
-  ) : (
+export function Avatar({ name, size = 40 }: { name: string; size?: number }) {
+  return (
     <span
       className="avatar avatar-letter"
       style={{ width: size, height: size, fontSize: Math.round(size * 0.3) }}

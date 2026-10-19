@@ -769,12 +769,6 @@ async function mutate(
         jpeg_base64: p.jpeg.toString('base64'),
         updated_at: p.updated_at,
       }));
-      const avatar = await rows<{ jpeg: Buffer }>(
-        db,
-        'SELECT jpeg FROM profile_photos WHERE user_id=?',
-        [id],
-      );
-      result.profile_photo = avatar[0]?.jpeg.toString('base64') || null;
       await log(db, id, 'DATA_EXPORTED', 'ACCOUNT', id);
       return result;
     }
@@ -827,7 +821,6 @@ async function closeAccount(db: PoolConnection, admin: string, p: Args) {
     [user],
   );
   await db.execute('DELETE FROM sessions WHERE user_id=?', [user]);
-  await db.execute('DELETE FROM profile_photos WHERE user_id=?', [user]);
   await db.execute('DELETE FROM auth_tokens WHERE user_id=?', [user]);
   await db.execute(
     `UPDATE requests SET description='Pedido de conta encerrada',neighborhood=NULL,canceled_at=IF(status IN ('OPEN','REVEALED'),UTC_TIMESTAMP(3),canceled_at),status=IF(status IN ('OPEN','REVEALED'),'CANCELED',status),has_photo=FALSE,photo_updated_at=NULL,updated_at=UTC_TIMESTAMP(3) WHERE requester_id=?`,
@@ -835,7 +828,7 @@ async function closeAccount(db: PoolConnection, admin: string, p: Args) {
   );
   await db.execute('UPDATE indications SET comment=NULL WHERE user_id=?', [user]);
   await db.execute(
-    "UPDATE profiles SET username=?,display_name='Conta encerrada',avatar_url=NULL,updated_at=UTC_TIMESTAMP(3) WHERE id=?",
+    "UPDATE profiles SET username=?,display_name='Conta encerrada',updated_at=UTC_TIMESTAMP(3) WHERE id=?",
     ['deleted_' + randomUUID().replaceAll('-', '').slice(0, 16), user],
   );
   await db.execute(

@@ -331,11 +331,9 @@ test('fechamento remove credenciais e informações pessoais, preservando recomp
   );
   expect(Number(reward[0].points)).toBe(10);
 });
-test('hashes novos e senhas antigas bcrypt são verificadas sem truncar as novas', async () => {
+test('hashes de senha são verificados sem truncar senhas longas', async () => {
   const long = '123!'.repeat(30);
   const hash = await hashPassword(long);
   expect(await verifyPassword(long, hash)).toBe(true);
   expect(await verifyPassword(long + 'x', hash)).toBe(false);
-  const { hash: legacyHash } = await import('bcryptjs');
-  expect(await verifyPassword('senha antiga', await legacyHash('senha antiga', 4))).toBe(true);
 });

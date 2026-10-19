@@ -4,15 +4,10 @@ node_modules/
 .env*
 !.env.example
 *.tsbuildinfo
-.test-postgres/
 test-results/
 playwright-report/
 coverage/
 tests/.auth/
-supabase/.temp/
-supabase/.branches/
-
-.test-tools/
 
 .migration-data/
 .hostinger-package/

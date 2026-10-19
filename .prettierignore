@@ -1,7 +1,0 @@
-node_modules
-.next
-test-results
-playwright-report
-package-lock.json
-ESPECIFICACAO_MVP_DESCOBERTA_LOCAL.md
-supabase/migrations

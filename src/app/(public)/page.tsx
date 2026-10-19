@@ -157,7 +157,7 @@ export default async function Landing() {
             ranking.data.slice(0, 3).map((p) => (
               <div className="ranking-row" key={p.username}>
                 <span className="rank-number">{p.position}</span>
-                <Avatar name={p.display_name} url={p.avatar_url} />
+                <Avatar name={p.display_name} />
                 <div>
                   <strong>{p.display_name}</strong>
                   <p className="hint">@{p.username}</p>

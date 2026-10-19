@@ -74,10 +74,6 @@ test('visitante é redirecionado nos fluxos privados', async ({ page }) => {
   }
   await expect(page.getByRole('button', { name: 'Continuar com Google' })).toHaveCount(0);
 });
-test('callback adulterado não autentica nem permite redirecionamento externo', async ({ page }) => {
-  await page.goto('/auth/callback?next=https://evil.example');
-  await expect(page).toHaveURL(/\/entrar\?motivo=link_expirado/);
-});
 test('páginas legais e metadata pública', async ({ page, request }) => {
   await page.goto('/privacidade');
   await expect(page.getByRole('heading', { name: 'Privacidade', exact: true })).toBeVisible();
