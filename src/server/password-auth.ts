@@ -2,7 +2,7 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { database } from '@/lib/database/server';
-import { appUrl, configured } from '@/lib/env';
+import { configured } from '@/lib/env';
 import {
   emailLoginSchema,
   emailSignupSchema,
@@ -47,16 +47,10 @@ export async function signupWithEmail(_state: ActionState, form: FormData): Prom
       passwordConfirmation: value(form, 'passwordConfirmation'),
     });
     const db = await database();
-    const next = returnPath(form.get('next'));
     const { data, error } = await db.auth.signUp({
       email: input.email,
       password: input.password,
-      options: {
-        emailRedirectTo:
-          appUrl() +
-          '/auth/callback' +
-          (next === '/app' ? '' : '?next=' + encodeURIComponent(next)),
-      },
+      next: returnPath(form.get('next')),
     });
     if (error) {
       if (error.code === 'user_already_exists' || error.code === 'email_exists')
@@ -81,9 +75,7 @@ export async function requestPasswordReset(
     if (!configured()) throw new Error('CONFIGURATION_REQUIRED');
     const { email } = emailSchema.parse({ email: value(form, 'email') });
     const db = await database();
-    const { error } = await db.auth.resetPasswordForEmail(email, {
-      redirectTo: appUrl() + '/auth/callback?destino=senha',
-    });
+    const { error } = await db.auth.resetPasswordForEmail(email);
     if (error) return authError(error);
     return { success: recovery };
   } catch (error) {

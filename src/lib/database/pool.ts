@@ -39,7 +39,7 @@ const booleanFields = new Set([
   'eligible',
   'ready',
 ]);
-export function normalizeRow(row: SqlRow): SqlRow {
+function normalizeRow(row: SqlRow): SqlRow {
   return Object.fromEntries(
     Object.entries(row).map(([key, value]) => [
       key,

@@ -27,9 +27,6 @@ export async function readOperation(
       value = row.ready;
       break;
     }
-    case 'is_admin':
-      value = admin;
-      break;
     case 'account_state':
       value = {
         admin,

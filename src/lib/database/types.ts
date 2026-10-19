@@ -7,7 +7,6 @@ import type {
   MemberSummary,
   Operations,
 } from '@/lib/types';
-export type { Json };
 export type Database = {
   public: {
     Tables: {
@@ -21,25 +20,6 @@ export type Database = {
           metadata: Json;
           created_at: string;
         };
-        Insert: {
-          id?: string;
-          actor_id?: string | null;
-          event_type: string;
-          entity_type: string;
-          entity_id?: string | null;
-          metadata?: Json;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          actor_id?: string | null;
-          event_type?: string;
-          entity_type?: string;
-          entity_id?: string | null;
-          metadata?: Json;
-          created_at?: string;
-        };
-        Relationships: [];
       };
       cities: {
         Row: {
@@ -52,48 +32,9 @@ export type Database = {
           country_code: string;
           slug: string;
         };
-        Insert: {
-          id: number;
-          name: string;
-          normalized_name: string;
-          state_name: string;
-          state_code: string;
-          country_name?: string;
-          country_code?: string;
-          slug: string;
-        };
-        Update: {
-          id?: number;
-          name?: string;
-          normalized_name?: string;
-          state_name?: string;
-          state_code?: string;
-          country_name?: string;
-          country_code?: string;
-          slug?: string;
-        };
-        Relationships: [];
       };
       followed_cities: {
         Row: { user_id: string; city_id: number; created_at: string };
-        Insert: { user_id: string; city_id: number; created_at?: string };
-        Update: { user_id?: string; city_id?: number; created_at?: string };
-        Relationships: [
-          {
-            foreignKeyName: 'followed_cities_city_id_fkey';
-            columns: ['city_id'];
-            isOneToOne: false;
-            referencedRelation: 'cities';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'followed_cities_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-        ];
       };
       indications: {
         Row: {
@@ -105,47 +46,6 @@ export type Database = {
           created_at: string;
           hidden_at: string | null;
         };
-        Insert: {
-          id?: string;
-          request_id: string;
-          user_id: string;
-          place_id: string;
-          comment?: string | null;
-          created_at?: string;
-          hidden_at?: string | null;
-        };
-        Update: {
-          id?: string;
-          request_id?: string;
-          user_id?: string;
-          place_id?: string;
-          comment?: string | null;
-          created_at?: string;
-          hidden_at?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'indications_place_id_fkey';
-            columns: ['place_id'];
-            isOneToOne: false;
-            referencedRelation: 'places';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'indications_request_id_fkey';
-            columns: ['request_id'];
-            isOneToOne: false;
-            referencedRelation: 'requests';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'indications_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-        ];
       };
       notifications: {
         Row: {
@@ -157,40 +57,6 @@ export type Database = {
           read_at: string | null;
           created_at: string;
         };
-        Insert: {
-          id?: string;
-          user_id: string;
-          request_id: string;
-          kind: string;
-          dedupe_key: string;
-          read_at?: string | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          request_id?: string;
-          kind?: string;
-          dedupe_key?: string;
-          read_at?: string | null;
-          created_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'notifications_request_id_fkey';
-            columns: ['request_id'];
-            isOneToOne: false;
-            referencedRelation: 'requests';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'notifications_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-        ];
       };
       places: {
         Row: {
@@ -204,37 +70,6 @@ export type Database = {
           last_verified_at: string;
           google_place_id: string | null;
         };
-        Insert: {
-          id?: string;
-          name: string;
-          address: string;
-          normalized_name: string;
-          created_by: string | null;
-          hidden_at: string | null;
-          city_id: number;
-          last_verified_at?: string;
-          google_place_id?: string | null;
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          address?: string;
-          normalized_name?: string;
-          created_by?: string | null;
-          hidden_at?: string | null;
-          city_id?: number;
-          last_verified_at?: string;
-          google_place_id?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'places_city_id_fkey';
-            columns: ['city_id'];
-            isOneToOne: false;
-            referencedRelation: 'cities';
-            referencedColumns: ['id'];
-          },
-        ];
       };
       profiles: {
         Row: {
@@ -245,31 +80,6 @@ export type Database = {
           created_at: string;
           updated_at: string;
         };
-        Insert: {
-          id: string;
-          username: string;
-          display_name: string;
-          home_city_id: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          username?: string;
-          display_name?: string;
-          home_city_id?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'profiles_home_city_id_fkey';
-            columns: ['home_city_id'];
-            isOneToOne: false;
-            referencedRelation: 'cities';
-            referencedColumns: ['id'];
-          },
-        ];
       };
       reports: {
         Row: {
@@ -284,46 +94,6 @@ export type Database = {
           reviewed_at: string | null;
           decision_note: string | null;
         };
-        Insert: {
-          id?: string;
-          reporter_id: string;
-          target_type: string;
-          target_id: string;
-          reason: string;
-          status?: string;
-          created_at?: string;
-          reviewed_by?: string | null;
-          reviewed_at?: string | null;
-          decision_note?: string | null;
-        };
-        Update: {
-          id?: string;
-          reporter_id?: string;
-          target_type?: string;
-          target_id?: string;
-          reason?: string;
-          status?: string;
-          created_at?: string;
-          reviewed_by?: string | null;
-          reviewed_at?: string | null;
-          decision_note?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'reports_reporter_id_fkey';
-            columns: ['reporter_id'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'reports_reviewed_by_fkey';
-            columns: ['reviewed_by'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-        ];
       };
       request_interests: {
         Row: {
@@ -334,59 +104,9 @@ export type Database = {
           created_at: string;
           wanted: boolean;
         };
-        Insert: {
-          user_id: string;
-          request_id: string;
-          saved?: boolean;
-          following?: boolean;
-          created_at?: string;
-          wanted?: boolean;
-        };
-        Update: {
-          user_id?: string;
-          request_id?: string;
-          saved?: boolean;
-          following?: boolean;
-          created_at?: string;
-          wanted?: boolean;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'request_interests_request_id_fkey';
-            columns: ['request_id'];
-            isOneToOne: false;
-            referencedRelation: 'requests';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'request_interests_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-        ];
       };
       request_reconfirmations: {
         Row: { user_id: string; request_id: string; confirmed_at: string };
-        Insert: { user_id: string; request_id: string; confirmed_at?: string };
-        Update: { user_id?: string; request_id?: string; confirmed_at?: string };
-        Relationships: [
-          {
-            foreignKeyName: 'request_reconfirmations_request_id_fkey';
-            columns: ['request_id'];
-            isOneToOne: false;
-            referencedRelation: 'requests';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'request_reconfirmations_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-        ];
       };
       request_resolutions: {
         Row: {
@@ -397,45 +117,6 @@ export type Database = {
           resolved_by: string;
           created_at: string;
         };
-        Insert: {
-          id?: string;
-          request_id: string;
-          type: 'INDICATED_PLACE' | 'OTHER_PLACE' | 'NOT_FOUND';
-          place_id?: string | null;
-          resolved_by: string;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          request_id?: string;
-          type?: 'INDICATED_PLACE' | 'OTHER_PLACE' | 'NOT_FOUND';
-          place_id?: string | null;
-          resolved_by?: string;
-          created_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'request_resolutions_place_id_fkey';
-            columns: ['place_id'];
-            isOneToOne: false;
-            referencedRelation: 'places';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'request_resolutions_request_id_fkey';
-            columns: ['request_id'];
-            isOneToOne: true;
-            referencedRelation: 'requests';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'request_resolutions_resolved_by_fkey';
-            columns: ['resolved_by'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-        ];
       };
       requests: {
         Row: {
@@ -457,60 +138,6 @@ export type Database = {
           reconfirmation_count: number;
           last_reconfirmed_at: string | null;
         };
-        Insert: {
-          id?: string;
-          requester_id: string;
-          description: string;
-          city_id: number;
-          neighborhood?: string | null;
-          status?: 'OPEN' | 'REVEALED' | 'RESOLVED' | 'CLOSED_NO_RESULT' | 'CANCELED';
-          indication_count?: number;
-          responses_revealed_at?: string | null;
-          canceled_at?: string | null;
-          hidden_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
-          has_photo?: boolean;
-          photo_updated_at?: string | null;
-          wanting_count?: number;
-          reconfirmation_count?: number;
-          last_reconfirmed_at?: string | null;
-        };
-        Update: {
-          id?: string;
-          requester_id?: string;
-          description?: string;
-          city_id?: number;
-          neighborhood?: string | null;
-          status?: 'OPEN' | 'REVEALED' | 'RESOLVED' | 'CLOSED_NO_RESULT' | 'CANCELED';
-          indication_count?: number;
-          responses_revealed_at?: string | null;
-          canceled_at?: string | null;
-          hidden_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
-          has_photo?: boolean;
-          photo_updated_at?: string | null;
-          wanting_count?: number;
-          reconfirmation_count?: number;
-          last_reconfirmed_at?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'requests_city_id_fkey';
-            columns: ['city_id'];
-            isOneToOne: false;
-            referencedRelation: 'cities';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'requests_requester_id_fkey';
-            columns: ['requester_id'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-        ];
       };
       reward_events: {
         Row: {
@@ -523,56 +150,6 @@ export type Database = {
           points: number;
           created_at: string;
         };
-        Insert: {
-          id?: string;
-          user_id: string;
-          request_id: string;
-          indication_id: string;
-          city_id: number;
-          type?: string;
-          points?: number;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          request_id?: string;
-          indication_id?: string;
-          city_id?: number;
-          type?: string;
-          points?: number;
-          created_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'reward_events_city_id_fkey';
-            columns: ['city_id'];
-            isOneToOne: false;
-            referencedRelation: 'cities';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'reward_events_indication_id_fkey';
-            columns: ['indication_id'];
-            isOneToOne: false;
-            referencedRelation: 'indications';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'reward_events_request_id_fkey';
-            columns: ['request_id'];
-            isOneToOne: false;
-            referencedRelation: 'requests';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'reward_events_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-        ];
       };
       support_requests: {
         Row: {
@@ -586,44 +163,6 @@ export type Database = {
           created_at: string;
           reviewed_at: string | null;
         };
-        Insert: {
-          id?: string;
-          user_id: string;
-          kind: string;
-          reason: string;
-          status?: string;
-          reviewer_id?: string | null;
-          decision_note?: string | null;
-          created_at?: string;
-          reviewed_at?: string | null;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          kind?: string;
-          reason?: string;
-          status?: string;
-          reviewer_id?: string | null;
-          decision_note?: string | null;
-          created_at?: string;
-          reviewed_at?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'support_requests_reviewer_id_fkey';
-            columns: ['reviewer_id'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'support_requests_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-        ];
       };
       topic_alerts: {
         Row: {
@@ -634,55 +173,11 @@ export type Database = {
           normalized_term: string;
           created_at: string;
         };
-        Insert: {
-          id?: string;
-          user_id: string;
-          city_id: number;
-          term: string;
-          normalized_term: string;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          city_id?: number;
-          term?: string;
-          normalized_term?: string;
-          created_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'topic_alerts_city_id_fkey';
-            columns: ['city_id'];
-            isOneToOne: false;
-            referencedRelation: 'cities';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'topic_alerts_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-        ];
       };
       user_preferences: {
         Row: { user_id: string; email_reminders: boolean; updated_at: string };
-        Insert: { user_id: string; email_reminders?: boolean; updated_at?: string };
-        Update: { user_id?: string; email_reminders?: boolean; updated_at?: string };
-        Relationships: [
-          {
-            foreignKeyName: 'user_preferences_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: true;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-        ];
       };
     };
-    Views: Record<string, never>;
     Functions: {
       account_state: { Args: Record<string, never>; Returns: AccountState };
       add_topic_alert: { Args: { p_city_id: number; p_term: string }; Returns: undefined };
@@ -734,10 +229,6 @@ export type Database = {
       };
       consume_api_limit: { Args: { p_bucket: string }; Returns: undefined };
       consume_share_card_limit: { Args: Record<string, never>; Returns: undefined };
-      create_request: {
-        Args: { p_description: string; p_city_id: number; p_neighborhood?: string | null };
-        Returns: string;
-      };
       create_request_with_photo: {
         Args: {
           p_description: string;
@@ -746,15 +237,6 @@ export type Database = {
           p_photo?: string | null;
         };
         Returns: string;
-      };
-      edit_request: {
-        Args: {
-          p_request_id: string;
-          p_description: string;
-          p_city_id: number;
-          p_neighborhood?: string | null;
-        };
-        Returns: undefined;
       };
       edit_request_with_photo: {
         Args: {
@@ -778,7 +260,6 @@ export type Database = {
         Args: { p_request_id: string; p_offset?: number };
         Returns: { place_id: string; indications: number }[];
       };
-      is_admin: { Args: Record<string, never>; Returns: boolean };
       log_login: { Args: Record<string, never>; Returns: undefined };
       mark_notifications_read: { Args: { p_id?: string | null }; Returns: undefined };
       member_summary: { Args: Record<string, never>; Returns: MemberSummary };
@@ -861,10 +342,5 @@ export type Database = {
         Returns: string;
       };
     };
-    Enums: {
-      request_status: 'OPEN' | 'REVEALED' | 'RESOLVED' | 'CLOSED_NO_RESULT' | 'CANCELED';
-      resolution_type: 'INDICATED_PLACE' | 'OTHER_PLACE' | 'NOT_FOUND';
-    };
-    CompositeTypes: Record<string, never>;
   };
 };

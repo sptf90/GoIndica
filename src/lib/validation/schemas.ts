@@ -72,7 +72,7 @@ export const adminSchema = z.object({
   ]),
   targetId: uuid,
 });
-export const googlePlaceId = z
+const googlePlaceId = z
   .string()
   .min(1)
   .max(255)

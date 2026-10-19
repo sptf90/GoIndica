@@ -16,7 +16,7 @@ const serviceOnly = new Set([
   'finish_email_job',
 ]);
 const publicCalls = new Set(['city_ranking', 'profile_stats']);
-const withoutProfile = new Set(['account_state', 'save_profile', 'log_login', 'is_admin']);
+const withoutProfile = new Set(['account_state', 'save_profile', 'log_login']);
 // These reads recheck account/profile access inside their data SELECT. They need no write transaction.
 const simpleReads = new Set([
   'member_summary',
@@ -38,7 +38,7 @@ export async function executeOperation(
   if (!client.privileged && !publicCalls.has(name) && !actor) throw new Error('AUTH_REQUIRED');
   if (publicCalls.has(name) || name === 'health_check')
     return (await readOperation(pool(), name, p as Args, actor)).value;
-  if (actor && (simpleReads.has(name) || name === 'account_state' || name === 'is_admin')) {
+  if (actor && (simpleReads.has(name) || name === 'account_state')) {
     const [account] = await rows<{
       blocked: boolean;
       is_admin: boolean;
@@ -51,7 +51,6 @@ export async function executeOperation(
     if (!account || account.blocked) throw new Error('ACCOUNT_BLOCKED');
     actor.admin = account.is_admin;
     if (name === 'account_state') return { admin: account.is_admin, onboarded: account.onboarded };
-    if (name === 'is_admin') return account.is_admin;
     if (!account.onboarded) throw new Error('ONBOARDING_REQUIRED');
     return (await readOperation(pool(), name, p as Args, actor)).value;
   }
@@ -200,7 +199,6 @@ async function mutate(
     case 'consume_share_card_limit':
       await rate(db, id, 'share_cards', 10, 60);
       return;
-    case 'create_request':
     case 'create_request_with_photo': {
       const description = text(p.p_description).trim(),
         neighborhood = text(p.p_neighborhood).trim();
@@ -220,7 +218,6 @@ async function mutate(
       );
       return requestId;
     }
-    case 'edit_request':
     case 'edit_request_with_photo': {
       const r = await requestLock(db, p, actor, true);
       if (

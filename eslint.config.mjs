@@ -6,10 +6,7 @@ import a11y from 'eslint-plugin-jsx-a11y';
 export default ts.config(
   {
     ignores: [
-      '.hostinger-source/**',
-      '.hostinger-package/**',
       '.next/**',
-      '.next-review/**',
       'node_modules/**',
       'test-results/**',
       'playwright-report/**',

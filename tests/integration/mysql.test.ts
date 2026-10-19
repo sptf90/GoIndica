@@ -20,6 +20,7 @@ import { LocalAuth } from '@/lib/auth/service';
 import { hashPassword, verifyPassword } from '@/lib/auth/crypto';
 import { check } from '@/lib/errors';
 import * as reads from '@/lib/database/read-operations';
+import { cleanupExpired } from '@/server/cleanup';
 let fixture: Awaited<ReturnType<typeof testDatabase>>;
 let ana: DatabaseClient, joao: DatabaseClient, maria: DatabaseClient, admin: DatabaseClient;
 const city = 3549805;
@@ -95,7 +96,7 @@ test('indicações privadas, revelação definitiva e pontos sem duplicação so
   );
   expect(
     (
-      await ana.call('edit_request', {
+      await ana.call('edit_request_with_photo', {
         p_request_id: request,
         p_description: 'Texto alterado',
         p_city_id: city,
@@ -193,7 +194,7 @@ test('leituras comuns dispensam transação e continuam exigindo conta e perfil 
     ).toBeInstanceOf(Array);
     expect(connection).not.toHaveBeenCalled();
     await fixture.pool.execute('UPDATE accounts SET blocked=TRUE WHERE id=?', [ids.joao]);
-    for (const name of ['account_state', 'is_admin', 'member_summary'] as const)
+    for (const name of ['account_state', 'member_summary'] as const)
       expect((await joao.call(name)).error?.message).toBe('ACCOUNT_BLOCKED');
   } finally {
     connection.mockRestore();
@@ -336,4 +337,32 @@ test('hashes de senha são verificados sem truncar senhas longas', async () => {
   const hash = await hashPassword(long);
   expect(await verifyPassword(long, hash)).toBe(true);
   expect(await verifyPassword(long + 'x', hash)).toBe(false);
+});
+test('limpeza do cron remove só sessões, tokens e contadores expirados', async () => {
+  const sql = (q: string, v: (string | number)[] = []) => fixture.pool.execute(q, v);
+  for (const [token, offset] of [
+    ['a'.repeat(64), -1],
+    ['b'.repeat(64), 1],
+  ] as const) {
+    await sql(
+      'INSERT INTO sessions(token_hash,user_id,expires_at) VALUES(?,?,DATE_ADD(UTC_TIMESTAMP(3),INTERVAL ? HOUR))',
+      [token, ids.ana, offset],
+    );
+    await sql(
+      "INSERT INTO auth_tokens(token_hash,user_id,purpose,expires_at) VALUES(?,?,'email',DATE_ADD(UTC_TIMESTAMP(3),INTERVAL ? HOUR))",
+      [token, ids.ana, offset],
+    );
+  }
+  await sql(
+    "INSERT INTO rate_limits(actor_id,bucket,window_start,hits) VALUES('limpeza','antigo',DATE_SUB(UTC_TIMESTAMP(3),INTERVAL 3 DAY),1),('limpeza','atual',UTC_TIMESTAMP(3),1)",
+  );
+  const cleaned = await cleanupExpired();
+  expect(cleaned.sessions).toBeGreaterThanOrEqual(1);
+  expect(cleaned.tokens).toBeGreaterThanOrEqual(1);
+  expect(cleaned.rate_limits).toBeGreaterThanOrEqual(1);
+  const [left] = await fixture.pool.query(
+    "SELECT (SELECT COUNT(*) FROM sessions WHERE token_hash IN (?,?)) s, (SELECT COUNT(*) FROM auth_tokens WHERE token_hash IN (?,?)) t, (SELECT GROUP_CONCAT(bucket) FROM rate_limits WHERE actor_id='limpeza') r",
+    ['a'.repeat(64), 'b'.repeat(64), 'a'.repeat(64), 'b'.repeat(64)],
+  );
+  expect(left).toEqual([{ s: 1, t: 1, r: 'atual' }]);
 });

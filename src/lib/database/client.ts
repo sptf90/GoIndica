@@ -3,11 +3,11 @@ import { LocalAuth } from '@/lib/auth/service';
 import { pool, rows, databaseError, type SqlValue } from './pool';
 import { executeOperation } from './operations';
 import type { Database } from './types';
-export type Tables = Database['public']['Tables'];
-export type TableName = keyof Tables;
-export type OperationName = keyof Database['public']['Functions'];
+type Tables = Database['public']['Tables'];
+type TableName = keyof Tables;
+type OperationName = keyof Database['public']['Functions'];
 export type Identity = { id: string; admin: boolean };
-export type Result<T> = { data: T | null; error: { message: string; code?: string } | null };
+type Result<T> = { data: T | null; error: { message: string; code?: string } | null };
 type Split<S extends string> = S extends `${infer A},${infer B}` ? A | Split<B> : S;
 type Selected<T, S extends string> = S extends '*' ? T : Pick<T, Extract<Split<S>, keyof T>>;
 const tableNames: TableName[] = [
@@ -82,7 +82,7 @@ export class DatabaseClient {
     })();
   }
 }
-export class Query<T> implements PromiseLike<Result<T[]>> {
+class Query<T> implements PromiseLike<Result<T[]>> {
   private columns = '*';
   private filters: string[] = [];
   private values: SqlValue[] = [];

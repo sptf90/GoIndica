@@ -1,6 +1,5 @@
 node_modules/
 .next/
-.next-review/
 .env*
 !.env.example
 *.tsbuildinfo
@@ -8,11 +7,3 @@ test-results/
 playwright-report/
 coverage/
 tests/.auth/
-
-.migration-data/
-.hostinger-package/
-goindica-hostinger.tar.gz
-goindica-hostinger.zip
-.hostinger-source/
-goindica-hostinger-fonte.zip
-!.env.hostinger.example

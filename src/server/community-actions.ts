@@ -2,7 +2,6 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { member, administrator } from './auth';
-import { appUrl } from '@/lib/env';
 import { operationalError } from '@/lib/observability';
 import { check, safeError } from '@/lib/errors';
 import { uuid, cityId, emailSchema, newPasswordSchema } from '@/lib/validation/schemas';
@@ -137,12 +136,7 @@ export async function changeEmail(_s: ActionState, f: FormData): Promise<ActionS
   try {
     const { email } = emailSchema.parse({ email: value(f, 'email') });
     await verifyPassword(db, user, f);
-    check(
-      await db.auth.updateUser(
-        { email },
-        { emailRedirectTo: appUrl() + '/auth/callback?next=%2Fconta' },
-      ),
-    );
+    check(await db.auth.updateUser({ email }));
     return {
       success:
         'Confirme o novo endereço pelo link enviado. Você também receberá um aviso no e-mail atual.',

@@ -33,13 +33,9 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    ".next-review/types/**/*.ts",
-    ".next-review/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules",
-    ".hostinger-source",
-    ".hostinger-package"
+    "node_modules"
   ]
 }

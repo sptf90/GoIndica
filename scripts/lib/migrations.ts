@@ -38,7 +38,7 @@ export async function migrate(db: Connection) {
     await db.query("SELECT RELEASE_LOCK('goindica-migrations')");
   }
 }
-export function statements(sql: string) {
+function statements(sql: string) {
   const output: string[] = [];
   let start = 0,
     delimiter = ';';

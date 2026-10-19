@@ -8,8 +8,8 @@ import { appUrl, secureCookies } from '@/lib/env';
 import { sendMail } from '@/lib/mail/smtp';
 import { confirmationEmail } from '@/lib/mail/confirmation';
 import { returnPath } from '@/lib/return-path';
-export const SESSION_COOKIE = 'goindica_session';
-export interface LocalUser {
+const SESSION_COOKIE = 'goindica_session';
+interface LocalUser {
   id: string;
   email: string;
   deleted_at?: string | null;
@@ -157,11 +157,11 @@ export class LocalAuth {
   async signUp({
     email,
     password,
-    options,
+    next = '/app',
   }: {
     email: string;
     password: string;
-    options?: { emailRedirectTo?: string };
+    next?: string;
   }) {
     try {
       email = email.trim().toLowerCase();
@@ -184,20 +184,15 @@ export class LocalAuth {
           );
         });
       }
-      if (!existing || (!existing.email_confirmed_at && !existing.deleted_at)) {
-        const next = options?.emailRedirectTo
-          ? new URL(options.emailRedirectTo).searchParams.get('next') || '/app'
-          : '/app';
+      if (!existing || (!existing.email_confirmed_at && !existing.deleted_at))
         await this.issue(id!, 'email', email, next);
-      }
       return { data: { user: null, session: null }, error: null };
     } catch (error) {
       return { data: { user: null, session: null }, error: authFailure(error) };
     }
   }
-  async resetPasswordForEmail(email: string, options?: { redirectTo?: string }) {
+  async resetPasswordForEmail(email: string) {
     try {
-      void options;
       email = email.trim().toLowerCase();
       await this.limited(email, 'recovery', 5);
       const [user] = await rows<UserRow>(
@@ -241,12 +236,8 @@ export class LocalAuth {
       return { data: {}, error: authFailure(error) };
     }
   }
-  async updateUser(
-    input: { password?: string; email?: string },
-    options?: { emailRedirectTo?: string },
-  ) {
+  async updateUser(input: { password?: string; email?: string }) {
     try {
-      void options;
       const {
         data: { user },
       } = await this.getUser();

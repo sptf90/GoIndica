@@ -18,7 +18,7 @@ jobs:
       - run: docker pull mariadb:10.11
       - run: TEST_MYSQL_IMAGE=mariadb:10.11 npm test
       - run: npm run build
-      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npx playwright install --with-deps chromium
       - run: TEST_MYSQL_IMAGE=mariadb:10.11 npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()

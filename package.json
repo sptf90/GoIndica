@@ -16,15 +16,10 @@
     "test:integration": "vitest run tests/integration",
     "test:e2e": "playwright test",
     "check": "npm run lint && npm run typecheck && npm test && npm run build",
-    "db:test": "npm run test:integration",
     "banco:migrar": "tsx scripts/migrate-mysql.ts",
     "cities:update": "tsx scripts/import-cities.ts",
     "banco:admin": "tsx scripts/promote-admin.ts",
-    "hostinger:pacote": "node scripts/package-hostinger.mjs",
-    "cron:lembretes": "tsx scripts/cron-reminders.ts",
-    "hostinger:fonte": "node scripts/package-source.mjs",
-    "banco:sql": "tsx scripts/export-mysql-sql.ts",
-    "banco:limpar": "tsx scripts/cleanup-mysql.ts"
+    "cron:lembretes": "tsx scripts/cron-reminders.ts"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",

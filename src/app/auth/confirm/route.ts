@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { database } from '@/lib/database/server';
 import { appUrl, configured } from '@/lib/env';
-import { callbackDestination } from '@/lib/return-path';
+import { returnPath } from '@/lib/return-path';
 
 // Only these two purposes are accepted; no caller-controlled redirect URL is used.
 export async function GET(request: NextRequest) {
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
           appUrl() +
             (type === 'recovery'
               ? '/nova-senha'
-              : callbackDestination(request.nextUrl.searchParams.get('next'), appUrl())),
+              : returnPath(request.nextUrl.searchParams.get('next'))),
         );
       }
     } catch {

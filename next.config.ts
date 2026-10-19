@@ -1,7 +1,5 @@
 import type { NextConfig } from 'next';
 const config: NextConfig = {
-  // Permite validar um build sem sobrescrever o servidor de desenvolvimento em execução.
-  distDir: process.env.NEXT_DIST_DIR || '.next',
   poweredByHeader: false,
   experimental: { serverActions: { bodySizeLimit: '6mb' } },
   output: 'standalone',

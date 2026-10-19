@@ -29,14 +29,3 @@ export function accessLink(path: '/entrar' | '/cadastro' | '/onboarding', destin
   const next = returnPath(destination);
   return path + (next === '/app' ? '' : '?next=' + encodeURIComponent(next));
 }
-
-export function callbackDestination(value: unknown, origin: string) {
-  if (typeof value === 'string' && value.startsWith(origin + '/auth/callback?')) {
-    try {
-      return returnPath(new URL(value).searchParams.get('next'));
-    } catch {
-      return '/app';
-    }
-  }
-  return returnPath(value);
-}
