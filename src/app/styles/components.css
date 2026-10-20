@@ -621,6 +621,10 @@
   object-fit: cover;
   background: var(--orange-tint);
 }
+.avatar-link {
+  display: flex;
+  flex-shrink: 0;
+}
 .avatar-letter {
   display: flex;
   align-items: center;

@@ -3,6 +3,7 @@ import type {
   Json,
   AccountState,
   ProfileStats,
+  PublicProfile,
   Metrics,
   MemberSummary,
   Operations,
@@ -77,6 +78,7 @@ export type Database = {
           username: string;
           display_name: string;
           home_city_id: number;
+          photo_updated_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -185,8 +187,11 @@ export type Database = {
         Args: { p_search?: string; p_offset?: number };
         Returns: {
           id: string;
+          kind: 'member' | 'company';
           username: string | null;
           display_name: string | null;
+          company_name: string | null;
+          cnpj: string | null;
           blocked: boolean;
           created_at: string;
         }[];
@@ -213,12 +218,27 @@ export type Database = {
         Args: { p_city_id: number; p_offset?: number };
         Returns: {
           position: number;
+          id: string;
           username: string;
           display_name: string;
+          photo_updated_at: string | null;
           points: number;
           confirmations: number;
         }[];
       };
+      public_city_ranking: {
+        Args: { p_city_id: number };
+        Returns: { position: number; points: number }[];
+      };
+      public_profile: {
+        Args: { p_username: string; p_request_id?: string; p_ranking_city_id?: number };
+        Returns: PublicProfile | null;
+      };
+      profile_photo: {
+        Args: { p_profile_id: string; p_request_id?: string; p_ranking_city_id?: number };
+        Returns: string | null;
+      };
+      username_available: { Args: { p_username: string }; Returns: boolean };
       claim_email_jobs: {
         Args: { p_worker: string; p_limit?: number };
         Returns: { id: string; user_id: string; request_id: string }[];
@@ -265,7 +285,7 @@ export type Database = {
       member_summary: { Args: Record<string, never>; Returns: MemberSummary };
       prepare_account_closure: { Args: { p_id: string }; Returns: string };
       prepare_reminders: { Args: Record<string, never>; Returns: number };
-      profile_stats: { Args: { p_username: string }; Returns: ProfileStats };
+      profile_stats: { Args: Record<string, never>; Returns: ProfileStats };
       reconfirm_discovery: { Args: { p_request_id: string }; Returns: undefined };
       record_analytics: {
         Args: { p_event: string; p_fingerprint: string };
@@ -299,6 +319,8 @@ export type Database = {
           p_username: string;
           p_display_name: string;
           p_city_id: number;
+          p_photo?: string | null;
+          p_remove_photo?: boolean;
         };
         Returns: undefined;
       };

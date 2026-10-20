@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isValidCnpj, normalizeCnpj } from '@/lib/cnpj';
 export const uuid = z.uuid('Identificador inválido.');
 export const cityId = z.coerce.number().int().positive('Selecione uma cidade.');
 export const emailSchema = z.object({
@@ -21,6 +22,27 @@ export const newPasswordSchema = z
   });
 export const emailSignupSchema = emailSchema
   .extend(newPasswordSchema.shape)
+  .refine((input) => input.password === input.passwordConfirmation, {
+    message: 'As senhas precisam ser iguais.',
+    path: ['passwordConfirmation'],
+  });
+export const companyNameSchema = z
+  .string()
+  .trim()
+  .min(2, 'Informe o nome de apresentação.')
+  .max(80, 'Use até 80 caracteres.');
+export const companySignupSchema = emailSchema
+  .extend(newPasswordSchema.shape)
+  .extend({
+    cnpj: z
+      .string()
+      .transform(normalizeCnpj)
+      .refine(isValidCnpj, 'Confira o CNPJ: os dígitos verificadores não conferem.'),
+    displayName: companyNameSchema,
+    declaration: z.literal('on', {
+      error: 'Confirme que você representa este estabelecimento.',
+    }),
+  })
   .refine((input) => input.password === input.passwordConfirmation, {
     message: 'As senhas precisam ser iguais.',
     path: ['passwordConfirmation'],

@@ -4,6 +4,7 @@ import { member } from '@/server/auth';
 import { check } from '@/lib/errors';
 import { CitySelector } from '@/components/city-selector';
 import { Empty, Avatar, Pagination } from '@/components/ui';
+import { profilePhotoUrl, profileUrl } from '@/lib/profile-links';
 export const metadata = { title: 'Ranking da cidade' };
 export default async function Ranking({
   searchParams,
@@ -43,9 +44,19 @@ export default async function Ranking({
           {entries.map((e) => (
             <li className="ranking-row" key={e.username}>
               <span className="rank-number">{e.position}</span>
-              <Avatar name={e.display_name} />
+              <Link
+                className="avatar-link"
+                href={profileUrl(e.username, { rankingCity: city.id })}
+                tabIndex={-1}
+                aria-hidden="true"
+              >
+                <Avatar
+                  name={e.display_name}
+                  src={profilePhotoUrl(e, { rankingCity: city.id })}
+                />
+              </Link>
               <div>
-                <Link href={'/perfil/' + e.username}>
+                <Link href={profileUrl(e.username, { rankingCity: city.id })}>
                   <strong>{e.display_name}</strong>
                 </Link>
                 <p className="hint">

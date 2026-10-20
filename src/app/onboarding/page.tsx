@@ -11,7 +11,8 @@ export default async function Onboarding({
   searchParams: Promise<{ next?: string }>;
 }) {
   const next = returnPath((await searchParams).next);
-  const { profile, user } = await session();
+  const { profile, user, kind } = await session();
+  if (kind === 'company') redirect('/empresa');
   if (profile) redirect(next);
   const name = typeof user.user_metadata.full_name === 'string' ? user.user_metadata.full_name : '';
   return (
@@ -27,7 +28,7 @@ export default async function Onboarding({
             <p className="eyebrow">Só falta se apresentar</p>
             <h1>Vamos nos conhecer?</h1>
             <p className="muted">
-              Seu e-mail fica privado. A comunidade vê seu nome e nome de usuário.
+              Seu e-mail fica privado. A comunidade vê seu nome, nome de usuário, foto e cidade.
             </p>
             <Avatar name={name || 'Você'} size={64} />
             <ProfileForm defaultName={name} next={next} />

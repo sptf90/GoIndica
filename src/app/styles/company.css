@@ -1,0 +1,168 @@
+/* Business accounts: signup by CNPJ and the sponsor panel. */
+.account-kind {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 28px;
+  background: var(--surface-subtle);
+  border-radius: 12px;
+  font-size: 14px;
+}
+.account-kind a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  color: var(--muted);
+  text-align: center;
+}
+.account-kind a[aria-current='page'] {
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgb(41 35 31 / 12%);
+}
+.company-retry {
+  justify-self: start;
+  margin-top: 4px;
+}
+.company-card {
+  margin-top: 20px;
+  padding: 18px 20px;
+  border: 1px solid var(--orange-line);
+  border-radius: 14px;
+  background: var(--orange-pale);
+  overflow-wrap: anywhere;
+}
+.company-card.inactive {
+  border-color: #e7b9bf;
+  background: #fcecef;
+}
+.company-card-source {
+  margin-bottom: 6px;
+  color: var(--accent-dark);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.company-card.inactive .company-card-source {
+  color: var(--danger);
+}
+.company-card > strong {
+  display: block;
+  font-size: 16px;
+  line-height: 1.35;
+}
+.company-card dl,
+.company-data {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 20px;
+  margin: 14px 0 0;
+}
+.company-card dt,
+.company-data dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+.company-card dd,
+.company-data dd {
+  margin: 2px 0 0;
+  font-size: 14px;
+}
+.company-card > .hint {
+  margin-top: 14px;
+}
+.company-access {
+  margin: 28px 0 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.company-access legend {
+  margin-bottom: 4px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.company-page > .muted {
+  margin-bottom: 12px;
+  overflow-wrap: anywhere;
+}
+.company-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--wash);
+  color: var(--accent-dark);
+  font-size: 13px;
+}
+.company-badge.pending {
+  background: var(--surface-subtle);
+  color: var(--ink-soft);
+}
+.company-section {
+  margin-top: 36px;
+  padding-top: 28px;
+  border-top: 1px solid var(--line);
+}
+.company-section h2 {
+  margin: 0 0 12px;
+  font-size: 20px;
+}
+.company-section > .hint {
+  margin-top: 16px;
+}
+.company-section .compact {
+  margin-top: 16px;
+}
+.company-refresh > .button {
+  --button-bg: var(--surface);
+  --button-ink: var(--ink);
+  --button-border: var(--line-strong);
+  --button-hover-bg: var(--surface-subtle);
+  --button-hover-ink: var(--accent-dark);
+  --button-hover-border: var(--line-strong);
+  --button-active-bg: var(--orange-tint);
+}
+.company-rules {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.company-data {
+  margin-top: 0;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow-wrap: anywhere;
+}
+.company-password {
+  margin-top: 12px;
+}
+.company-password > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 14px;
+}
+@media (max-width: 480px) {
+  .company-card dl,
+  .company-data {
+    grid-template-columns: 1fr;
+  }
+}

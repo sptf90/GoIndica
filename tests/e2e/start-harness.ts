@@ -75,6 +75,35 @@ const server = createServer((req, res) => {
       });
     return;
   }
+  const provider = url.pathname.match(/^\/(cnpj|cnpj-alt)\/(\w+)$/);
+  if (provider) {
+    const [, source, cnpj] = provider;
+    const company = (
+      (source === 'cnpj'
+        ? {
+            '19131243000197': ['OPEN KNOWLEDGE BRASIL', 'REDE PELO CONHECIMENTO LIVRE', 'ATIVA'],
+            '00000000000272': ['EMPRESA ENCERRADA LTDA', '', 'BAIXADA'],
+          }
+        : { '11444777000161': ['MERCADO RESERVA LTDA', '', 'ATIVA'] }) as Record<string, string[]>
+    )[cnpj];
+    res.setHeader('Content-Type', 'application/json');
+    if (cnpj === '12ABC34501DE35') res.statusCode = 404;
+    else if (!company) res.statusCode = source === 'cnpj' ? 403 : 502;
+    res.end(
+      JSON.stringify(
+        company
+          ? {
+              razao_social: company[0],
+              nome_fantasia: company[1],
+              descricao_situacao_cadastral: company[2],
+              codigo_municipio_ibge: 3549805,
+              descricao_identificador_matriz_filial: 'MATRIZ',
+            }
+          : { message: 'indisponível' },
+      ),
+    );
+    return;
+  }
   if (url.pathname === '/test-mail') {
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify(mail.get(url.searchParams.get('email') || '') || null));
@@ -84,16 +113,7 @@ const server = createServer((req, res) => {
   res.end();
 });
 await new Promise<void>((resolve) => server.listen(3456, '127.0.0.1', resolve));
-const usernames = [
-  'ana',
-  'joao',
-  'admin',
-  'bruno',
-  'lia',
-  'paula',
-  'diego',
-  'rita',
-];
+const usernames = ['ana', 'joao', 'admin', 'bruno', 'lia', 'paula', 'diego', 'rita', 'carla'];
 const hash = await hashPassword(password);
 for (const name of usernames) {
   const id = randomUUID();
@@ -137,6 +157,7 @@ const child = spawn(process.execPath, ['scripts/start.mjs'], {
     SMTP_CA_FILE: join(directory, 'cert.pem'),
     EMAIL_FROM: 'GoIndica <mail@test.invalid>',
     CRON_SECRET: 'local-fixture-cron-secret-12345678901234567890',
+    CNPJ_API_URL: 'http://localhost:3456/cnpj/,http://localhost:3456/cnpj-alt/',
   },
 });
 let closing = false;

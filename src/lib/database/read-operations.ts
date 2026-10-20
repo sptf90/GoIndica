@@ -2,9 +2,27 @@ import 'server-only';
 import { rows, type Executor, type SqlValue, type SqlRow } from './pool';
 import type { Identity } from './client';
 import type { LocalRequest, Metrics } from '@/lib/types';
+import { reputationLabel } from '@/lib/reputation';
+import { normalizeCnpj } from '@/lib/cnpj';
 export type Args = Record<string, unknown>;
 export const int = (value: unknown, max = 100000) => Math.max(0, Math.min(max, Number(value) || 0));
 export const text = (value: unknown) => (typeof value === 'string' ? value : '');
+// A profile is only reachable from content the viewer may already see: a visible request it
+// authored, its indication on the viewer's request after the reveal, or the city ranking.
+function profileContext(p: Args, actor: Identity | null) {
+  const city = int(p.p_ranking_city_id, 9999999);
+  return {
+    sql: `(p.id=? OR ?=TRUE OR EXISTS(SELECT 1 FROM requests r WHERE r.id=? AND r.hidden_at IS NULL AND (r.requester_id=p.id OR (r.requester_id=? AND r.status<>'OPEN' AND EXISTS(SELECT 1 FROM indications i WHERE i.request_id=r.id AND i.user_id=p.id AND i.hidden_at IS NULL)))) OR (?>0 AND EXISTS(SELECT 1 FROM reward_events e WHERE e.user_id=p.id AND e.city_id=?)))`,
+    values: [
+      actor?.id || null,
+      actor?.admin || false,
+      text(p.p_request_id),
+      actor?.id || null,
+      city,
+      city,
+    ] as SqlValue[],
+  };
+}
 export async function readOperation(
   db: Executor,
   name: string,
@@ -56,24 +74,74 @@ export async function readOperation(
       break;
     }
     case 'profile_stats': {
+      // Detailed counts belong to the account owner only; other people see the reputation label.
       const [row] = await rows(
         db,
         `SELECT (SELECT COALESCE(SUM(points),0) FROM reward_events WHERE user_id=p.id) AS points,
       (SELECT COUNT(*) FROM reward_events WHERE user_id=p.id) AS confirmations,
       (SELECT COUNT(*) FROM requests WHERE requester_id=p.id AND hidden_at IS NULL) AS requests,
       (SELECT COUNT(*) FROM indications i JOIN requests r ON r.id=i.request_id WHERE i.user_id=p.id AND i.hidden_at IS NULL AND r.hidden_at IS NULL) AS indications
-      FROM profiles p JOIN accounts a ON a.id=p.id WHERE p.username=? AND a.blocked=FALSE`,
-        [text(p.p_username)],
+      FROM profiles p WHERE p.id=? AND ${access}`,
+        [id, ...accessValues],
       );
-      value = row || { points: 0, confirmations: 0, requests: 0, indications: 0 };
+      if (!row) throw new Error('AUTH_REQUIRED');
+      value = row;
+      break;
+    }
+    case 'public_profile': {
+      const context = profileContext(p, actor);
+      const [row] = await rows<{
+        id: string;
+        username: string;
+        display_name: string;
+        home_city_id: number;
+        photo_updated_at: string | null;
+        confirmations: number;
+      }>(
+        db,
+        `SELECT p.id,p.username,p.display_name,p.home_city_id,p.photo_updated_at,(SELECT COUNT(*) FROM reward_events WHERE user_id=p.id) AS confirmations
+      FROM profiles p JOIN accounts a ON a.id=p.id WHERE p.username=? AND (a.blocked=FALSE OR ?=TRUE) AND ${context.sql} AND ${access}`,
+        [text(p.p_username), admin, ...context.values, ...accessValues],
+      );
+      value = row
+        ? {
+            id: row.id,
+            username: row.username,
+            display_name: row.display_name,
+            home_city_id: row.home_city_id,
+            photo_updated_at: row.photo_updated_at,
+            reputation: reputationLabel(Number(row.confirmations)),
+          }
+        : null;
+      break;
+    }
+    case 'profile_photo': {
+      const context = profileContext(p, actor);
+      const [row] = await rows<{ jpeg: Buffer }>(
+        db,
+        `SELECT ph.jpeg FROM profile_photos ph JOIN profiles p ON p.id=ph.profile_id JOIN accounts a ON a.id=p.id
+      WHERE p.id=? AND (a.blocked=FALSE OR ?=TRUE) AND ${context.sql} AND ${access}`,
+        [text(p.p_profile_id), admin, ...context.values, ...accessValues],
+      );
+      value = row?.jpeg?.toString('base64') || null;
       break;
     }
     case 'city_ranking':
       value = await rows(
         db,
         `SELECT ROW_NUMBER() OVER(ORDER BY SUM(e.points) DESC,COUNT(*) DESC,MIN(e.created_at),p.id) AS position,
-      p.username,p.display_name,SUM(e.points) AS points,COUNT(*) AS confirmations FROM reward_events e JOIN profiles p ON p.id=e.user_id JOIN accounts a ON a.id=p.id
-      WHERE e.city_id=? AND a.blocked=FALSE GROUP BY p.id,p.username,p.display_name ORDER BY position LIMIT 30 OFFSET ${int(p.p_offset)}`,
+      p.id,p.username,p.display_name,p.photo_updated_at,SUM(e.points) AS points,COUNT(*) AS confirmations FROM reward_events e JOIN profiles p ON p.id=e.user_id JOIN accounts a ON a.id=p.id
+      WHERE e.city_id=? AND a.blocked=FALSE AND ${access} GROUP BY p.id,p.username,p.display_name,p.photo_updated_at ORDER BY position LIMIT 30 OFFSET ${int(p.p_offset)}`,
+        [Number(p.p_city_id), ...accessValues],
+      );
+      break;
+    case 'public_city_ranking':
+      // Anonymous landing preview: positions and points only, never who earned them.
+      value = await rows(
+        db,
+        `SELECT ROW_NUMBER() OVER(ORDER BY SUM(e.points) DESC,COUNT(*) DESC,MIN(e.created_at),e.user_id) AS position,
+      SUM(e.points) AS points FROM reward_events e JOIN accounts a ON a.id=e.user_id
+      WHERE e.city_id=? AND a.blocked=FALSE GROUP BY e.user_id ORDER BY position LIMIT 3`,
         [Number(p.p_city_id)],
       );
       break;
@@ -131,11 +199,14 @@ export async function readOperation(
       if (!admin) throw new Error('NOT_ALLOWED');
       value = await rows(
         db,
-        `SELECT a.id,p.username,p.display_name,a.blocked,a.created_at FROM accounts a LEFT JOIN profiles p ON p.id=a.id WHERE (?='' OR p.username LIKE ? OR p.display_name LIKE ?) ORDER BY a.created_at DESC LIMIT 30 OFFSET ${int(p.p_offset)}`,
+        `SELECT a.id,a.kind,p.username,p.display_name,c.display_name AS company_name,c.cnpj,a.blocked,a.created_at FROM accounts a
+        LEFT JOIN profiles p ON p.id=a.id LEFT JOIN companies c ON c.account_id=a.id
+        WHERE (?='' OR p.username LIKE ? OR p.display_name LIKE ? OR c.display_name LIKE ? OR c.legal_name LIKE ? OR c.cnpj=?)
+        ORDER BY a.created_at DESC LIMIT 30 OFFSET ${int(p.p_offset)}`,
         [
           text(p.p_search),
-          `%${text(p.p_search).slice(0, 60)}%`,
-          `%${text(p.p_search).slice(0, 60)}%`,
+          ...Array(4).fill(`%${text(p.p_search).slice(0, 60)}%`),
+          normalizeCnpj(text(p.p_search)),
         ],
       );
       break;

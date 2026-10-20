@@ -7,12 +7,14 @@ import { check } from '@/lib/errors';
 import { ProfileForm } from '@/components/profile-form';
 import { Avatar } from '@/components/ui';
 import { logout } from '@/server/actions';
+import { profilePhotoUrl } from '@/lib/profile-links';
+import { reputationLabel } from '@/lib/reputation';
 export const metadata = { title: 'Meu perfil' };
 export default async function MyProfile() {
   const { db, profile, admin } = await member();
   const [cityResult, statsResult] = await Promise.all([
     db.from('cities').select('*').eq('id', profile.home_city_id).single(),
-    db.call('profile_stats', { p_username: profile.username }),
+    db.call('profile_stats'),
   ]);
   const summary = await memberSummary();
   const city = check(cityResult),
@@ -20,7 +22,7 @@ export default async function MyProfile() {
   return (
     <div className="form-page profile-page">
       <div className="profile-heading">
-        <Avatar name={profile.display_name} size={72} />
+        <Avatar name={profile.display_name} size={72} src={profilePhotoUrl(profile)} />
         <div>
           <p className="eyebrow">Seu lugar na comunidade</p>
           <h1>{profile.display_name}</h1>
@@ -44,15 +46,11 @@ export default async function MyProfile() {
           <strong>{stats.confirmations}</strong> indicações confirmadas
         </p>
       </div>
-      {stats.confirmations > 0 ? (
-        <p className="recognition">
-          {stats.confirmations >= 50
-            ? 'Referência da comunidade · 50 confirmações'
-            : stats.confirmations >= 10
-              ? 'Ajuda frequente · 10 confirmações'
-              : 'Primeira indicação confirmada'}
-        </p>
-      ) : null}
+      <p className="recognition">{reputationLabel(stats.confirmations)}</p>
+      <p className="hint">
+        Outras pessoas veem apenas seu nome, nome de usuário, foto, cidade e este selo. Os números acima
+        ficam visíveis só para você.
+      </p>
       <ProfileMenu pending={summary.pending} username={profile.username} admin={admin} />
       <details className="profile-editor">
         <summary>

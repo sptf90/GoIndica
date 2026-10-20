@@ -8,6 +8,7 @@ import { appUrl, secureCookies } from '@/lib/env';
 import { sendMail } from '@/lib/mail/smtp';
 import { confirmationEmail } from '@/lib/mail/confirmation';
 import { returnPath } from '@/lib/return-path';
+import { saveNewCompany, type NewCompany } from '@/lib/company';
 const SESSION_COOKIE = 'goindica_session';
 interface LocalUser {
   id: string;
@@ -158,15 +159,21 @@ export class LocalAuth {
     email,
     password,
     next = '/app',
+    company,
   }: {
     email: string;
     password: string;
     next?: string;
+    company?: NewCompany;
   }) {
     try {
       email = email.trim().toLowerCase();
       await this.limited(email, 'signup', 5);
-      const [existing] = await rows<UserRow>(pool(), 'SELECT * FROM users WHERE email=?', [email]);
+      const [existing] = await rows<UserRow & { kind: string }>(
+        pool(),
+        'SELECT u.*,a.kind FROM users u LEFT JOIN accounts a ON a.id=u.id WHERE u.email=?',
+        [email],
+      );
       let id = existing?.id;
       if (!existing) {
         id = randomUUID();
@@ -177,13 +184,24 @@ export class LocalAuth {
             email,
             hashed,
           ]);
-          await db.execute('INSERT INTO accounts(id) VALUES(?)', [id]);
+          await db.execute('INSERT INTO accounts(id,kind) VALUES(?,?)', [
+            id,
+            company ? 'company' : 'member',
+          ]);
+          if (company) await saveNewCompany(db, id!, company);
           await db.execute(
-            "INSERT INTO audit_logs(id,actor_id,event_type,entity_type,entity_id,metadata) VALUES(?,?,'SIGNUP','ACCOUNT',?,'{}')",
-            [randomUUID(), id, id],
+            "INSERT INTO audit_logs(id,actor_id,event_type,entity_type,entity_id,metadata) VALUES(?,?,'SIGNUP','ACCOUNT',?,?)",
+            [randomUUID(), id, id, JSON.stringify(company ? { kind: 'company' } : {})],
           );
         });
-      }
+      } else if (
+        company &&
+        existing.kind === 'company' &&
+        !existing.email_confirmed_at &&
+        !existing.deleted_at
+      )
+        // A pending company signup may be corrected (CNPJ, name) before the email is confirmed.
+        await transaction((db) => saveNewCompany(db, existing.id, company));
       if (!existing || (!existing.email_confirmed_at && !existing.deleted_at))
         await this.issue(id!, 'email', email, next);
       return { data: { user: null, session: null }, error: null };

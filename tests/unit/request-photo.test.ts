@@ -1,7 +1,24 @@
 import { test, expect } from 'vitest';
 import sharp from 'sharp';
 import { randomBytes } from 'node:crypto';
-import { prepareRequestPhoto, maximumPhotoBytes } from '@/lib/request-photo';
+import { prepareProfilePhoto, prepareRequestPhoto, maximumPhotoBytes } from '@/lib/request-photo';
+
+test('foto de perfil vira JPEG quadrado de 400 px sem metadados', async () => {
+  const source = await sharp({
+    create: { width: 1600, height: 900, channels: 3, background: '#ec5e27' },
+  })
+    .png()
+    .withMetadata({ orientation: 6 })
+    .toBuffer();
+  const photo = await prepareProfilePhoto(new File([source], 'eu.png', { type: 'image/png' }));
+  const metadata = await sharp(Buffer.from(photo!, 'base64')).metadata();
+  expect([metadata.format, metadata.width, metadata.height]).toEqual(['jpeg', 400, 400]);
+  expect(metadata.exif).toBeUndefined();
+  expect(await prepareProfilePhoto(new File([], ''))).toBeNull();
+  await expect(
+    prepareProfilePhoto(new File(['<svg/>'], 'eu.svg', { type: 'image/svg+xml' })),
+  ).rejects.toThrow('INVALID_PHOTO');
+});
 
 test('processa foto real, limita dimensões e remove metadados', async () => {
   const source = await sharp({

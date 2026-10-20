@@ -27,6 +27,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         <Brand />
         <p>O conhecimento da cidade, compartilhado.</p>
         <nav aria-label="Informações legais">
+          <Link href="/cadastro?tipo=empresa">Para empresas</Link>
           <Link href="/privacidade">Privacidade</Link>
           <Link href="/termos">Termos de uso</Link>
         </nav>

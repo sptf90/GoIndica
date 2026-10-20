@@ -1,5 +1,5 @@
 const memberPath =
-  /^\/(?:app|atividades|ranking|perfil(?:\/[a-z][a-z0-9_]{2,23})?|notificacoes|salvos|conta|preferencias|pedidos\/(?:novo|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}(?:\/(?:editar|indicar))?))$/;
+  /^\/(?:app|empresa|atividades|ranking|perfil(?:\/[a-z][a-z0-9_]{2,23})?|notificacoes|salvos|conta|preferencias|pedidos\/(?:novo|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}(?:\/(?:editar|indicar))?))$/;
 
 export function returnPath(value: unknown): string {
   if (

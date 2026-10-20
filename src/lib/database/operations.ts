@@ -15,8 +15,13 @@ const serviceOnly = new Set([
   'email_job_eligible',
   'finish_email_job',
 ]);
-const publicCalls = new Set(['city_ranking', 'profile_stats']);
-const withoutProfile = new Set(['account_state', 'save_profile', 'log_login']);
+const publicCalls = new Set(['public_city_ranking']);
+const withoutProfile = new Set([
+  'account_state',
+  'save_profile',
+  'log_login',
+  'username_available',
+]);
 // These reads recheck account/profile access inside their data SELECT. They need no write transaction.
 const simpleReads = new Set([
   'member_summary',
@@ -24,6 +29,10 @@ const simpleReads = new Set([
   'search_unanswered_requests',
   'request_editable',
   'request_photo',
+  'profile_stats',
+  'public_profile',
+  'profile_photo',
+  'city_ranking',
 ]);
 export async function executeOperation(
   client: DatabaseClient,
@@ -43,14 +52,16 @@ export async function executeOperation(
       blocked: boolean;
       is_admin: boolean;
       onboarded: boolean;
+      kind: 'member' | 'company';
     }>(
       pool(),
-      'SELECT a.blocked,a.is_admin,EXISTS(SELECT 1 FROM profiles p WHERE p.id=a.id) AS onboarded FROM accounts a WHERE a.id=?',
+      'SELECT a.blocked,a.is_admin,a.kind,EXISTS(SELECT 1 FROM profiles p WHERE p.id=a.id) AS onboarded FROM accounts a WHERE a.id=?',
       [actor.id],
     );
     if (!account || account.blocked) throw new Error('ACCOUNT_BLOCKED');
     actor.admin = account.is_admin;
-    if (name === 'account_state') return { admin: account.is_admin, onboarded: account.onboarded };
+    if (name === 'account_state')
+      return { admin: account.is_admin, onboarded: account.onboarded, kind: account.kind };
     if (!account.onboarded) throw new Error('ONBOARDING_REQUIRED');
     return (await readOperation(pool(), name, p as Args, actor)).value;
   }
@@ -142,6 +153,22 @@ async function photo(db: PoolConnection, id: string, value: unknown, remove: unk
     await db.execute('UPDATE requests SET has_photo=FALSE,photo_updated_at=NULL WHERE id=?', [id]);
   }
 }
+async function profilePhoto(db: PoolConnection, id: string, value: unknown, remove: unknown) {
+  if (value) {
+    const jpeg = Buffer.from(text(value), 'base64');
+    if (jpeg.length > 524288) throw new Error('PHOTO_TOO_LARGE');
+    if (jpeg.length < 4 || jpeg.subarray(0, 3).toString('hex') !== 'ffd8ff')
+      throw new Error('INVALID_PHOTO');
+    await db.execute(
+      'INSERT INTO profile_photos(profile_id,jpeg) VALUES(?,?) ON DUPLICATE KEY UPDATE jpeg=VALUES(jpeg),updated_at=UTC_TIMESTAMP(3)',
+      [id, jpeg],
+    );
+    await db.execute('UPDATE profiles SET photo_updated_at=UTC_TIMESTAMP(3) WHERE id=?', [id]);
+  } else if (remove) {
+    await db.execute('DELETE FROM profile_photos WHERE profile_id=?', [id]);
+    await db.execute('UPDATE profiles SET photo_updated_at=NULL WHERE id=?', [id]);
+  }
+}
 async function topics(db: PoolConnection, r: LocalRequest) {
   const alerts = await rows<{ user_id: string; normalized_term: string }>(
     db,
@@ -171,18 +198,34 @@ async function mutate(
         throw new Error('INVALID_INPUT');
       await rate(db, id, 'profile', 20, 3600);
       const existing = (await rows(db, 'SELECT id FROM profiles WHERE id=?', [id])).length;
-      if (existing)
-        await db.execute(
-          'UPDATE profiles SET username=?,display_name=?,home_city_id=?,updated_at=UTC_TIMESTAMP(3) WHERE id=?',
-          [username, display, Number(p.p_city_id), id],
-        );
-      else
-        await db.execute(
-          'INSERT INTO profiles(id,username,display_name,home_city_id) VALUES(?,?,?,?)',
-          [id, username, display, Number(p.p_city_id)],
-        );
+      try {
+        if (existing)
+          await db.execute(
+            'UPDATE profiles SET username=?,display_name=?,home_city_id=?,updated_at=UTC_TIMESTAMP(3) WHERE id=?',
+            [username, display, Number(p.p_city_id), id],
+          );
+        else
+          await db.execute(
+            'INSERT INTO profiles(id,username,display_name,home_city_id) VALUES(?,?,?,?)',
+            [id, username, display, Number(p.p_city_id)],
+          );
+      } catch (error) {
+        // The UNIQUE index is the authority: concurrent saves of one name fail here, not in the UI.
+        const code = error && typeof error === 'object' && 'code' in error ? error.code : '';
+        if (code === 'ER_DUP_ENTRY' && /username/.test(String((error as Error).message)))
+          throw new Error('USERNAME_TAKEN');
+        throw error;
+      }
+      await profilePhoto(db, id, p.p_photo, p.p_remove_photo);
       await log(db, id, existing ? 'PROFILE_UPDATED' : 'ONBOARDING_COMPLETED', 'PROFILE', id);
       return;
+    }
+    case 'username_available': {
+      const username = text(p.p_username).trim().toLowerCase();
+      if (!/^[a-z][a-z0-9_]{2,23}$/.test(username)) throw new Error('INVALID_INPUT');
+      await rate(db, id, 'username_check', 30, 60);
+      return !(await rows(db, 'SELECT id FROM profiles WHERE username=? AND id<>?', [username, id]))
+        .length;
     }
     case 'log_login':
       await log(db, id, 'LOGIN', 'ACCOUNT', id);
@@ -270,7 +313,10 @@ async function mutate(
         [r.id],
       );
       await log(db, id, 'INDICATION_CREATED', 'INDICATION', indicationId);
-      const [signals] = await rows<{ indications_last_hour: number; recent_account: number }>(
+      const [signals] = await rows<{
+        indications_last_hour: number;
+        recent_account: number;
+      }>(
         db,
         'SELECT (SELECT COUNT(*) FROM indications WHERE user_id=? AND created_at>DATE_SUB(UTC_TIMESTAMP(3),INTERVAL 1 HOUR)) AS indications_last_hour,EXISTS(SELECT 1 FROM accounts WHERE id=? AND created_at>DATE_SUB(UTC_TIMESTAMP(3),INTERVAL 7 DAY)) AS recent_account',
         [id, id],
@@ -316,11 +362,11 @@ async function mutate(
         placeId = p.p_place_id ? text(p.p_place_id) : null;
       if (!['INDICATED_PLACE', 'OTHER_PLACE', 'NOT_FOUND'].includes(kind))
         throw new Error('INVALID_INPUT');
-      const [existing] = await rows<{ id: string; type: string; place_id: string | null }>(
-        db,
-        'SELECT id,type,place_id FROM request_resolutions WHERE request_id=?',
-        [r.id],
-      );
+      const [existing] = await rows<{
+        id: string;
+        type: string;
+        place_id: string | null;
+      }>(db, 'SELECT id,type,place_id FROM request_resolutions WHERE request_id=?', [r.id]);
       if (existing) {
         if (existing.type === kind && existing.place_id === placeId) return existing.id;
         throw new Error('REQUEST_CLOSED');
@@ -490,14 +536,21 @@ async function mutate(
         );
       else throw new Error('INVALID_INPUT');
       await log(db, id, action, 'ADMIN_ACTION', target);
-      await log(db, id, 'MODERATION_DECISION', 'ADMIN_ACTION', target, { action, note });
+      await log(db, id, 'MODERATION_DECISION', 'ADMIN_ACTION', target, {
+        action,
+        note,
+      });
       return;
     }
     case 'set_request_interest':
     case 'set_request_wanted': {
       const r = await requestLock(db, p, actor);
       await rate(db, id, 'interests', 60, 60);
-      const [old] = await rows<{ saved: boolean; following: boolean; wanted: boolean }>(
+      const [old] = await rows<{
+        saved: boolean;
+        following: boolean;
+        wanted: boolean;
+      }>(
         db,
         'SELECT saved,following,wanted FROM request_interests WHERE user_id=? AND request_id=?',
         [id, r.id],
@@ -697,16 +750,20 @@ async function mutate(
         'UPDATE support_requests SET status=?,reviewer_id=?,decision_note=?,reviewed_at=UTC_TIMESTAMP(3) WHERE id=?',
         [decision, id, note, text(p.p_id)],
       );
-      await log(db, id, 'SUPPORT_REVIEWED', 'SUPPORT', text(p.p_id), { decision });
+      await log(db, id, 'SUPPORT_REVIEWED', 'SUPPORT', text(p.p_id), {
+        decision,
+      });
       return;
     }
     case 'prepare_account_closure': {
       admin();
-      const [support] = await rows<{ user_id: string; kind: string; status: string }>(
-        db,
-        'SELECT user_id,kind,status FROM support_requests WHERE id=? FOR UPDATE',
-        [text(p.p_id)],
-      );
+      const [support] = await rows<{
+        user_id: string;
+        kind: string;
+        status: string;
+      }>(db, 'SELECT user_id,kind,status FROM support_requests WHERE id=? FOR UPDATE', [
+        text(p.p_id),
+      ]);
       if (
         !support ||
         support.kind !== 'CLOSE_ACCOUNT' ||
@@ -733,7 +790,10 @@ async function mutate(
       return closeAccount(db, id, p);
     case 'export_account': {
       await rate(db, id, 'data_export', 3, 3600);
-      const result: Record<string, unknown> = { version: 3, exported_at: new Date().toISOString() };
+      const result: Record<string, unknown> = {
+        version: 3,
+        exported_at: new Date().toISOString(),
+      };
       const exports: Record<string, [string, string]> = {
         profile: ['profiles', 'id'],
         places: ['places', 'created_by'],
@@ -756,7 +816,22 @@ async function mutate(
         const data = await rows(db, `SELECT * FROM ${table} WHERE ${column}=?`, [id]);
         result[key] = ['profile', 'preferences'].includes(key) ? data[0] || null : data;
       }
-      const photos = await rows<{ request_id: string; jpeg: Buffer; updated_at: string }>(
+      const [ownPhoto] = await rows<{ jpeg: Buffer; updated_at: string }>(
+        db,
+        'SELECT jpeg,updated_at FROM profile_photos WHERE profile_id=?',
+        [id],
+      );
+      result.profile_photo = ownPhoto
+        ? {
+            jpeg_base64: ownPhoto.jpeg.toString('base64'),
+            updated_at: ownPhoto.updated_at,
+          }
+        : null;
+      const photos = await rows<{
+        request_id: string;
+        jpeg: Buffer;
+        updated_at: string;
+      }>(
         db,
         'SELECT p.* FROM request_photos p JOIN requests r ON r.id=p.request_id WHERE r.requester_id=?',
         [id],
@@ -825,9 +900,10 @@ async function closeAccount(db: PoolConnection, admin: string, p: Args) {
   );
   await db.execute('UPDATE indications SET comment=NULL WHERE user_id=?', [user]);
   await db.execute(
-    "UPDATE profiles SET username=?,display_name='Conta encerrada',updated_at=UTC_TIMESTAMP(3) WHERE id=?",
+    "UPDATE profiles SET username=?,display_name='Conta encerrada',photo_updated_at=NULL,updated_at=UTC_TIMESTAMP(3) WHERE id=?",
     ['deleted_' + randomUUID().replaceAll('-', '').slice(0, 16), user],
   );
+  await db.execute('DELETE FROM profile_photos WHERE profile_id=?', [user]);
   await db.execute(
     "UPDATE reports SET reason='Conteúdo anonimizado a pedido do titular' WHERE reporter_id=?",
     [user],

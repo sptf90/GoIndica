@@ -13,6 +13,7 @@ import { Empty, Pagination, Status } from '@/components/ui';
 import { timestamp } from '@/server/queries';
 import { PlacePanel } from '@/components/place-panel';
 import { uuid } from '@/lib/validation/schemas';
+import { formatCnpj } from '@/lib/cnpj';
 export const metadata = { title: 'Administração' };
 const tabs = {
   users: 'Usuários',
@@ -80,13 +81,23 @@ export default async function Admin({
     more = rows.length === 30;
     body = rows.map((r) => (
       <article className="admin-row" key={r.id}>
-        <div>
-          <strong>{r.display_name || 'Onboarding pendente'}</strong>
-          <p className="hint">
-            @{r.username || 'sem username'} · {r.blocked ? 'Bloqueado' : 'Ativo'}
-          </p>
-          {r.username ? <Link href={'/perfil/' + r.username}>Ver perfil ↗</Link> : null}
-        </div>
+        {r.kind === 'company' ? (
+          <div>
+            <strong>{r.company_name || 'Cadastro empresarial expirado'}</strong>
+            <p className="hint">
+              Empresa{r.cnpj ? ' · CNPJ ' + formatCnpj(r.cnpj) : ''} ·{' '}
+              {r.blocked ? 'Bloqueada' : 'Ativa'}
+            </p>
+          </div>
+        ) : (
+          <div>
+            <strong>{r.display_name || 'Onboarding pendente'}</strong>
+            <p className="hint">
+              @{r.username || 'sem username'} · {r.blocked ? 'Bloqueado' : 'Ativo'}
+            </p>
+            {r.username ? <Link href={'/perfil/' + r.username}>Ver perfil ↗</Link> : null}
+          </div>
+        )}
         <Control
           id={r.id}
           action={r.blocked ? 'UNBLOCK_USER' : 'BLOCK_USER'}

@@ -1,8 +1,11 @@
 import 'server-only';
-import sharp from 'sharp';
+import sharp, { type Sharp } from 'sharp';
 
 export const maximumPhotoBytes = 5 * 1024 * 1024;
-export async function prepareRequestPhoto(value: FormDataEntryValue | null) {
+async function preparePhoto(
+  value: FormDataEntryValue | null,
+  encode: (image: Sharp) => Promise<Buffer>,
+) {
   if (value === null || (value instanceof File && value.size === 0)) return null;
   if (!(value instanceof File)) throw new Error('INVALID_PHOTO');
   if (value.size > maximumPhotoBytes) throw new Error('PHOTO_TOO_LARGE');
@@ -15,18 +18,7 @@ export async function prepareRequestPhoto(value: FormDataEntryValue | null) {
     if (!['jpeg', 'png', 'webp'].includes(metadata.format || '') || (metadata.pages || 1) > 1)
       throw new Error('INVALID_PHOTO');
     // Re-encoding strips EXIF (including location), handles orientation and bounds storage.
-    let output = await image
-      .rotate()
-      .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
-      .flatten({ background: '#ffffff' })
-      .jpeg({ quality: 78 })
-      .toBuffer();
-    if (output.byteLength > 512 * 1024) {
-      output = await sharp(output)
-        .resize(1000, 1000, { fit: 'inside' })
-        .jpeg({ quality: 55 })
-        .toBuffer();
-    }
+    const output = await encode(image.rotate());
     if (output.byteLength > 512 * 1024) throw new Error('PHOTO_TOO_LARGE');
     return output.toString('base64');
   } catch (error) {
@@ -35,4 +27,24 @@ export async function prepareRequestPhoto(value: FormDataEntryValue | null) {
       throw new Error('PHOTO_DIMENSIONS');
     throw new Error('INVALID_PHOTO');
   }
+}
+export function prepareRequestPhoto(value: FormDataEntryValue | null) {
+  return preparePhoto(value, async (image) => {
+    const output = await image
+      .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
+      .flatten({ background: '#ffffff' })
+      .jpeg({ quality: 78 })
+      .toBuffer();
+    if (output.byteLength <= 512 * 1024) return output;
+    return sharp(output).resize(1000, 1000, { fit: 'inside' }).jpeg({ quality: 55 }).toBuffer();
+  });
+}
+export function prepareProfilePhoto(value: FormDataEntryValue | null) {
+  return preparePhoto(value, (image) =>
+    image
+      .resize(400, 400, { fit: 'cover', position: 'attention' })
+      .flatten({ background: '#ffffff' })
+      .jpeg({ quality: 80 })
+      .toBuffer(),
+  );
 }

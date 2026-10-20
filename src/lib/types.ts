@@ -9,6 +9,15 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export interface AccountState {
   admin: boolean;
   onboarded: boolean;
+  kind: 'member' | 'company';
+}
+export interface PublicProfile {
+  id: string;
+  username: string;
+  display_name: string;
+  home_city_id: number;
+  photo_updated_at: string | null;
+  reputation: string;
 }
 export interface ProfileStats {
   points: number;

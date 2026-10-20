@@ -16,7 +16,7 @@ import { check, safeError } from '@/lib/errors';
 import { placeDetails, validatePlaceCity } from '@/lib/places';
 import type { ActionState } from '@/lib/types';
 import { returnPath } from '@/lib/return-path';
-import { prepareRequestPhoto } from '@/lib/request-photo';
+import { prepareProfilePhoto, prepareRequestPhoto } from '@/lib/request-photo';
 const value = (f: FormData, k: string) => String(f.get(k) || '');
 export async function logout(): Promise<void> {
   const db = await database();
@@ -31,19 +31,35 @@ export async function saveProfile(_state: ActionState, f: FormData): Promise<Act
       displayName: value(f, 'displayName'),
       cityId: value(f, 'cityId'),
     });
+    const photo = await prepareProfilePhoto(f.get('photo'));
     check(
       await db.call('save_profile', {
         p_username: input.username,
         p_display_name: input.displayName,
         p_city_id: input.cityId,
+        p_photo: photo,
+        p_remove_photo: !photo && value(f, 'removePhoto') === 'true',
       }),
     );
   } catch (e) {
-    return safeError(e);
+    const state = safeError(e);
+    if (e && typeof e === 'object' && 'message' in e && e.message === 'USERNAME_TAKEN')
+      return { ...state, fields: { username: [state.error || ''] } };
+    return state;
   }
   revalidatePath('/', 'layout');
   if (profile) return { success: 'Perfil atualizado.' };
   redirect(returnPath(f.get('next')));
+}
+export async function checkUsername(
+  username: string,
+): Promise<'available' | 'taken' | 'invalid' | 'unknown'> {
+  const parsed = profileSchema.shape.username.safeParse(username);
+  if (!parsed.success) return 'invalid';
+  const { db } = await session();
+  const result = await db.call('username_available', { p_username: parsed.data });
+  if (result.error) return 'unknown';
+  return result.data ? 'available' : 'taken';
 }
 export async function createRequest(_state: ActionState, f: FormData): Promise<ActionState> {
   const { db } = await member();

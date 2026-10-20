@@ -14,9 +14,9 @@ export default function Privacy() {
       </p>
       <h2>Dados usados pelo serviço</h2>
       <p>
-        Seu nome de exibição, nome de usuário e cidade principal compõem seu perfil. Pedidos,
-        indicações, resoluções e recompensas são registrados para oferecer o serviço e manter a
-        integridade da pontuação.
+        Seu nome de exibição, nome de usuário, foto opcional e cidade principal compõem seu perfil.
+        Pedidos, indicações, resoluções e recompensas são registrados para oferecer o serviço e
+        manter a integridade da pontuação.
       </p>
       <p>
         Antes da revelação, os locais indicados por outras pessoas ficam privados. Depois da

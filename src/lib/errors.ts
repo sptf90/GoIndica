@@ -33,6 +33,15 @@ const messages: Record<string, string> = {
     'Não foi possível validar este estabelecimento agora. Tente novamente em instantes.',
   CONFIGURATION_REQUIRED:
     'O serviço ainda precisa ser configurado. Consulte as instruções de instalação.',
+  USERNAME_TAKEN: 'Este nome de usuário já está em uso. Escolha outro.',
+  CNPJ_TAKEN:
+    'Este CNPJ já possui cadastro no GoIndica. Se o estabelecimento é seu, entre com a conta já criada ou fale com o suporte.',
+  CNPJ_INVALID: 'Confira o CNPJ: os dígitos verificadores não conferem.',
+  CNPJ_NOT_FOUND: 'Este CNPJ não foi encontrado na Receita Federal. Confira os números.',
+  CNPJ_INACTIVE:
+    'A Receita Federal indica que este CNPJ não está ativo. Só estabelecimentos ativos podem se cadastrar.',
+  CNPJ_LOOKUP_UNAVAILABLE:
+    'Não conseguimos consultar a Receita Federal agora. Tente novamente em alguns minutos.',
   INVALID_INPUT: 'Revise os campos e tente novamente.',
 };
 export function safeError(error: unknown): ActionState {
@@ -46,7 +55,7 @@ export function safeError(error: unknown): ActionState {
   const key = Object.keys(messages).find((k) => candidate.includes(k));
   if (key) return { error: messages[key] };
   if (error && typeof error === 'object' && 'code' in error && error.code === '23505')
-    return { error: 'Este nome de usuário já está em uso ou esta contribuição já foi registrada.' };
+    return { error: 'Esta contribuição já foi registrada.' };
   return { error: 'Não foi possível concluir agora. Tente novamente em instantes.' };
 }
 export function check<T extends { data: unknown; error: unknown }>(

@@ -1,5 +1,6 @@
 import { beforeAll, afterAll, test, expect, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
+import sharp from 'sharp';
 import { testDatabase } from './database';
 const browser = vi.hoisted(() => ({ cookies: new Map<string, string>() }));
 vi.mock('next/headers', () => ({
@@ -24,10 +25,17 @@ import { cleanupExpired } from '@/server/cleanup';
 let fixture: Awaited<ReturnType<typeof testDatabase>>;
 let ana: DatabaseClient, joao: DatabaseClient, maria: DatabaseClient, admin: DatabaseClient;
 const city = 3549805;
-const ids = { ana: randomUUID(), joao: randomUUID(), maria: randomUUID(), admin: randomUUID() };
+const ids = {
+  ana: randomUUID(),
+  joao: randomUUID(),
+  maria: randomUUID(),
+  admin: randomUUID(),
+};
 beforeAll(async () => {
   fixture = await testDatabase();
-  Object.assign(process.env, fixture.env, { NEXT_PUBLIC_APP_URL: 'http://localhost:3000' });
+  Object.assign(process.env, fixture.env, {
+    NEXT_PUBLIC_APP_URL: 'http://localhost:3000',
+  });
   for (const [name, id] of Object.entries(ids)) {
     await fixture.pool.execute(
       'INSERT INTO users(id,email,password_hash,email_confirmed_at) VALUES(?,?,?,UTC_TIMESTAMP(3))',
@@ -83,8 +91,12 @@ test('indicações privadas, revelação definitiva e pontos sem duplicação so
   const request = await create(),
     place = await registerPlace(ids.joao, city, 'Empório do Centro', 'Rua Central, 123, Centro');
   expect((await indicate(ana, ids.ana, request, place)).error?.message).toBe('SELF_INDICATION');
-  expect(await indicate(joao, ids.joao, request, place)).toMatchObject({ error: null });
-  expect(await indicate(maria, ids.maria, request, place)).toMatchObject({ error: null });
+  expect(await indicate(joao, ids.joao, request, place)).toMatchObject({
+    error: null,
+  });
+  expect(await indicate(maria, ids.maria, request, place)).toMatchObject({
+    error: null,
+  });
   expect(check(await ana.from('indications').select('*').eq('request_id', request))).toHaveLength(
     0,
   );
@@ -123,14 +135,18 @@ test('indicações privadas, revelação definitiva e pontos sem duplicação so
   ]);
   expect(outcomes.map((o) => o.error)).toEqual([null, null]);
   expect(outcomes[0].data).toBe(outcomes[1].data);
-  expect(check(await joao.call('profile_stats', { p_username: 'joao_teste' })).points).toBe(10);
-  expect(check(await maria.call('profile_stats', { p_username: 'maria_teste' })).points).toBe(10);
+  expect(check(await joao.call('profile_stats')).points).toBe(10);
+  expect(check(await maria.call('profile_stats')).points).toBe(10);
   await expect(
     fixture.pool.execute('UPDATE reward_events SET points=20 WHERE request_id=?', [request]),
   ).rejects.toThrow('IMMUTABLE_LEDGER');
   expect(
-    (await ana.call('resolve_request', { p_request_id: request, p_type: 'NOT_FOUND' })).error
-      ?.message,
+    (
+      await ana.call('resolve_request', {
+        p_request_id: request,
+        p_type: 'NOT_FOUND',
+      })
+    ).error?.message,
   ).toBe('REQUEST_CLOSED');
   check(await joao.call('reconfirm_discovery', { p_request_id: request }));
   check(await joao.call('reconfirm_discovery', { p_request_id: request }));
@@ -177,8 +193,12 @@ test('cidades incompatíveis, identidades forjadas e operações administrativas
   expect((await indicate(joao, ids.joao, request, place)).error?.message).toBe('INVALID_CITY');
   expect((await indicate(joao, ids.ana, request, place)).error?.message).toBe('NOT_ALLOWED');
   expect(
-    (await joao.call('admin_moderate', { p_action: 'BLOCK_USER', p_target_id: ids.ana })).error
-      ?.message,
+    (
+      await joao.call('admin_moderate', {
+        p_action: 'BLOCK_USER',
+        p_target_id: ids.ana,
+      })
+    ).error?.message,
   ).toBe('NOT_ALLOWED');
   expect((await new DatabaseClient().from('requests').select('*')).error?.message).toBe(
     'AUTH_REQUIRED',
@@ -190,7 +210,13 @@ test('leituras comuns dispensam transação e continuam exigindo conta e perfil 
     expect(check(await joao.call('account_state')).onboarded).toBe(true);
     expect(check(await joao.call('member_summary'))).toHaveProperty('unread');
     expect(
-      check(await joao.call('search_requests', { p_city_id: city, p_query: '', p_offset: 0 })),
+      check(
+        await joao.call('search_requests', {
+          p_city_id: city,
+          p_query: '',
+          p_offset: 0,
+        }),
+      ),
     ).toBeInstanceOf(Array);
     expect(connection).not.toHaveBeenCalled();
     await fixture.pool.execute('UPDATE accounts SET blocked=TRUE WHERE id=?', [ids.joao]);
@@ -217,7 +243,11 @@ test.each(['member_summary', 'search_requests', 'search_unanswered_requests'] as
       return original(...args);
     });
     try {
-      const result = await joao.call(name, { p_city_id: city, p_query: '', p_offset: 0 });
+      const result = await joao.call(name, {
+        p_city_id: city,
+        p_query: '',
+        p_offset: 0,
+      });
       if (name === 'member_summary') expect(result.error?.message).toBe('AUTH_REQUIRED');
       else expect(check(result)).toEqual([]);
       expect(read).toHaveBeenCalled();
@@ -283,7 +313,12 @@ test('login, confirmação, token único e recuperação isolada das páginas de
     'invalid_credentials',
   );
   expect(
-    (await auth.signInWithPassword({ email, password: 'Outra senha longa segura 456!' })).error,
+    (
+      await auth.signInWithPassword({
+        email,
+        password: 'Outra senha longa segura 456!',
+      })
+    ).error,
   ).toBeNull();
   await auth.signOut();
 });
@@ -332,6 +367,156 @@ test('fechamento remove credenciais e informações pessoais, preservando recomp
   );
   expect(Number(reward[0].points)).toBe(10);
 });
+async function person(username: string) {
+  const id = randomUUID();
+  await fixture.pool.execute(
+    'INSERT INTO users(id,email,password_hash,email_confirmed_at) VALUES(?,?,?,UTC_TIMESTAMP(3))',
+    [id, username + '@test.invalid', 'sem-login'],
+  );
+  await fixture.pool.execute('INSERT INTO accounts(id) VALUES(?)', [id]);
+  await fixture.pool.execute(
+    'INSERT INTO profiles(id,username,display_name,home_city_id) VALUES(?,?,?,?)',
+    [id, username, 'Pessoa ' + username, city],
+  );
+  return { id, username, db: new DatabaseClient(false, { id, admin: false }) };
+}
+const saveProfile = (db: DatabaseClient, username: string, cityId = city, photo?: string) =>
+  db.call('save_profile', {
+    p_username: username,
+    p_display_name: 'Pessoa ' + username,
+    p_city_id: cityId,
+    p_photo: photo,
+  });
+test('nome de usuário é único, com erro próprio, inclusive em gravações simultâneas', async () => {
+  const first = await person('nome_unico_a'),
+    second = await person('nome_unico_b');
+  expect((await saveProfile(second.db, 'nome_unico_a')).error?.message).toBe('USERNAME_TAKEN');
+  expect((await saveProfile(second.db, 'NOME_UNICO_A')).error?.message).toBe('USERNAME_TAKEN');
+  expect(
+    check(
+      await second.db.call('username_available', {
+        p_username: 'nome_unico_a',
+      }),
+    ),
+  ).toBe(false);
+  expect(check(await first.db.call('username_available', { p_username: 'nome_unico_a' }))).toBe(
+    true,
+  );
+  expect(check(await second.db.call('username_available', { p_username: 'nome_livre' }))).toBe(
+    true,
+  );
+  const third = await person('disputa_c'),
+    fourth = await person('disputa_d');
+  const outcomes = await Promise.all([
+    saveProfile(third.db, 'nome_disputado'),
+    saveProfile(fourth.db, 'nome_disputado'),
+  ]);
+  const errors = outcomes.map((o) => o.error?.message ?? 'OK');
+  expect(errors.sort()).toEqual(['OK', 'USERNAME_TAKEN']);
+  const [owners] = await fixture.pool.execute<import('mysql2').RowDataPacket[]>(
+    "SELECT COUNT(*) AS total FROM profiles WHERE username='nome_disputado'",
+  );
+  expect(Number(owners[0].total)).toBe(1);
+});
+test('trocar a cidade do perfil não altera pedidos anteriores', async () => {
+  const author = await person('cidade_autor');
+  const request = check(
+    await author.db.call('create_request_with_photo', {
+      p_city_id: city,
+      p_description: 'Onde consertar bicicleta?',
+    }),
+  );
+  check(await saveProfile(author.db, 'cidade_autor', 3550308));
+  expect(
+    check(await author.db.from('profiles').select('*').eq('id', author.id).single()).home_city_id,
+  ).toBe(3550308);
+  expect(
+    check(await author.db.from('requests').select('*').eq('id', request).single()).city_id,
+  ).toBe(city);
+});
+test('perfil e foto só abrem a partir de conteúdo que a pessoa pode ver', async () => {
+  const author = await person('contexto_autor'),
+    helper = await person('contexto_ajuda'),
+    viewer = await person('contexto_leitor');
+  const jpeg = await sharp({
+    create: { width: 8, height: 8, channels: 3, background: '#ec5e27' },
+  })
+    .jpeg()
+    .toBuffer();
+  check(await saveProfile(author.db, author.username, city, jpeg.toString('base64')));
+  check(await saveProfile(helper.db, helper.username, city, jpeg.toString('base64')));
+  const request = check(
+    await author.db.call('create_request_with_photo', {
+      p_city_id: city,
+      p_description: 'Onde comprar pão de fermentação natural?',
+    }),
+  );
+  const open = (db: DatabaseClient, username: string, context: object = {}) =>
+    db.call('public_profile', { p_username: username, ...context }).then(check);
+  const photo = (db: DatabaseClient, id: string, context: object = {}) =>
+    db.call('profile_photo', { p_profile_id: id, ...context }).then(check);
+  // Sem origem não há navegação livre, nem para nomes existentes.
+  expect(await open(viewer.db, author.username)).toBeNull();
+  expect(await photo(viewer.db, author.id)).toBeNull();
+  // O autor aparece no pedido visível; o perfil traz só nome, foto, cidade e reputação.
+  const shown = await open(viewer.db, author.username, {
+    p_request_id: request,
+  });
+  expect(shown).toEqual({
+    id: author.id,
+    username: author.username,
+    display_name: 'Pessoa ' + author.username,
+    home_city_id: city,
+    photo_updated_at: expect.any(String),
+    reputation: 'Sem selo ainda',
+  });
+  expect(await photo(viewer.db, author.id, { p_request_id: request })).toBe(
+    jpeg.toString('base64'),
+  );
+  // Quem indicou só é alcançável pelo dono do pedido, e só depois da revelação.
+  const place = await registerPlace(helper.id, city, 'Padaria Natural', 'Rua do Trigo, 10');
+  check(await indicate(helper.db, helper.id, request, place));
+  expect(await open(author.db, helper.username, { p_request_id: request })).toBeNull();
+  check(await author.db.call('reveal_responses', { p_request_id: request }));
+  expect(await open(author.db, helper.username, { p_request_id: request })).not.toBeNull();
+  expect(await photo(author.db, helper.id, { p_request_id: request })).not.toBeNull();
+  expect(await open(viewer.db, helper.username, { p_request_id: request })).toBeNull();
+  expect(await photo(viewer.db, helper.id, { p_request_id: request })).toBeNull();
+  // Abrir o perfil não libera as indicações de terceiros.
+  expect(
+    check(await viewer.db.from('indications').select('*').eq('request_id', request)),
+  ).toHaveLength(0);
+  expect(
+    (await viewer.db.call('indication_groups', { p_request_id: request })).error?.message,
+  ).toBe('NOT_ALLOWED');
+  // Ranking da cidade é origem válida apenas para quem pontuou nela.
+  expect(await open(viewer.db, 'joao_teste', { p_ranking_city_id: city })).not.toBeNull();
+  expect(await open(viewer.db, 'joao_teste', { p_ranking_city_id: 3550308 })).toBeNull();
+  expect(await open(viewer.db, author.username, { p_ranking_city_id: city })).toBeNull();
+  // O próprio perfil e a administração não dependem de origem.
+  expect(await open(author.db, author.username)).not.toBeNull();
+  expect(await open(admin, author.username)).not.toBeNull();
+  // Pedido removido deixa de ser origem.
+  check(
+    await admin.call('admin_moderate', {
+      p_action: 'HIDE_REQUEST',
+      p_target_id: request,
+      p_note: 'Remoção de teste autorizada',
+    }),
+  );
+  expect(await open(viewer.db, author.username, { p_request_id: request })).toBeNull();
+});
+test('estatísticas detalhadas são só do titular e o ranking público é anônimo', async () => {
+  const anonymous = new DatabaseClient();
+  expect((await anonymous.call('profile_stats')).error?.message).toBe('AUTH_REQUIRED');
+  expect((await anonymous.call('city_ranking', { p_city_id: city })).error?.message).toBe(
+    'AUTH_REQUIRED',
+  );
+  const preview = check(await anonymous.call('public_city_ranking', { p_city_id: city }));
+  expect(preview.length).toBeGreaterThan(0);
+  expect(Object.keys(preview[0]).sort()).toEqual(['points', 'position']);
+  expect(check(await joao.call('profile_stats')).points).toBe(10);
+});
 test('hashes de senha são verificados sem truncar senhas longas', async () => {
   const long = '123!'.repeat(30);
   const hash = await hashPassword(long);
@@ -365,4 +550,221 @@ test('limpeza do cron remove só sessões, tokens e contadores expirados', async
     ['a'.repeat(64), 'b'.repeat(64), 'a'.repeat(64), 'b'.repeat(64)],
   );
   expect(left).toEqual([{ s: 1, t: 1, r: 'atual' }]);
+});
+async function select<T = Record<string, unknown>>(
+  query: string,
+  values: (string | number)[] = [],
+) {
+  const [result] = await fixture.pool.query(query, values);
+  return result as T[];
+}
+const receita = {
+  cnpj: '19131243000197',
+  legalName: 'OPEN KNOWLEDGE BRASIL',
+  tradeName: 'REDE PELO CONHECIMENTO LIVRE',
+  registrationStatus: 'ATIVA',
+  cityId: city,
+  branch: 'MATRIZ' as const,
+};
+const business = (cnpj: string, displayName = 'Rede Livre') => ({
+  cnpj,
+  displayName,
+  legalName: '',
+  data: { ...receita, cnpj },
+});
+test('empresa se cadastra por CNPJ e nunca ganha perfil, pedidos ou indicações', async () => {
+  browser.cookies.clear();
+  mail.send.mockClear();
+  const auth = new LocalAuth();
+  const email = 'empresa@test.invalid',
+    password = 'Senha da empresa longa 123!';
+  expect(
+    (await auth.signUp({ email, password, next: '/empresa', company: business(receita.cnpj) }))
+      .error,
+  ).toBeNull();
+  const url = new URL(String(mail.send.mock.calls.at(-1)?.[2]).match(/http:\/\/[^\s]+/)![0]);
+  expect(url.searchParams.get('next')).toBe('/empresa');
+  expect(
+    (await auth.verifyOtp({ type: 'email', token_hash: url.searchParams.get('token_hash')! }))
+      .error,
+  ).toBeNull();
+  const [row] = await select<{
+    id: string;
+    kind: string;
+    data_source: string;
+    legal_name: string;
+    checked: number;
+  }>(
+    `SELECT a.id,a.kind,c.data_source,c.legal_name,c.data_checked_at IS NOT NULL AS checked FROM users u
+    JOIN accounts a ON a.id=u.id JOIN companies c ON c.account_id=a.id WHERE u.email=?`,
+    [email],
+  );
+  expect(row).toMatchObject({
+    kind: 'company',
+    data_source: 'RECEITA',
+    legal_name: receita.legalName,
+    checked: 1,
+  });
+  const businessDb = new DatabaseClient(false, { id: row.id, admin: false });
+  expect(check(await businessDb.call('account_state'))).toEqual({
+    admin: false,
+    onboarded: false,
+    kind: 'company',
+  });
+  // Sem perfil, todas as operações de membro são recusadas no servidor.
+  expect(
+    (
+      await businessDb.call('create_request_with_photo', {
+        p_city_id: city,
+        p_description: 'Pedido de empresa',
+      })
+    ).error?.message,
+  ).toBe('ONBOARDING_REQUIRED');
+  const request = await create();
+  const place = await registerPlace(ids.joao, city, 'Loja da Empresa', 'Rua Comercial, 1');
+  expect((await indicate(businessDb, row.id, request, place)).error?.message).toBe(
+    'ONBOARDING_REQUIRED',
+  );
+  expect((await businessDb.call('city_ranking', { p_city_id: city })).error?.message).toBe(
+    'ONBOARDING_REQUIRED',
+  );
+  // E o banco segura as mesmas regras, mesmo sem passar pela aplicação.
+  expect(
+    (
+      await businessDb.call('save_profile', {
+        p_username: 'empresa_x',
+        p_display_name: 'Empresa',
+        p_city_id: city,
+      })
+    ).error?.message,
+  ).toBe('NOT_ALLOWED');
+  await expect(
+    fixture.pool.execute(
+      'INSERT INTO profiles(id,username,display_name,home_city_id) VALUES(?,?,?,?)',
+      [row.id, 'empresa_y', 'Empresa', city],
+    ),
+  ).rejects.toThrow('NOT_ALLOWED');
+  await expect(
+    fixture.pool.execute("UPDATE accounts SET kind='member' WHERE id=?", [row.id]),
+  ).rejects.toThrow('NOT_ALLOWED');
+  await expect(
+    fixture.pool.execute("UPDATE accounts SET kind='company' WHERE id=?", [ids.ana]),
+  ).rejects.toThrow('NOT_ALLOWED');
+  await expect(
+    fixture.pool.execute(
+      "INSERT INTO companies(account_id,cnpj,legal_name,display_name,data_source) VALUES(?,'00000000000272','Membro','Membro','MANUAL')",
+      [ids.ana],
+    ),
+  ).rejects.toThrow('NOT_ALLOWED');
+  // Nenhuma superfície pública ou de membro lista a empresa; só o admin a enxerga.
+  expect(
+    check(await ana.call('city_ranking', { p_city_id: city })).some((r) => r.id === row.id),
+  ).toBe(false);
+  const accounts = check(await admin.call('admin_accounts', { p_search: '19.131.243/0001-97' }));
+  expect(accounts).toEqual([
+    expect.objectContaining({
+      id: row.id,
+      kind: 'company',
+      company_name: 'Rede Livre',
+      username: null,
+    }),
+  ]);
+  await auth.signOut();
+});
+test('CNPJ não gera cadastro duplicado, nem em envios simultâneos', async () => {
+  const { cnpjTaken } = await import('@/lib/company');
+  const cnpj = '00000000000272',
+    password = 'Senha da empresa longa 123!';
+  const outcomes = await Promise.all(
+    ['filial-a@test.invalid', 'filial-b@test.invalid'].map((email) =>
+      new LocalAuth().signUp({ email, password, company: business(cnpj, 'Filial') }),
+    ),
+  );
+  expect(outcomes.map((o) => o.error?.message || 'OK').sort()).toEqual(['CNPJ_TAKEN', 'OK']);
+  expect(await cnpjTaken(cnpj)).toBe(true);
+  const [{ total }] = await select<{ total: number }>(
+    'SELECT COUNT(*) total FROM companies WHERE cnpj=?',
+    [cnpj],
+  );
+  expect(Number(total)).toBe(1);
+  // Um cadastro que não confirmou o e-mail em 24 horas libera o CNPJ para o estabelecimento.
+  await select(
+    'UPDATE users u JOIN companies c ON c.account_id=u.id SET u.created_at=DATE_SUB(UTC_TIMESTAMP(3),INTERVAL 2 DAY) WHERE c.cnpj=?',
+    [cnpj],
+  );
+  expect(await cnpjTaken(cnpj)).toBe(false);
+  expect(
+    (
+      await new LocalAuth().signUp({
+        email: 'filial-c@test.invalid',
+        password,
+        company: business(cnpj, 'Filial certa'),
+      })
+    ).error,
+  ).toBeNull();
+  expect(
+    await select(
+      'SELECT u.email FROM companies c JOIN users u ON u.id=c.account_id WHERE c.cnpj=?',
+      [cnpj],
+    ),
+  ).toEqual([{ email: 'filial-c@test.invalid' }]);
+});
+test('consulta de CNPJ guarda só dados do estabelecimento e usa cache', async () => {
+  const { lookupCnpj } = await import('@/lib/company');
+  process.env.CNPJ_API_URL = 'http://cnpj.test/api/, http://reserva.test/';
+  const fetcher = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>(async (url) => {
+    const cnpj = url.split('/').at(-1);
+    if (url.startsWith('http://reserva.test/'))
+      return cnpj === '11444777000161'
+        ? Response.json({
+            razao_social: 'MERCADO RESERVA LTDA',
+            descricao_situacao_cadastral: 'ATIVA',
+          })
+        : new Response('falha', { status: 502 });
+    if (cnpj === '12ABC34501DE35')
+      return Response.json({
+        razao_social: 'MERCADO  ALFA   LTDA',
+        nome_fantasia: '',
+        descricao_situacao_cadastral: 'ATIVA',
+        codigo_municipio_ibge: city,
+        descricao_identificador_matriz_filial: 'FILIAL',
+        qsa: [{ nome_socio: 'PESSOA SOCIA', cnpj_cpf_do_socio: '***123***' }],
+      });
+    if (cnpj === '19131243000197') return new Response('{}', { status: 404 });
+    return new Response('{"error":"Forbidden"}', { status: 403 });
+  });
+  vi.stubGlobal('fetch', fetcher);
+  try {
+    expect(await lookupCnpj('12ABC34501DE35')).toEqual({
+      status: 'found',
+      data: {
+        cnpj: '12ABC34501DE35',
+        legalName: 'MERCADO ALFA LTDA',
+        tradeName: null,
+        registrationStatus: 'ATIVA',
+        cityId: city,
+        branch: 'FILIAL',
+      },
+    });
+    expect(await lookupCnpj('12ABC34501DE35')).toMatchObject({ status: 'found' });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(new Headers(fetcher.mock.calls[0][1]?.headers).get('User-Agent')).toMatch(/^GoIndica/);
+    const [cached] = await select<Record<string, unknown>>(
+      'SELECT * FROM cnpj_lookups WHERE cnpj=?',
+      ['12ABC34501DE35'],
+    );
+    expect(JSON.stringify(cached)).not.toContain('SOCIA');
+    expect(await lookupCnpj('19131243000197', true)).toEqual({ status: 'not_found' });
+    expect(await lookupCnpj('11444777000161', true)).toMatchObject({
+      status: 'found',
+      data: { legalName: 'MERCADO RESERVA LTDA', registrationStatus: 'ATIVA' },
+    });
+    expect(await lookupCnpj('00000000000272', true)).toEqual({ status: 'unavailable' });
+    expect(await select('SELECT cnpj FROM cnpj_lookups WHERE cnpj=?', ['00000000000272'])).toEqual(
+      [],
+    );
+  } finally {
+    vi.unstubAllGlobals();
+    delete process.env.CNPJ_API_URL;
+  }
 });

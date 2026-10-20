@@ -42,7 +42,9 @@ export function LocationIllustration() {
     </div>
   );
 }
-export function Avatar({ name, size = 40 }: { name: string; size?: number }) {
+export function Avatar({ name, size = 40, src }: { name: string; size?: number; src?: string }) {
+  if (src)
+    return <img className="avatar" src={src} width={size} height={size} alt="" aria-hidden="true" />;
   return (
     <span
       className="avatar avatar-letter"
@@ -51,7 +53,7 @@ export function Avatar({ name, size = 40 }: { name: string; size?: number }) {
     >
       {name
         .trim()
-        .split(/\s+/)
+        .split(/[\s_]+/)
         .slice(0, 2)
         .map((part) => part.charAt(0))
         .join('')
@@ -59,9 +61,9 @@ export function Avatar({ name, size = 40 }: { name: string; size?: number }) {
     </span>
   );
 }
-export function Brand() {
+export function Brand({ href = '/' }: { href?: string }) {
   return (
-    <Link href="/" className="brand" aria-label="GoIndica — início">
+    <Link href={href} className="brand" aria-label="GoIndica — início">
       <Image
         className="brand-logo"
         src="/goindica-logo.svg"

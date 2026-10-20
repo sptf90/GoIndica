@@ -6,6 +6,7 @@ import { database } from '@/lib/database/server';
 import { configured } from '@/lib/env';
 import { accessLink, returnPath } from '@/lib/return-path';
 import { operationalError } from '@/lib/observability';
+import { companyFor } from '@/lib/company';
 export const session = cache(async () => {
   const destination = returnPath((await headers()).get('x-auth-destination'));
   if (!configured()) redirect('/entrar?motivo=configuracao');
@@ -42,12 +43,27 @@ export const session = cache(async () => {
     operationalError('auth.profile', profile.error);
     throw new Error('SERVICE_UNAVAILABLE');
   }
-  return { db, user, profile: profile.data, admin: state.data.admin, destination };
+  return {
+    db,
+    user,
+    profile: profile.data,
+    admin: state.data.admin,
+    kind: state.data.kind,
+    destination,
+  };
 });
 export const member = cache(async () => {
   const ctx = await session();
+  if (ctx.kind === 'company') redirect('/empresa');
   if (!ctx.profile) redirect(accessLink('/onboarding', ctx.destination));
   return { ...ctx, profile: ctx.profile };
+});
+export const company = cache(async () => {
+  const ctx = await session();
+  if (ctx.kind !== 'company') redirect(ctx.profile ? '/app' : '/onboarding');
+  const data = await companyFor(ctx.user.id);
+  if (!data) redirect('/cadastro?tipo=empresa');
+  return { ...ctx, company: data };
 });
 export async function administrator() {
   const ctx = await member();

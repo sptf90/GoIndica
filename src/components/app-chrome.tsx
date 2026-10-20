@@ -64,7 +64,7 @@ export function AppChrome({
   return (
     <div ref={shell} className={`app-shell${context?.focused ? ' focused-shell' : ''}`}>
       <aside className="app-sidebar">
-        <Brand />
+        <Brand href="/app" />
         <DesktopNavigation admin={admin} />
         <Link href="/pedidos/novo" className="button sidebar-create" title="Novo pedido">
           <Icon name="plus" />
@@ -88,7 +88,7 @@ export function AppChrome({
             </div>
           ) : (
             <div className="main-brand">
-              <Brand />
+              <Brand href="/app" />
               <span className="desktop-context">Conhecimento de quem vive aqui</span>
             </div>
           )}

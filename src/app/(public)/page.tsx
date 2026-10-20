@@ -14,7 +14,7 @@ export default async function Landing() {
     : pilot === 3549805
       ? 'São José do Rio Preto — SP'
       : 'Comunidade local';
-  const ranking = db ? await db.call('city_ranking', { p_city_id: pilot }) : null;
+  const ranking = db ? await db.call('public_city_ranking', { p_city_id: pilot }) : null;
   return (
     <main id="conteudo">
       <LandingAnalytics />
@@ -154,13 +154,13 @@ export default async function Landing() {
         </div>
         <div className="ranking-preview">
           {ranking?.data?.length ? (
-            ranking.data.slice(0, 3).map((p) => (
-              <div className="ranking-row" key={p.username}>
+            ranking.data.map((p) => (
+              <div className="ranking-row" key={p.position}>
                 <span className="rank-number">{p.position}</span>
-                <Avatar name={p.display_name} />
+                <Avatar name="Pessoa da comunidade" />
                 <div>
-                  <strong>{p.display_name}</strong>
-                  <p className="hint">@{p.username}</p>
+                  <strong>{p.position}º lugar</strong>
+                  <p className="hint">Pessoa da comunidade</p>
                 </div>
                 <strong>
                   {p.points}

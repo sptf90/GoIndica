@@ -25,6 +25,7 @@ import { DiscoveryFeedback } from '@/components/discovery-feedback';
 import { wanted, reconfirm } from '@/server/discovery-actions';
 import { RequestPhoto } from '@/components/request-photo';
 import { ShareCard } from '@/components/share-card';
+import { profilePhotoUrl, profileUrl } from '@/lib/profile-links';
 export const metadata = { title: 'Pedido da comunidade' };
 export default async function Detail({
   params,
@@ -179,8 +180,12 @@ export default async function Detail({
             </div>
           </div>
           {author ? (
-            <Link className="byline" href={'/perfil/' + author.username}>
-              <Avatar name={author.display_name} size={38} />
+            <Link className="byline" href={profileUrl(author.username, { request: id })}>
+              <Avatar
+                name={author.display_name}
+                size={38}
+                src={profilePhotoUrl(author, { request: id })}
+              />
               <span>
                 <span className="metadata-label">Publicado por</span>
                 <strong>{author.display_name}</strong>{' '}
@@ -404,10 +409,25 @@ export default async function Detail({
                       const p = g.profiles.get(i.user_id);
                       return (
                         <li key={i.id}>
-                          <Avatar name={p?.display_name || 'Pessoa'} size={32} />
+                          {p ? (
+                            <Link
+                              className="avatar-link"
+                              href={profileUrl(p.username, { request: id })}
+                              tabIndex={-1}
+                              aria-hidden="true"
+                            >
+                              <Avatar
+                                name={p.display_name}
+                                size={32}
+                                src={profilePhotoUrl(p, { request: id })}
+                              />
+                            </Link>
+                          ) : (
+                            <Avatar name="Pessoa" size={32} />
+                          )}
                           <div>
                             {p ? (
-                              <Link href={'/perfil/' + p.username}>
+                              <Link href={profileUrl(p.username, { request: id })}>
                                 <strong>{p.display_name}</strong>{' '}
                                 <span className="hint">@{p.username}</span>
                               </Link>
