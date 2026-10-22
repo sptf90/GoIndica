@@ -7,114 +7,118 @@
   align-items: center;
   justify-content: space-between;
   min-height: 68px;
-  gap: 24px;
+  gap: var(--space-6);
 }
 .public-header nav {
   display: flex;
   align-items: center;
-  gap: 26px;
-  font-size: 14px;
+  gap: var(--space-6);
+  font-size: var(--text-md);
 }
 .public-header .button {
-  min-height: 42px;
-  padding: 10px 16px;
-  font-size: 13px;
+  --button-height: var(--control-sm);
+  --button-pad: var(--space-4);
+  --button-font: var(--text-sm);
 }
 .hero {
   display: grid;
   grid-template-columns: 1.15fr 1fr;
   align-items: center;
-  gap: 70px;
-  padding-top: 56px;
-  padding-bottom: 72px;
+  gap: var(--space-16);
+  padding-top: var(--space-12);
+  padding-bottom: var(--space-16);
 }
 .hero h1 {
-  font-size: clamp(36px, 4.55vw, 62px);
+  font-size: var(--text-display);
   line-height: 1.09;
-  letter-spacing: -0.055em;
-  margin-top: 20px;
+  letter-spacing: -0.05em;
+  margin-top: var(--space-5);
 }
 .hero h1 span {
   color: var(--accent);
 }
 .hero .lead {
-  margin-top: 26px;
+  margin-top: var(--space-6);
 }
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 22px;
-  margin-top: 32px;
+  gap: var(--space-6);
+  margin-top: var(--space-8);
+}
+.hero-actions .button {
+  --button-height: 48px;
+  --button-pad: var(--space-6);
 }
 .hero-actions .text-link {
-  font-size: 14px;
+  font-size: var(--text-md);
 }
 .hero-note {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--muted);
-  margin-top: 28px;
+  margin-top: var(--space-6);
 }
 .demo-board {
   border: 1px solid var(--line);
-  border-radius: 22px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
-  padding: 28px;
+  padding: var(--space-8);
 }
 .demo-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  font-size: 12px;
+  gap: var(--space-3);
+  font-size: var(--text-xs);
   color: var(--muted);
-  padding-bottom: 22px;
+  padding-bottom: var(--space-5);
   border-bottom: 1px solid var(--line);
 }
 .demo-top .eyebrow {
-  font-size: 9px;
+  font-size: var(--text-2xs);
   color: var(--muted);
 }
 .demo-question {
-  padding-top: 28px;
+  padding-top: var(--space-6);
 }
 .demo-question .eyebrow {
   color: var(--orange-strong);
 }
 .demo-question h2 {
-  font-size: 28px;
-  margin-top: 14px;
+  font-size: var(--text-3xl);
+  margin-top: var(--space-3);
   line-height: 1.25;
 }
 .demo-count {
   display: flex;
   align-items: center;
-  gap: 14px;
-  font-size: 13px;
-  margin-top: 26px;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  margin-top: var(--space-6);
 }
 .demo-dots {
   color: var(--accent);
   letter-spacing: -3px;
-  font-size: 18px;
+  font-size: var(--text-lg);
 }
 .demo-line {
   text-align: center;
-  font-size: 28px;
+  font-size: var(--text-3xl);
   color: var(--accent);
-  margin: 8px;
+  margin: var(--space-2);
 }
 .demo-answer {
-  padding: 22px;
+  padding: var(--space-6);
   background: var(--wash);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
 }
 .demo-answer h3 {
-  font-size: 29px;
-  margin: 14px 0 10px;
+  font-size: var(--text-3xl);
+  margin: var(--space-3) 0 var(--space-3);
 }
 .demo-answer p {
-  font-size: 14px;
+  font-size: var(--text-md);
   color: var(--muted);
 }
 .demo-answer strong {
@@ -123,7 +127,7 @@
 .demo-people {
   display: flex;
   align-items: center;
-  margin-top: 18px;
+  margin-top: var(--space-4);
 }
 .demo-people > span {
   background: var(--surface);
@@ -132,91 +136,91 @@
   width: 30px;
   height: 30px;
   text-align: center;
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 26px;
   margin-right: -5px;
 }
 .demo-people p {
-  margin-left: 18px !important;
-  font-size: 11px;
+  margin-left: var(--space-4) !important;
+  font-size: var(--text-2xs);
 }
 .demo-board > .hint {
-  margin-top: 20px;
-  font-size: 11px;
+  margin-top: var(--space-5);
+  font-size: var(--text-2xs);
 }
 .how-section {
   background: var(--surface-subtle);
-  padding: 64px 0;
+  padding: var(--space-16) 0;
 }
 .section-heading h2 {
-  margin-top: 14px;
+  margin-top: var(--space-3);
 }
 .steps {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 32px;
-  margin: 44px 0 0;
+  gap: var(--space-8);
+  margin: var(--space-10) 0 0;
 }
 .steps li {
   border-top: 1px solid var(--line);
-  padding-top: 18px;
+  padding-top: var(--space-4);
 }
 .steps li > span {
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-weight: 700;
   color: var(--accent);
 }
 .steps h3 {
-  margin: 18px 0 12px;
-  font-size: 19px;
+  margin: var(--space-4) 0 var(--space-3);
+  font-size: var(--text-xl);
 }
 .steps p {
   color: var(--muted);
-  font-size: 14px;
+  font-size: var(--text-md);
   line-height: 1.7;
 }
 .memory,
 .community {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 90px;
-  padding-block: 80px;
+  gap: var(--space-20);
+  padding-block: var(--space-20);
   border-bottom: 1px solid var(--line);
 }
 .memory h2 {
-  margin-top: 18px;
-  font-size: 36px;
+  margin-top: var(--space-4);
+  font-size: clamp(28px, 3vw, 36px);
 }
 .memory .lead {
-  margin-bottom: 24px;
+  margin-bottom: var(--space-6);
 }
 .memory .hint {
-  margin-top: 20px;
-  margin-bottom: 22px;
+  margin-top: var(--space-5);
+  margin-bottom: var(--space-6);
 }
 .community .muted {
-  margin-top: 18px;
+  margin-top: var(--space-4);
 }
 .ranking-preview > .text-link {
   display: block;
-  margin-top: 24px;
+  margin-top: var(--space-6);
 }
 .final-cta {
   text-align: center;
-  padding: 80px 0;
+  padding: var(--space-20) 0;
 }
 .final-cta h2 {
-  font-size: 42px;
-  margin: 18px 0 28px;
+  font-size: clamp(28px, 3.5vw, 42px);
+  margin: var(--space-4) 0 var(--space-8);
 }
 .public-footer {
   border-top: 1px solid var(--line);
-  padding: 28px 0;
+  padding: var(--space-8) 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  font-size: 12px;
+  gap: var(--space-6);
+  font-size: var(--text-xs);
   color: var(--muted);
 }
 .public-footer .brand-logo {
@@ -225,24 +229,24 @@
 }
 .public-footer nav {
   display: flex;
-  gap: 22px;
+  gap: var(--space-6);
 }
 .auth-page {
   max-width: 480px;
-  padding: 36px;
-  margin-block: 48px 64px;
+  padding: var(--space-8);
+  margin-block: var(--space-12) var(--space-16);
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
 }
 .auth-page h1 {
-  margin: 12px 0 16px;
+  margin: var(--space-3) 0 var(--space-4);
 }
 .auth-page .lead {
-  margin-bottom: 28px;
+  margin-bottom: var(--space-8);
 }
 .auth-page > .hint {
-  margin-top: 24px;
+  margin-top: var(--space-6);
 }
 .auth-page .hint a {
   text-decoration: underline;
@@ -254,9 +258,9 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 12px 20px;
-  margin-top: 20px;
-  font-size: 14px;
+  gap: var(--space-3) var(--space-5);
+  margin-top: var(--space-5);
+  font-size: var(--text-md);
 }
 .auth-links a {
   color: var(--accent);

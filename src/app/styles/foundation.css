@@ -1,4 +1,5 @@
-/* Brand primitives, semantic colors and shared interaction contracts. */
+/* Brand primitives, design scale and shared interaction contracts.
+   Every size in the other stylesheets must come from the scales below. */
 :root {
   --brand-orange: #ec5e27;
   --brand-white: #fdfdf1;
@@ -22,6 +23,8 @@
   --accent-dark: var(--orange-dark);
   --wash: var(--orange-soft);
   --danger: #a12732;
+  --danger-soft: #fcecef;
+  --danger-line: #e7b9bf;
   --button-primary: var(--brand-orange);
   --button-primary-hover: var(--orange-strong);
   --button-primary-active: var(--orange-dark);
@@ -31,35 +34,83 @@
   --button-disabled-bg: #f0eade;
   --button-disabled-ink: #71665c;
   --button-disabled-border: #e2d8ca;
+
+  /* Type scale */
+  --text-2xs: 11px;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 28px;
+  --text-title: clamp(26px, 2.6vw, 32px);
+  --text-display: clamp(36px, 4.5vw, 60px);
+
+  /* Spacing scale (4px grid) */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
+  --space-5: 20px;
   --space-6: 24px;
   --space-8: 32px;
-  --page-gutter: 20px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+
+  /* Corners: controls, cards, panels and pills */
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+  --radius: var(--radius-lg);
+  --radius-control: var(--radius-md);
+
+  /* Controls share one height so buttons and inputs line up on every screen. */
   --control-height: 48px;
+  --control-sm: 40px;
+  --touch-target: 44px;
+
+  --page-gutter: var(--space-5);
+  --content-width: 1120px;
+  --content-narrow: 680px;
   --header-height: 60px;
   --nav-height: 68px;
-  --radius: 14px;
-  --radius-control: 12px;
   --body: 'Inter Variable', sans-serif;
   --display: var(--body);
-  --shadow-menu: 0 8px 28px rgb(41 35 31 / 12%);
+  /* Depth: quiet shadows; borders carry most of the structure. */
+  --shadow-sm: 0 1px 2px rgb(41 35 31 / 6%);
+  --shadow-card: 0 1px 2px rgb(41 35 31 / 4%);
+  --shadow-lift: 0 6px 20px -10px rgb(41 35 31 / 18%);
+  --shadow-menu: 0 16px 40px -16px rgb(41 35 31 / 24%), 0 1px 3px rgb(41 35 31 / 6%);
+  --ring-orange: 0 0 0 3px rgb(236 94 39 / 16%);
+
   --motion-fast: 160ms;
+  --motion-enter: 280ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (min-width: 768px) {
+  :root {
+    --control-height: 44px;
+    --control-sm: 36px;
+  }
 }
 * {
   box-sizing: border-box;
 }
 html {
-  scroll-padding-top: calc(var(--header-height) + env(safe-area-inset-top) + 16px);
+  scroll-padding-top: calc(var(--header-height) + env(safe-area-inset-top) + var(--space-4));
 }
 body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--body);
-  font-size: 16px;
+  font-size: var(--text-base);
   line-height: 1.5;
   -webkit-tap-highlight-color: transparent;
 }
@@ -100,21 +151,21 @@ h3 {
   font-family: var(--display);
   font-weight: 650;
   line-height: 1.2;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.03em;
   text-wrap: pretty;
   overflow-wrap: anywhere;
 }
 h1 {
-  font-size: clamp(26px, 3vw, 36px);
+  font-size: var(--text-title);
 }
 h2 {
-  font-size: clamp(22px, 2.5vw, 28px);
+  font-size: var(--text-2xl);
 }
 h3 {
-  font-size: 18px;
+  font-size: var(--text-lg);
 }
 p + p {
-  margin-top: 12px;
+  margin-top: var(--space-3);
 }
 ul,
 ol {
@@ -136,7 +187,7 @@ img {
   border-radius: 4px;
 }
 .wrap {
-  width: min(1200px, calc(100% - 40px));
+  width: min(1200px, calc(100% - 2 * var(--page-gutter)));
   margin-inline: auto;
 }
 .sr-only {
@@ -150,6 +201,9 @@ img {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/* Buttons: one component, variants by class, sizes by custom property.
+   primary (default) · secondary · quiet/ghost · danger — md (default) · sm · lg */
 .button {
   --button-bg: var(--button-primary);
   --button-ink: var(--ink);
@@ -158,24 +212,27 @@ img {
   --button-hover-ink: var(--brand-white);
   --button-hover-border: var(--button-primary-hover);
   --button-active-bg: var(--button-primary-active);
+  --button-height: var(--control-height);
+  --button-pad: var(--space-5);
+  --button-font: var(--text-md);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: var(--control-height);
-  padding: 12px 20px;
+  gap: var(--space-2);
+  min-height: var(--button-height);
+  padding: var(--space-2) var(--button-pad);
   border: 1px solid var(--button-border);
   border-radius: var(--radius-control);
   background: var(--button-bg);
   color: var(--button-ink);
   font-weight: 600;
-  font-size: 14px;
-  line-height: 1.4;
+  font-size: var(--button-font);
+  line-height: 1.3;
   text-align: center;
   transition:
     background-color var(--motion-fast),
     border-color var(--motion-fast),
-    transform var(--motion-fast);
+    transform var(--motion-fast) var(--ease-out);
 }
 .button:where(:hover):not(:disabled):not([aria-disabled='true']) {
   border-color: var(--button-hover-border);
@@ -187,7 +244,8 @@ img {
   color: var(--button-hover-ink);
   transform: scale(0.98);
 }
-.button.secondary {
+.button.secondary,
+.secondary > .button {
   --button-bg: var(--surface);
   --button-ink: var(--ink);
   --button-border: var(--line-strong);
@@ -196,6 +254,7 @@ img {
   --button-hover-border: var(--line-strong);
   --button-active-bg: var(--orange-tint);
 }
+.button.ghost,
 .quiet > .button {
   --button-bg: transparent;
   --button-ink: var(--muted);
@@ -204,6 +263,29 @@ img {
   --button-hover-ink: var(--accent-dark);
   --button-hover-border: transparent;
   --button-active-bg: var(--orange-tint);
+}
+.button.danger {
+  --button-bg: var(--danger-soft);
+  --button-ink: var(--danger);
+  --button-border: var(--danger-line);
+  --button-hover-bg: var(--danger-line);
+  --button-hover-ink: var(--danger);
+  --button-hover-border: var(--danger-line);
+  --button-active-bg: var(--danger-line);
+}
+.button.sm,
+.compact > .button {
+  --button-height: var(--control-sm);
+  --button-pad: var(--space-3);
+  --button-font: var(--text-sm);
+}
+.button.lg {
+  --button-height: 48px;
+  --button-pad: var(--space-6);
+  --button-font: var(--text-base);
+}
+.button.block {
+  width: 100%;
 }
 .button:disabled,
 .button[aria-disabled='true'] {
@@ -215,8 +297,8 @@ img {
 .text-link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 44px;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
   color: var(--accent);
   font-weight: 600;
   text-underline-offset: 4px;
@@ -224,13 +306,13 @@ img {
 button.text-link {
   border: 0;
   background: transparent;
-  padding: 4px 0;
+  padding: var(--space-1) 0;
 }
 .text-link:hover {
   text-decoration: underline;
 }
 .eyebrow {
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 1.5;
   font-weight: 600;
   color: var(--accent);
@@ -239,29 +321,29 @@ button.text-link {
   color: var(--muted);
 }
 .hint {
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--muted);
   line-height: 1.5;
 }
 .lead {
-  font-size: 18px;
+  font-size: var(--text-lg);
   color: var(--muted);
   line-height: 1.6;
   max-width: 440px;
 }
 .lead.small {
-  font-size: 17px;
+  font-size: var(--text-base);
 }
 .skip-link {
   position: fixed;
   z-index: 100;
-  left: 16px;
+  left: var(--space-4);
   top: -100px;
   background: var(--surface);
-  padding: 12px;
+  padding: var(--space-3);
 }
 .skip-link:focus {
-  top: max(16px, env(safe-area-inset-top));
+  top: max(var(--space-4), env(safe-area-inset-top));
 }
 .icon {
   display: inline-block;
@@ -271,10 +353,10 @@ button.text-link {
 .icon-button {
   display: inline-grid;
   place-items: center;
-  width: 44px;
-  min-height: 44px;
+  width: var(--touch-target);
+  min-height: var(--touch-target);
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--ink);
   flex-shrink: 0;
@@ -286,7 +368,7 @@ button.text-link {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
-  min-height: 44px;
+  min-height: var(--touch-target);
 }
 .brand-logo {
   display: block;
@@ -295,17 +377,49 @@ button.text-link {
   object-fit: contain;
 }
 
+/* Surfaces */
+.card {
+  padding: var(--space-6);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+.accent-text {
+  color: var(--brand-orange);
+}
+
+/* Loading placeholders keep the final layout so nothing jumps when data arrives. */
+.skeleton {
+  display: block;
+  background: var(--surface-subtle);
+  border-radius: var(--radius-sm);
+  animation: skeleton-pulse 1.2s ease-in-out infinite alternate;
+}
+@keyframes skeleton-pulse {
+  to {
+    opacity: 0.45;
+  }
+}
+/* Entrance used with `backwards` fill: no transform is left behind, so
+   fixed-position children keep the viewport as their reference. */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
 html:has(.app-shell) {
-  scroll-padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 24px);
+  scroll-padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + var(--space-6));
 }
 input,
 textarea,
 select,
 button {
-  scroll-margin-block: 16px;
+  scroll-margin-block: var(--space-4);
 }
 @media (min-width: 768px) {
   html:has(.app-shell) {
-    scroll-padding-bottom: 24px;
+    scroll-padding-bottom: var(--space-6);
   }
 }

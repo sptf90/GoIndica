@@ -6,6 +6,7 @@ import { member } from '@/server/auth';
 import { Avatar } from '@/components/ui';
 import { Icon } from '@/components/icon';
 import { profilePhotoUrl } from '@/lib/profile-links';
+import { logout } from '@/server/actions';
 export const metadata = { robots: { index: false, follow: false } };
 export default async function MemberLayout({ children }: { children: React.ReactNode }) {
   const { profile, admin } = await member();
@@ -20,13 +21,27 @@ export default async function MemberLayout({ children }: { children: React.React
         />
       }
       account={
-        <Link href="/perfil" className="profile-link" title="Meu perfil">
-          <Avatar name={profile.display_name} size={40} src={profilePhotoUrl(profile)} />
-          <span className="profile-copy">
-            <strong>{profile.display_name.split(' ')[0]}</strong> <span>@{profile.username}</span>
-          </span>
-          <Icon name="chevron" size={14} />
-        </Link>
+        <div className="account-menu">
+          <Link href="/perfil" className="profile-link" aria-haspopup="true">
+            <Avatar name={profile.display_name} size={40} src={profilePhotoUrl(profile)} />
+            <span className="profile-copy">
+              <strong>{profile.display_name.split(' ')[0]}</strong> <span>@{profile.username}</span>
+            </span>
+            <Icon name="chevron" size={14} />
+          </Link>
+          <div className="account-popover">
+            <Link href="/perfil">
+              <Icon name="person" size={18} />
+              Meu perfil
+            </Link>
+            <form action={logout}>
+              <button type="submit">
+                <Icon name="logout" size={18} />
+                Sair
+              </button>
+            </form>
+          </div>
+        </div>
       }
     >
       {children}

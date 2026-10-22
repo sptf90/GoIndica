@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { CSSProperties } from 'react';
 import type { City, LocalRequest, Resolution } from '@/lib/types';
 import { Status } from './ui';
 import { date } from '@/server/queries';
@@ -8,13 +9,15 @@ export function RequestCard({
   request,
   city,
   resolution,
+  index = 0,
 }: {
   request: LocalRequest;
   city?: City;
   resolution?: Resolution;
+  index?: number;
 }) {
   return (
-    <article className="request-row">
+    <article className="request-row" style={{ '--i': Math.min(index, 10) } as CSSProperties}>
       <div className="request-summary">
         <div className="row-meta">
           <Status status={request.status} />

@@ -120,10 +120,11 @@ export default async function Activities({
           </Empty>
         )
       ) : requests.length ? (
-        <div>
-          {requests.slice(0, 20).map((r) => (
+        <div className="request-list">
+          {requests.slice(0, 20).map((r, index) => (
             <RequestCard
               key={r.id}
+              index={index}
               request={r}
               city={cities.get(r.city_id)}
               resolution={resolutions.get(r.id)}

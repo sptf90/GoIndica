@@ -5,6 +5,8 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { Brand } from './ui';
 import { Icon } from './icon';
 import { DesktopNavigation, MobileNavigation } from './navigation';
+import { CommandPalette } from './command-palette';
+import { MotionConfig } from 'motion/react';
 
 function contextFor(path: string) {
   if (path === '/pedidos/novo') return { title: 'Perguntar à cidade', back: '/app', focused: true };
@@ -62,43 +64,48 @@ export function AppChrome({
     };
   }, []);
   return (
-    <div ref={shell} className={`app-shell${context?.focused ? ' focused-shell' : ''}`}>
-      <aside className="app-sidebar">
-        <Brand href="/app" />
-        <DesktopNavigation admin={admin} />
-        <Link href="/pedidos/novo" className="button sidebar-create" title="Novo pedido">
-          <Icon name="plus" />
-          <span>Novo pedido</span>
-        </Link>
-        <div className="sidebar-account">{account}</div>
-        <p className="sidebar-note">
-          O conhecimento da cidade,
-          <br />
-          compartilhado.
-        </p>
-      </aside>
-      <header className="app-header">
-        <div className="wrap">
-          {context ? (
-            <div className="contextual-heading">
-              <Link href={context.back} className="icon-button" aria-label="Voltar">
-                <Icon name="back" size={24} />
-              </Link>
-              <span>{context.title}</span>
+    <MotionConfig reducedMotion="user">
+      <div ref={shell} className={`app-shell${context?.focused ? ' focused-shell' : ''}`}>
+        <aside className="app-sidebar">
+          <Brand href="/app" />
+          <DesktopNavigation admin={admin} />
+          <Link href="/pedidos/novo" className="button sidebar-create" title="Novo pedido">
+            <Icon name="plus" />
+            <span>Novo pedido</span>
+          </Link>
+          <div className="sidebar-account">{account}</div>
+          <p className="sidebar-note">
+            O conhecimento da cidade,
+            <br />
+            compartilhado.
+          </p>
+        </aside>
+        <header className="app-header">
+          <div className="wrap">
+            {context ? (
+              <div className="contextual-heading">
+                <Link href={context.back} className="icon-button" aria-label="Voltar">
+                  <Icon name="back" size={24} />
+                </Link>
+                <span>{context.title}</span>
+              </div>
+            ) : (
+              <div className="main-brand">
+                <Brand href="/app" />
+                <span className="desktop-context">Conhecimento de quem vive aqui</span>
+              </div>
+            )}
+            <div className="header-account">
+              <CommandPalette admin={admin} />
+              {notifications}
             </div>
-          ) : (
-            <div className="main-brand">
-              <Brand href="/app" />
-              <span className="desktop-context">Conhecimento de quem vive aqui</span>
-            </div>
-          )}
-          <div className="header-account">{notifications}</div>
-        </div>
-      </header>
-      <main id="conteudo" className="app-main wrap" tabIndex={-1}>
-        <div className="app-content">{children}</div>
-      </main>
-      {!context?.focused ? <MobileNavigation /> : null}
-    </div>
+          </div>
+        </header>
+        <main id="conteudo" className="app-main wrap" tabIndex={-1}>
+          <div className="app-content">{children}</div>
+        </main>
+        {!context?.focused ? <MobileNavigation /> : null}
+      </div>
+    </MotionConfig>
   );
 }

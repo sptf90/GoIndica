@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { memberSummary } from '@/server/queries';
 import { ScrollableTabs } from '@/components/scrollable-tabs';
 import Link from 'next/link';
@@ -7,34 +8,26 @@ import { check } from '@/lib/errors';
 import { FeedSearch } from '@/components/feed-search';
 import { Icon } from '@/components/icon';
 import { RequestCard } from '@/components/request-card';
+import { RequestRowsSkeleton } from '@/components/skeletons';
 import { Empty, Pagination } from '@/components/ui';
 import { resolutionsFor } from '@/server/queries';
+import type { City } from '@/lib/types';
 export const metadata = { title: 'Pergunte à cidade' };
-export default async function Feed({
-  searchParams,
+type FeedStatus = 'OPEN' | 'UNANSWERED' | 'RESOLVED';
+async function FeedResults({
+  city,
+  q,
+  status,
+  page,
+  newRequest,
 }: {
-  searchParams: Promise<{ city?: string; q?: string; status?: string; page?: string }>;
+  city: City;
+  q: string;
+  status: FeedStatus;
+  page: number;
+  newRequest: string;
 }) {
-  const { db, profile } = await member();
-  const params = await searchParams;
-  const cityId = Number(params.city) || profile.home_city_id;
-  const page = pageNumber(params.page);
-  const q = (params.q || '').trim().slice(0, 300);
-  const status =
-    params.status === 'RESOLVED'
-      ? 'RESOLVED'
-      : params.status === 'UNANSWERED'
-        ? 'UNANSWERED'
-        : 'OPEN';
-  const [cityResult, followedResult, summary] = await Promise.all([
-    db.from('cities').select('*').eq('id', cityId).maybeSingle(),
-    db.from('followed_cities').select('city_id'),
-    memberSummary(),
-  ]);
-  const followed = check(followedResult);
-  const city =
-    cityResult.data ||
-    check(await db.from('cities').select('*').eq('id', profile.home_city_id).single());
+  const { db } = await member();
   const requests = check(
     status === 'UNANSWERED'
       ? await db.call('search_unanswered_requests', {
@@ -49,29 +42,102 @@ export default async function Feed({
           p_offset: (page - 1) * 20,
         }),
   );
-  const [resolutions, followedCities] = await Promise.all([
-    resolutionsFor(requests),
-    followed.length
-      ? db
+  const resolutions = await resolutionsFor(requests);
+  const more = requests.length > 20;
+  return (
+    <div className="stream-enter">
+      {requests.length ? (
+        <div className="request-list">
+          {requests.slice(0, 20).map((r, index) => (
+            <RequestCard
+              key={r.id}
+              index={index}
+              request={r}
+              city={city}
+              resolution={resolutions.get(r.id)}
+            />
+          ))}
+        </div>
+      ) : (
+        <Empty
+          title={
+            q
+              ? 'Nenhum pedido encontrado.'
+              : status === 'UNANSWERED'
+                ? 'Nenhum pedido sem indicação nesta cidade.'
+                : status === 'OPEN'
+                  ? 'Ainda não há pedidos por aqui.'
+                  : 'A cidade ainda está construindo seu histórico.'
+          }
+        >
+          <p>
+            {status === 'UNANSWERED'
+              ? 'Veja os outros pedidos da cidade ou publique o que você procura.'
+              : status === 'OPEN'
+                ? 'Que tal ser a primeira pessoa a perguntar?'
+                : 'As descobertas aparecem quando alguém confirma onde encontrou.'}
+          </p>
+          <Link href={newRequest} className="text-link">
+            Publicar um pedido ↗
+          </Link>
+        </Empty>
+      )}
+      <Pagination
+        page={page}
+        hasMore={more}
+        base="/app"
+        params={{ city: String(city.id), q, status }}
+      />
+    </div>
+  );
+}
+export default async function Feed({
+  searchParams,
+}: {
+  searchParams: Promise<{ city?: string; q?: string; status?: string; page?: string }>;
+}) {
+  const { db, profile } = await member();
+  const params = await searchParams;
+  const cityId = Number(params.city) || profile.home_city_id;
+  const page = pageNumber(params.page);
+  const q = (params.q || '').trim().slice(0, 300);
+  const status: FeedStatus =
+    params.status === 'RESOLVED'
+      ? 'RESOLVED'
+      : params.status === 'UNANSWERED'
+        ? 'UNANSWERED'
+        : 'OPEN';
+  const [cityResult, followedResult, summary] = await Promise.all([
+    db.from('cities').select('*').eq('id', cityId).maybeSingle(),
+    db.from('followed_cities').select('city_id'),
+    memberSummary(),
+  ]);
+  const followed = check(followedResult);
+  const city =
+    cityResult.data ||
+    check(await db.from('cities').select('*').eq('id', profile.home_city_id).single());
+  const followedCities = followed.length
+    ? check(
+        await db
           .from('cities')
           .select('*')
           .in(
             'id',
             followed.map((f) => f.city_id),
-          )
-          .then(check)
-      : Promise.resolve([]),
-  ]);
+          ),
+      )
+    : [];
   const newRequest =
     '/pedidos/novo?' + new URLSearchParams({ city: String(city.id), ...(q ? { q } : {}) });
-  const more = requests.length > 20;
   return (
     <>
       <div className="feed-layout">
         <div className="feed-primary">
           <section className="app-intro">
             <p className="eyebrow">A cidade em conversa</p>
-            <h1>O que você está procurando?</h1>
+            <h1>
+              O que você está <span className="accent-text">procurando?</span>
+            </h1>
             <p className="muted">Pergunte a quem conhece. Ajude quem procura.</p>
           </section>
           <FeedSearch
@@ -143,47 +209,16 @@ export default async function Feed({
               Pedidos que ainda precisam de ajuda, começando pelos mais antigos.
             </p>
           ) : null}
-          {requests.length ? (
-            <div className="request-list">
-              {requests.slice(0, 20).map((r) => (
-                <RequestCard
-                  key={r.id}
-                  request={r}
-                  city={city}
-                  resolution={resolutions.get(r.id)}
-                />
-              ))}
-            </div>
-          ) : (
-            <Empty
-              title={
-                q
-                  ? 'Nenhum pedido encontrado.'
-                  : status === 'UNANSWERED'
-                    ? 'Nenhum pedido sem indicação nesta cidade.'
-                    : status === 'OPEN'
-                      ? 'Ainda não há pedidos por aqui.'
-                      : 'A cidade ainda está construindo seu histórico.'
-              }
-            >
-              <p>
-                {status === 'UNANSWERED'
-                  ? 'Veja os outros pedidos da cidade ou publique o que você procura.'
-                  : status === 'OPEN'
-                    ? 'Que tal ser a primeira pessoa a perguntar?'
-                    : 'As descobertas aparecem quando alguém confirma onde encontrou.'}
-              </p>
-              <Link href={newRequest} className="text-link">
-                Publicar um pedido ↗
-              </Link>
-            </Empty>
-          )}
-          <Pagination
-            page={page}
-            hasMore={more}
-            base="/app"
-            params={{ city: String(city.id), q, status }}
-          />
+          <Suspense
+            key={`${city.id}:${q}:${status}:${page}`}
+            fallback={
+              <div role="status" aria-label="Carregando pedidos">
+                <RequestRowsSkeleton />
+              </div>
+            }
+          >
+            <FeedResults city={city} q={q} status={status} page={page} newRequest={newRequest} />
+          </Suspense>
         </div>
         <aside className="feed-aside" aria-label="Sobre a comunidade">
           <span className="aside-symbol">

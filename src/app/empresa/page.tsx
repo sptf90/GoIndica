@@ -107,7 +107,7 @@ export default async function CompanyPanel() {
           action={refreshCompanyData}
           label="Atualizar dados da Receita"
           pendingLabel="Consultando…"
-          className="compact company-refresh"
+          className="compact secondary"
         />
       </section>
 

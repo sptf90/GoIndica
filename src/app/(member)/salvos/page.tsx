@@ -47,9 +47,10 @@ export default async function Saved({
       </ScrollableTabs>
       {rows.length ? (
         <div className="request-list">
-          {rows.map((r) => (
+          {rows.map((r, index) => (
             <RequestCard
               key={r.id}
+              index={index}
               request={r}
               city={cities.get(r.city_id)!}
               resolution={resolutions.get(r.id)}

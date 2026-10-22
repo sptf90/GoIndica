@@ -6,6 +6,7 @@ import { member } from '@/server/auth';
 import { check } from '@/lib/errors';
 import { ProfileForm } from '@/components/profile-form';
 import { Avatar } from '@/components/ui';
+import { CountUp } from '@/components/count-up';
 import { logout } from '@/server/actions';
 import { profilePhotoUrl } from '@/lib/profile-links';
 import { reputationLabel } from '@/lib/reputation';
@@ -34,16 +35,28 @@ export default async function MyProfile() {
       </div>
       <div className="profile-stats">
         <p>
-          <strong>{stats.requests}</strong> pedidos publicados
+          <strong>
+            <CountUp value={stats.requests} />
+          </strong>{' '}
+          pedidos publicados
         </p>
         <p>
-          <strong>{stats.indications}</strong> indicações enviadas
+          <strong>
+            <CountUp value={stats.indications} />
+          </strong>{' '}
+          indicações enviadas
         </p>
         <p>
-          <strong>{stats.points}</strong> pontos
+          <strong>
+            <CountUp value={stats.points} />
+          </strong>{' '}
+          pontos
         </p>
         <p>
-          <strong>{stats.confirmations}</strong> indicações confirmadas
+          <strong>
+            <CountUp value={stats.confirmations} />
+          </strong>{' '}
+          indicações confirmadas
         </p>
       </div>
       <p className="recognition">{reputationLabel(stats.confirmations)}</p>
