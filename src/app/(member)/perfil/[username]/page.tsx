@@ -38,29 +38,31 @@ export default async function PublicProfile({
       ? { href: '/ranking?city=' + context.rankingCity, label: '← Voltar ao ranking' }
       : { href: '/perfil', label: '← Meu perfil' };
   return (
-    <div className="form-page profile-page">
+    <div className="profile-page public-profile-page">
       <Link className="back-link" href={back.href}>
         {back.label}
       </Link>
-      <div className="profile-heading">
-        <Avatar name={profile.display_name} size={80} src={profilePhotoUrl(profile, context)} />
-        <div>
-          <h1>{profile.display_name}</h1>
-          <p className="muted">@{profile.username}</p>
-          <p>
-            {city.name} — {city.state_code}
-          </p>
+      <section className="public-profile-card" aria-label="Perfil da comunidade">
+        <div className="profile-heading">
+          <Avatar name={profile.display_name} size={80} mobileSize={64} src={profilePhotoUrl(profile, context)} />
+          <div>
+            <h1>{profile.display_name}</h1>
+            <p className="muted">@{profile.username}</p>
+            <p>
+              {city.name} — {city.state_code}
+            </p>
+          </div>
         </div>
-      </div>
-      <p className="recognition">{profile.reputation}</p>
-      <p className="muted">
-        Reconhecimento por ajudar outras pessoas a encontrar o que procuravam.
-      </p>
-      {user.id === profile.id ? (
-        <Link className="button secondary" href="/perfil">
-          Editar meu perfil
-        </Link>
-      ) : null}
+        <p className="recognition">{profile.reputation}</p>
+        <p className="muted">
+          Reconhecimento por ajudar outras pessoas a encontrar o que procuravam.
+        </p>
+        {user.id === profile.id ? (
+          <Link className="button secondary" href="/perfil">
+            Editar meu perfil
+          </Link>
+        ) : null}
+      </section>
     </div>
   );
 }

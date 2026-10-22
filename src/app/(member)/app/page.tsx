@@ -31,16 +31,16 @@ async function FeedResults({
   const requests = check(
     status === 'UNANSWERED'
       ? await db.call('search_unanswered_requests', {
-          p_city_id: city.id,
-          p_query: q,
-          p_offset: (page - 1) * 20,
-        })
+        p_city_id: city.id,
+        p_query: q,
+        p_offset: (page - 1) * 20,
+      })
       : await db.call('search_requests', {
-          p_city_id: city.id,
-          p_query: q,
-          p_status: status,
-          p_offset: (page - 1) * 20,
-        }),
+        p_city_id: city.id,
+        p_query: q,
+        p_status: status,
+        p_offset: (page - 1) * 20,
+      }),
   );
   const resolutions = await resolutionsFor(requests);
   const more = requests.length > 20;
@@ -118,14 +118,14 @@ export default async function Feed({
     check(await db.from('cities').select('*').eq('id', profile.home_city_id).single());
   const followedCities = followed.length
     ? check(
-        await db
-          .from('cities')
-          .select('*')
-          .in(
-            'id',
-            followed.map((f) => f.city_id),
-          ),
-      )
+      await db
+        .from('cities')
+        .select('*')
+        .in(
+          'id',
+          followed.map((f) => f.city_id),
+        ),
+    )
     : [];
   const newRequest =
     '/pedidos/novo?' + new URLSearchParams({ city: String(city.id), ...(q ? { q } : {}) });
@@ -134,11 +134,14 @@ export default async function Feed({
       <div className="feed-layout">
         <div className="feed-primary">
           <section className="app-intro">
-            <p className="eyebrow">A cidade em conversa</p>
-            <h1>
-              O que você está <span className="accent-text">procurando?</span>
-            </h1>
-            <p className="muted">Pergunte a quem conhece. Ajude quem procura.</p>
+            <div className="feed-heading-copy">
+              <p className="eyebrow">A cidade em conversa</p>
+              <h1>
+                O que você está <span className="accent-text">procurando?</span>
+              </h1>
+              <p className="muted">Pergunte a quem conhece. Ajude quem procura.</p>
+            </div>
+            <p className="feed-city"><Icon name="pin" size={17} /><span>{city.name}<small>{city.state_code}</small></span></p>
           </section>
           <FeedSearch
             key={city.id + ':' + q + ':' + status}
@@ -221,19 +224,13 @@ export default async function Feed({
           </Suspense>
         </div>
         <aside className="feed-aside" aria-label="Sobre a comunidade">
-          <span className="aside-symbol">
-            <Icon name="message" size={28} />
-          </span>
-          <p className="eyebrow">Conhecimento que circula</p>
-          <h2>
-            Alguém daqui
-            <br />
-            pode saber.
-          </h2>
-          <p className="muted">
-            Uma peça difícil de achar, um ingrediente especial, um serviço perto de casa. Sua
-            pergunta encontra quem conhece o caminho.
-          </p>
+          <div className="feed-aside-heading"><span className="aside-symbol"><Icon name="compass" size={22} /></span><h2>Seu espaço na cidade</h2></div>
+          <nav className="community-summary" aria-label="Resumo da sua participação">
+            <Link href="/atividades?tab=decision"><span>Aguardando sua decisão</span><strong>{summary.pending}</strong></Link>
+            <Link href="/salvos"><span>Pedidos salvos</span><Icon name="arrow" size={18} /></Link>
+            <Link href="/notificacoes"><span>Notificações não lidas</span><strong>{summary.unread}</strong></Link>
+          </nav>
+          <h3>De uma pergunta a uma descoberta</h3>
           <ol className="community-steps">
             <li>
               <span>1</span>Conte o que procura

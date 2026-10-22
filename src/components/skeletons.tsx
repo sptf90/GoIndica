@@ -60,11 +60,20 @@ export function ListSkeleton() {
 export function FormSkeleton() {
   return (
     <Loading label="Carregando">
-      <div className="form-page loading-state">
+      <div className="task-page loading-state">
         <Heading />
-        <Bar className="skeleton-control" />
-        <Bar className="skeleton-control" />
-        <Bar className="skeleton-control" />
+        <div className="task-layout" aria-hidden="true">
+          <div className="task-form loading-state">
+            <Bar className="skeleton-control" />
+            <Bar className="skeleton-control" />
+            <Bar className="skeleton-control" />
+          </div>
+          <div className="task-guidance loading-state">
+            <Bar className="skeleton-title" />
+            <Bar className="skeleton-text" />
+            <Bar className="skeleton-text" />
+          </div>
+        </div>
       </div>
     </Loading>
   );
@@ -85,7 +94,7 @@ export function DetailSkeleton() {
 export function ProfileSkeleton() {
   return (
     <Loading label="Carregando perfil">
-      <div className="form-page loading-state">
+      <div className="profile-overview loading-state">
         <div className="skeleton-profile">
           <Bar className="skeleton-avatar" size={80} />
           <div>

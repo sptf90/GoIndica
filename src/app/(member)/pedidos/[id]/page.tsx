@@ -65,12 +65,12 @@ export default async function Detail({
   const ownReconfirmation =
     request.status === 'RESOLVED'
       ? check(
-          await db
-            .from('request_reconfirmations')
-            .select('confirmed_at')
-            .eq('request_id', id)
-            .maybeSingle(),
-        )
+        await db
+          .from('request_reconfirmations')
+          .select('confirmed_at')
+          .eq('request_id', id)
+          .maybeSingle(),
+      )
       : null;
   const editable =
     owner && request.status === 'OPEN'
@@ -129,7 +129,7 @@ export default async function Detail({
           </div>
           <div className="request-actions">
             {editable ? (
-              <Link className="button secondary edit-request" href={`/pedidos/${id}/editar`}>
+              <Link className="button secondary sm edit-request" href={`/pedidos/${id}/editar`}>
                 <Icon name="edit" size={16} />
                 <span>Editar pedido</span>
               </Link>
@@ -197,7 +197,7 @@ export default async function Detail({
           )}
         </div>
       </header>
-      <div className="request-community-interest">
+      <div className="request-community-interest request-interest-bar">
         {request.wanting_count > 0 ? (
           <p>
             {request.wanting_count}{' '}

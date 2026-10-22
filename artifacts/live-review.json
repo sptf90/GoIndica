@@ -1,0 +1,191 @@
+[
+  {
+    "route": "/",
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "count": 1
+      },
+      {
+        "id": "color-contrast",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "route": "/entrar",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/cadastro",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/cadastro?tipo=empresa",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/recuperar-senha",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/privacidade",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/termos",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/endereco-inexistente",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/empresa",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "companyWidth": 320,
+    "grid": "238px",
+    "fits": true
+  },
+  {
+    "companyWidth": 375,
+    "grid": "293px",
+    "fits": true
+  },
+  {
+    "companyWidth": 390,
+    "grid": "308px",
+    "fits": true
+  },
+  {
+    "companyWidth": 430,
+    "grid": "348px",
+    "fits": true
+  },
+  {
+    "companyWidth": 768,
+    "grid": "309px 309px",
+    "fits": true
+  },
+  {
+    "companyWidth": 1024,
+    "grid": "309px 309px",
+    "fits": true
+  },
+  {
+    "companyWidth": 1200,
+    "grid": "309px 309px",
+    "fits": true
+  },
+  {
+    "companyWidth": 1280,
+    "grid": "309px 309px",
+    "fits": true
+  },
+  {
+    "companyWidth": 1440,
+    "grid": "309px 309px",
+    "fits": true
+  },
+  {
+    "route": "/app",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/ranking",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/perfil",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": [
+              ".profile-stats > p:nth-child(3)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.45 (foreground color: #7e746b, background color: #fdfdf1, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".profile-stats > p:nth-child(4)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.12 (foreground color: #b5afa5, background color: #fdfdf1, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ],
+    "incomplete": []
+  },
+  {
+    "route": "/atividades",
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "count": 3
+      }
+    ]
+  },
+  {
+    "route": "/salvos",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/notificacoes",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/preferencias",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/conta",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/pedidos/novo",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/admin?tab=users",
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "count": 7
+      }
+    ]
+  },
+  {
+    "route": "http://localhost:3100/pedidos/10e8c071-b17a-4e77-b294-5bf62385a8d6",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "http://localhost:3100/pedidos/10e8c071-b17a-4e77-b294-5bf62385a8d6/editar",
+    "violations": [],
+    "incomplete": []
+  }
+]

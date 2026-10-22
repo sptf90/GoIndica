@@ -1,0 +1,80 @@
+[
+  {
+    "route": "/",
+    "text200": {
+      "width": 320,
+      "scrollWidth": 320,
+      "overflowing": []
+    }
+  },
+  {
+    "route": "/entrar",
+    "text200": {
+      "width": 320,
+      "scrollWidth": 320,
+      "overflowing": []
+    }
+  },
+  {
+    "route": "/cadastro",
+    "text200": {
+      "width": 320,
+      "scrollWidth": 320,
+      "overflowing": []
+    }
+  },
+  {
+    "route": "/cadastro?tipo=empresa",
+    "text200": {
+      "width": 320,
+      "scrollWidth": 320,
+      "overflowing": []
+    }
+  },
+  {
+    "route": "/privacidade",
+    "text200": {
+      "width": 320,
+      "scrollWidth": 320,
+      "overflowing": []
+    }
+  },
+  {
+    "route": "/termos",
+    "text200": {
+      "width": 320,
+      "scrollWidth": 320,
+      "overflowing": []
+    }
+  },
+  {
+    "profileSettled": {
+      "violations": [],
+      "incomplete": [],
+      "passedRules": 24,
+      "axeVersion": "4.13.0"
+    }
+  },
+  {
+    "landscapeMenu": {
+      "x": 25,
+      "y": 196.33944702148438,
+      "width": 220,
+      "height": 107
+    }
+  },
+  {
+    "pinchZoom": {
+      "scale": 2,
+      "navHidden": false
+    }
+  },
+  {
+    "reducedMotion": [
+      "none",
+      "none",
+      "none",
+      "none"
+    ]
+  }
+]

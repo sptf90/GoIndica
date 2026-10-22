@@ -32,10 +32,11 @@ export default async function Saved({
   rows.sort((a, b) => order.get(a.id)! - order.get(b.id)!);
   const [cities, resolutions] = await Promise.all([citiesFor(rows), resolutionsFor(rows)]);
   return (
-    <>
+    <div className="collection-page saved-page">
       <PageHeading
         title={following ? 'Pedidos que acompanho' : 'Pedidos salvos'}
         description="Guarde os caminhos que quer explorar e acompanhe novas indicações."
+        action={rows.length ? <Link href="/app" className="button secondary">Explorar pedidos</Link> : undefined}
       />
       <ScrollableTabs active={following ? 'following' : 'saved'} label="Itens da sua lista">
         <Link aria-current={!following ? 'page' : undefined} href="/salvos">
@@ -71,6 +72,6 @@ export default async function Saved({
         base="/salvos"
         params={following ? { tab: 'following' } : {}}
       />
-    </>
+    </div>
   );
 }

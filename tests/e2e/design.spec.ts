@@ -1,9 +1,9 @@
 import { test, expect } from './fixtures';
 import { context } from './helpers';
 
-const widths = [320, 375, 390, 430, 768, 1024, 1280, 1440];
+const widths = [320, 375, 390, 430, 768, 1024, 1200, 1280, 1440];
 
-test('identidade GoIndica e contexto do pedido se adaptam aos oito tamanhos', async ({
+test('identidade GoIndica e contexto do pedido se adaptam aos nove tamanhos', async ({
   browser,
 }) => {
   const ana = await context(browser, 'Ana', 'ana_teste');
@@ -38,13 +38,22 @@ test('identidade GoIndica e contexto do pedido se adaptam aos oito tamanhos', as
         };
       });
       expect(appearance.canvas).toBe('rgb(253, 253, 241)');
-      expect(appearance.surface).toBe('rgb(253, 253, 241)');
+      expect(appearance.surface).toBe('rgb(246, 242, 231)');
+      await expect(ana.page.locator('.request-header')).toHaveCSS('background-color', 'rgb(255, 254, 249)');
       expect(appearance.font).toContain('Inter Variable');
       expect(appearance.loaded).toBe(true);
       expect(appearance.fits, `${width}px`).toBe(true);
       const main = (await ana.page.locator('.app-main').boundingBox())!;
       expect(main.x).toBeGreaterThanOrEqual(16);
       expect(main.x + main.width).toBeLessThanOrEqual(width - 16);
+      if (width >= 768) {
+        const header = (await ana.page.locator('.app-header').boundingBox())!;
+        const sidebar = (await ana.page.locator('.app-sidebar').boundingBox())!;
+        expect(header.x).toBeGreaterThan(sidebar.x + sidebar.width);
+        expect(Math.abs(header.x - main.x)).toBeLessThanOrEqual(1);
+        expect(Math.abs(header.width - main.width)).toBeLessThanOrEqual(1);
+        expect(Math.abs(header.y - sidebar.y)).toBeLessThanOrEqual(1);
+      }
       const content = (await ana.page.locator('.detail-content').boundingBox())!;
       const contextPanel = (await ana.page.locator('.request-context').boundingBox())!;
       if (width >= 1024) {
@@ -100,7 +109,7 @@ test('barra inferior possui quatro destinos e administração continua acessíve
         await admin.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
       ).toBe(true);
     }
-    for (const width of [768, 1024, 1440]) {
+    for (const width of [768, 1024, 1200, 1280, 1440]) {
       await admin.page.setViewportSize({ width, height: 850 });
       await expect(admin.page.locator('.desktop-nav')).toBeVisible();
       await expect(admin.page.locator('.bottom-nav')).not.toBeVisible();

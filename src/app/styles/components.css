@@ -116,6 +116,7 @@
 }
 .request-journey {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: var(--space-2);
@@ -123,11 +124,12 @@
 }
 .request-journey li {
   display: flex;
+  overflow-wrap: anywhere;
   align-items: center;
   gap: var(--space-1);
   min-width: 0;
   color: var(--muted);
-  font-size: var(--text-2xs);
+  font-size: var(--text-xs);
 }
 .request-journey li > span {
   display: grid;
@@ -174,14 +176,9 @@
   justify-content: flex-end;
   gap: var(--space-2);
 }
-.request-actions .button {
-  --button-height: var(--control-sm);
-  --button-pad: var(--space-3);
-  --button-font: var(--text-sm);
-}
 .request-actions .icon-button {
-  width: var(--control-sm);
-  min-height: var(--control-sm);
+  width: max(var(--control-sm), var(--touch-target));
+  min-height: max(var(--control-sm), var(--touch-target));
   padding: 0;
   border-radius: var(--radius-control);
 }
@@ -191,10 +188,10 @@
 }
 .request-options > summary {
   display: flex;
-  gap: 6px;
+  gap: var(--gap-inline-tight);
   align-items: center;
   cursor: pointer;
-  min-height: var(--control-sm);
+  min-height: max(var(--control-sm), var(--touch-target));
   padding: 0 var(--space-3);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-control);
@@ -419,7 +416,7 @@
 .context-facts dt {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--gap-inline-tight);
   color: var(--muted);
   font-size: var(--text-xs);
 }
@@ -642,7 +639,11 @@
   margin-top: var(--space-8);
 }
 .avatar {
+  --avatar-dimension: var(--avatar-size, 40px);
   display: inline-block;
+  width: var(--avatar-dimension);
+  height: var(--avatar-dimension);
+  font-size: calc(var(--avatar-dimension) * 0.3);
   flex-shrink: 0;
   border-radius: 50%;
   object-fit: cover;
@@ -918,11 +919,8 @@
 }
 @media (min-width: 1024px) {
   .detail-grid {
-    grid-template-columns: minmax(0, 1fr) 260px;
-    gap: var(--space-8);
-  }
-  .detail-grid {
     grid-template-columns: minmax(0, 1fr) 300px;
+    gap: var(--space-8);
   }
   .request-context {
     position: sticky;
@@ -1274,7 +1272,12 @@ html:has(.command-dialog[open]) {
   font-size: var(--text-lg);
 }
 .command-search input:focus {
+  outline: none;
   box-shadow: none;
+}
+.command-search:focus-within {
+  outline: 3px solid var(--orange-strong);
+  outline-offset: -3px;
 }
 .command-dialog kbd {
   display: inline-block;

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { RequestStatus } from '@/lib/types';
 import { Icon } from './icon';
+import type { CSSProperties } from 'react';
 export const statusLabels: Record<RequestStatus, string> = {
   OPEN: 'Procurando',
   REVEALED: 'Indicações abertas',
@@ -42,15 +43,27 @@ export function LocationIllustration() {
     </div>
   );
 }
-export function Avatar({ name, size = 40, src }: { name: string; size?: number; src?: string }) {
+export function Avatar({
+  name,
+  size = 40,
+  mobileSize,
+  src,
+}: {
+  name: string;
+  size?: number;
+  mobileSize?: number;
+  src?: string;
+}) {
+  const style = {
+    '--avatar-size': `${size}px`,
+    ...(mobileSize ? { '--avatar-mobile-size': `${mobileSize}px` } : {}),
+  } as CSSProperties;
   if (src)
-    return <img className="avatar" src={src} width={size} height={size} alt="" aria-hidden="true" />;
+    return (
+      <img className="avatar" style={style} src={src} width={size} height={size} alt="" aria-hidden="true" />
+    );
   return (
-    <span
-      className="avatar avatar-letter"
-      style={{ width: size, height: size, fontSize: Math.round(size * 0.3) }}
-      aria-hidden="true"
-    >
+    <span className="avatar avatar-letter" style={style} aria-hidden="true">
       {name
         .trim()
         .split(/[\s_]+/)

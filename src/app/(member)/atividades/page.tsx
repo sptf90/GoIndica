@@ -1,3 +1,4 @@
+import { PageHeading } from '@/components/page-heading';
 import { ScrollableTabs } from '@/components/scrollable-tabs';
 import Link from 'next/link';
 import { pageNumber } from '@/lib/pagination';
@@ -40,8 +41,8 @@ export default async function Activities({
     const ids = indications.map((i) => i.request_id);
     requests = ids.length
       ? check(await db.from('requests').select('*').in('id', ids)).sort(
-          (a, b) => ids.indexOf(a.id) - ids.indexOf(b.id),
-        )
+        (a, b) => ids.indexOf(a.id) - ids.indexOf(b.id),
+      )
       : [];
   } else if (tab === 'confirmed') {
     rewards = check(
@@ -69,14 +70,11 @@ export default async function Activities({
   }
   const [cities, resolutions] = await Promise.all([citiesFor(requests), resolutionsFor(requests)]);
   return (
-    <>
-      <p className="eyebrow">Tudo o que você movimentou</p>
-      <div className="heading-action">
-        <h1>Minhas atividades</h1>
-        <Link href="/pedidos/novo" className="button">
-          Novo pedido
-        </Link>
-      </div>
+    <div className="collection-page activity-page">
+      <PageHeading title="Minhas atividades" eyebrow="Tudo o que você movimentou"
+        description="Acompanhe suas perguntas, as indicações que enviou e cada descoberta confirmada."
+        action={<Link href="/pedidos/novo" className="button">Novo pedido</Link>}
+      />
       <ScrollableTabs active={tab} label="Tipo de atividade" className="activity-tabs">
         {Object.entries(tabs).map(([key, label]) => (
           <Link
@@ -91,7 +89,7 @@ export default async function Activities({
       </ScrollableTabs>
       {tab === 'confirmed' ? (
         rewards?.length ? (
-          <div>
+          <div className="reward-ledger">
             {rewards.slice(0, 20).map((e) => {
               const request = requests.find((r) => r.id === e.request_id);
               return (
@@ -144,6 +142,6 @@ export default async function Activities({
         base="/atividades"
         params={{ tab }}
       />
-    </>
+    </div>
   );
 }

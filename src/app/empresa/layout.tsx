@@ -1,5 +1,6 @@
 import { Brand } from '@/components/ui';
 import { logout } from '@/server/actions';
+import { MainContent } from '@/components/main-content';
 export const metadata = { robots: { index: false, follow: false } };
 export default function CompanyLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -12,9 +13,9 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
           </form>
         </div>
       </header>
-      <main id="conteudo" className="app-main wrap">
+      <MainContent className="app-main wrap">
         {children}
-      </main>
+      </MainContent>
     </div>
   );
 }

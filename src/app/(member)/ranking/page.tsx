@@ -1,3 +1,4 @@
+import { PageHeading } from '@/components/page-heading';
 import Link from 'next/link';
 import { pageNumber } from '@/lib/pagination';
 import { member } from '@/server/auth';
@@ -26,19 +27,22 @@ export default async function Ranking({
     await db.call('city_ranking', { p_city_id: city.id, p_offset: (page - 1) * 30 }),
   );
   return (
-    <>
-      <p className="eyebrow">Conhecimento que fez a diferença</p>
-      <h1>Quem ajuda a cidade</h1>
-      <p className="muted">
-        Somente indicações confirmadas contam. Os pontos pertencem à cidade do pedido.
-      </p>
-      <form action="/ranking" className="city-filter">
-        <CitySelector key={city.id} initial={city} name="city" />
-        <button className="button secondary">Ver ranking</button>
-      </form>
-      <h2 className="city-title">
-        {city.name} — {city.state_code}
-      </h2>
+    <div className="ranking-page">
+      <PageHeading title="Quem ajuda a cidade" eyebrow="Conhecimento que fez a diferença"
+        description="Somente indicações confirmadas contam. Os pontos pertencem à cidade do pedido."
+      />
+      <div className="ranking-filter-panel">
+        <form action="/ranking" className="city-filter">
+          <CitySelector key={city.id} initial={city} name="city" />
+          <button className="button secondary">Ver ranking</button>
+        </form>
+      </div>
+      <div className="ranking-section-heading">
+        <h2 className="city-title">
+          {city.name} — {city.state_code}
+        </h2>
+        <p className="hint">Pessoas que transformam indicações em descobertas</p>
+      </div>
       {entries.length ? (
         <ol className="ranking-list">
           {entries.map((e) => (
@@ -51,6 +55,7 @@ export default async function Ranking({
                 aria-hidden="true"
               >
                 <Avatar
+                  mobileSize={36}
                   name={e.display_name}
                   src={profilePhotoUrl(e, { rankingCity: city.id })}
                 />
@@ -85,6 +90,6 @@ export default async function Ranking({
       <p className="hint">
         Em caso de empate, fica à frente quem tem mais confirmações e recebeu a primeira antes.
       </p>
-    </>
+    </div>
   );
 }

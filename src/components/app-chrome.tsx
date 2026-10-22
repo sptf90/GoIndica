@@ -7,6 +7,7 @@ import { Icon } from './icon';
 import { DesktopNavigation, MobileNavigation } from './navigation';
 import { CommandPalette } from './command-palette';
 import { MotionConfig } from 'motion/react';
+import { MainContent } from './main-content';
 
 function contextFor(path: string) {
   if (path === '/pedidos/novo') return { title: 'Perguntar à cidade', back: '/app', focused: true };
@@ -26,6 +27,10 @@ function contextFor(path: string) {
   if (path.startsWith('/perfil/')) return { title: 'Perfil da comunidade', back: '/ranking' };
   if (path === '/salvos') return { title: 'Sua lista', back: '/perfil' };
   if (path === '/notificacoes') return { title: 'Novidades', back: '/app' };
+  if (path === '/app') return { title: 'Pedidos da cidade', back: '/app', home: true };
+  if (path === '/ranking') return { title: 'Ranking da cidade', back: '/app', home: true };
+  if (path === '/atividades') return { title: 'Suas atividades', back: '/app', home: true };
+  if (path === '/perfil') return { title: 'Meu perfil', back: '/app', home: true };
   if (path === '/admin') return { title: 'Administração', back: '/perfil' };
   return null;
 }
@@ -83,11 +88,14 @@ export function AppChrome({
         <header className="app-header">
           <div className="wrap">
             {context ? (
-              <div className="contextual-heading">
-                <Link href={context.back} className="icon-button" aria-label="Voltar">
-                  <Icon name="back" size={24} />
-                </Link>
-                <span>{context.title}</span>
+              <div className={`contextual-heading${context.home ? ' primary-context' : ''}`}>
+                {context.home ? <Brand href="/app" /> : null}
+                {context.home ? <span className="header-mark"><Icon name="compass" size={20} /></span> : (
+                  <Link href={context.back} className="icon-button" aria-label="Voltar">
+                    <Icon name="back" size={24} />
+                  </Link>
+                )}
+                <span className="header-path-label">{context.title}</span>
               </div>
             ) : (
               <div className="main-brand">
@@ -101,9 +109,9 @@ export function AppChrome({
             </div>
           </div>
         </header>
-        <main id="conteudo" className="app-main wrap" tabIndex={-1}>
+        <MainContent className="app-main wrap">
           <div className="app-content">{children}</div>
-        </main>
+        </MainContent>
         {!context?.focused ? <MobileNavigation /> : null}
       </div>
     </MotionConfig>

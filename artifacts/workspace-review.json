@@ -1,0 +1,257 @@
+[
+  {
+    "route": "/app",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/atividades",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/salvos",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/notificacoes",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/ranking",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/perfil",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/preferencias",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/conta",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/pedidos/novo",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/perfil/bruno_teste?ranking=3549805",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/app",
+    "width": 320,
+    "text200": {
+      "scrollWidth": 320,
+      "overflowing": [
+        {
+          "tag": "A",
+          "class": "",
+          "text": "Sem indicação"
+        },
+        {
+          "tag": "A",
+          "class": "",
+          "text": "Encontrados"
+        }
+      ]
+    }
+  },
+  {
+    "route": "/perfil",
+    "width": 320,
+    "text200": {
+      "scrollWidth": 320,
+      "overflowing": []
+    }
+  },
+  {
+    "route": "/preferencias",
+    "width": 320,
+    "text200": {
+      "scrollWidth": 320,
+      "overflowing": []
+    }
+  },
+  {
+    "route": "/conta",
+    "width": 320,
+    "text200": {
+      "scrollWidth": 320,
+      "overflowing": []
+    }
+  },
+  {
+    "route": "/pedidos/novo",
+    "width": 320,
+    "text200": {
+      "scrollWidth": 320,
+      "overflowing": []
+    }
+  },
+  {
+    "route": "/perfil/bruno_teste?ranking=3549805",
+    "width": 320,
+    "text200": {
+      "scrollWidth": 320,
+      "overflowing": []
+    }
+  },
+  {
+    "route": "/app",
+    "width": 768,
+    "text200": {
+      "scrollWidth": 768,
+      "overflowing": []
+    }
+  },
+  {
+    "route": "/perfil",
+    "width": 768,
+    "text200": {
+      "scrollWidth": 768,
+      "overflowing": []
+    }
+  },
+  {
+    "route": "/preferencias",
+    "width": 768,
+    "text200": {
+      "scrollWidth": 768,
+      "overflowing": []
+    }
+  },
+  {
+    "route": "/conta",
+    "width": 768,
+    "text200": {
+      "scrollWidth": 768,
+      "overflowing": []
+    }
+  },
+  {
+    "route": "/pedidos/novo",
+    "width": 768,
+    "text200": {
+      "scrollWidth": 768,
+      "overflowing": []
+    }
+  },
+  {
+    "route": "/perfil/bruno_teste?ranking=3549805",
+    "width": 768,
+    "text200": {
+      "scrollWidth": 768,
+      "overflowing": []
+    }
+  },
+  {
+    "route": "/app",
+    "width": 1440,
+    "text200": {
+      "scrollWidth": 1440,
+      "overflowing": []
+    }
+  },
+  {
+    "route": "/perfil",
+    "width": 1440,
+    "text200": {
+      "scrollWidth": 1440,
+      "overflowing": []
+    }
+  },
+  {
+    "route": "/preferencias",
+    "width": 1440,
+    "text200": {
+      "scrollWidth": 1440,
+      "overflowing": []
+    }
+  },
+  {
+    "route": "/conta",
+    "width": 1440,
+    "text200": {
+      "scrollWidth": 1440,
+      "overflowing": []
+    }
+  },
+  {
+    "route": "/pedidos/novo",
+    "width": 1440,
+    "text200": {
+      "scrollWidth": 1440,
+      "overflowing": []
+    }
+  },
+  {
+    "route": "/perfil/bruno_teste?ranking=3549805",
+    "width": 1440,
+    "text200": {
+      "scrollWidth": 1440,
+      "overflowing": []
+    }
+  },
+  {
+    "tab": "users",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "tab": "requests",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "tab": "indications",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "tab": "places",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "tab": "reports",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "tab": "rewards",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "tab": "logs",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "tab": "metrics",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "tab": "support",
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "tab": "operations",
+    "violations": [],
+    "incomplete": []
+  }
+]

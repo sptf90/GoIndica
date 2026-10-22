@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { TaskPage } from '@/components/workspace-layout';
 import { notFound, redirect } from 'next/navigation';
 import { member } from '@/server/auth';
 import { uuid } from '@/lib/validation/schemas';
@@ -22,14 +22,20 @@ export default async function Indicate({ params }: { params: Promise<{ id: strin
   if (own.data) redirect('/pedidos/' + id);
   const city = check(await db.from('cities').select('*').eq('id', request.city_id).single());
   return (
-    <div className="form-page">
-      <Link href={'/pedidos/' + id} className="back-link">
-        ← Voltar para o pedido
-      </Link>
-      <p className="eyebrow">Você conhece um caminho?</p>
-      <h1>Indicar um local</h1>
+    <TaskPage
+      title="Indicar um local" eyebrow="Você conhece um caminho?"
+      description="Compartilhe um lugar que pode ajudar nesta busca."
+      back={{ href: '/pedidos/' + id, label: 'Voltar para o pedido' }}
+      guidance={{
+        title: 'Indique com confiança', items: [
+          'Escolha o estabelecimento correto nas sugestões de busca.',
+          'Conte como você sabe: um detalhe da sua experiência pode ajudar.',
+          'A indicação só será aberta pelo solicitante. O local não pode ser trocado após o envio.',
+        ]
+      }}
+    >
       <p className="request-quote">“{request.description}”</p>
       <PlaceSearch requestId={id} cityId={city.id} cityName={city.name} />
-    </div>
+    </TaskPage>
   );
 }

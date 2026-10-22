@@ -2,7 +2,7 @@ import { test, expect } from './fixtures';
 import type { Page } from '@playwright/test';
 import { context, mockPlaceSuggestions } from './helpers';
 
-const widths = [320, 375, 390, 430, 768, 1024, 1280, 1440];
+const widths = [320, 375, 390, 430, 768, 1024, 1200, 1280, 1440];
 async function inspect(page: Page, name: string) {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   for (const width of widths) {
@@ -15,6 +15,19 @@ async function inspect(page: Page, name: string) {
         Math.abs(points.y - confirmations.y),
         `Estatísticas do perfil: ${width}px`,
       ).toBeLessThanOrEqual(1);
+    }
+    if (width >= 1200 && (await page.locator('.app-sidebar').count())) {
+      const sidebar = (await page.locator('.app-sidebar').boundingBox())!;
+      const account = (await page.locator('.profile-link').boundingBox())!;
+      expect(account.x + account.width, 'Conta contida na sidebar').toBeLessThanOrEqual(sidebar.x + sidebar.width);
+    }
+    if (width >= 1200 && (await page.locator('.metrics-filter').count())) {
+      const fields = await page.locator('.metrics-filter input:not([type="hidden"])').all();
+      const submit = (await page.locator('.metrics-filter > button').boundingBox())!;
+      for (const field of fields) {
+        const box = (await field.boundingBox())!;
+        expect(Math.abs(box.y - submit.y), 'Métricas: campos alinhados').toBeLessThanOrEqual(1);
+      }
     }
     for (const tab of await page.locator('.tabs a[aria-current="page"]').all()) {
       await expect(tab).toBeInViewport({ ratio: 1 });
@@ -65,6 +78,9 @@ test('admin, edição e indicação permanecem legíveis em celular e desktop', 
     await expect(ana.page.getByRole('heading', { name: 'Encontrado em Empório A' })).toBeVisible();
     for (const tab of [
       'reports',
+      'places',
+      'support',
+      'operations',
       'users',
       'requests',
       'indications',
@@ -126,7 +142,7 @@ test('nome longo não quebra cabeçalho, perfil, ranking ou histórico de recomp
   }
 });
 
-test('páginas legais e página ausente se adaptam aos oito tamanhos', async ({ page }) => {
+test('páginas legais e página ausente se adaptam aos nove tamanhos', async ({ page }) => {
   for (const [name, path] of [
     ['privacidade', '/privacidade'],
     ['termos', '/termos'],

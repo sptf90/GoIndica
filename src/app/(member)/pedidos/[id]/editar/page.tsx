@@ -1,3 +1,4 @@
+import { TaskPage } from '@/components/workspace-layout';
 import { notFound, redirect } from 'next/navigation';
 import { member } from '@/server/auth';
 import { uuid } from '@/lib/validation/schemas';
@@ -18,10 +19,18 @@ export default async function Edit({ params }: { params: Promise<{ id: string }>
     redirect('/pedidos/' + id);
   const city = check(await db.from('cities').select('*').eq('id', request.city_id).single());
   return (
-    <div className="form-page">
-      <h1>Editar pedido</h1>
-      <p className="muted">Os dados ficam bloqueados depois da primeira indicação.</p>
+    <TaskPage
+      title="Editar pedido" eyebrow="Ajuste sua pergunta"
+      description="Os dados ficam bloqueados depois da primeira indicação."
+      guidance={{
+        title: 'Deixe sua busca mais clara', items: [
+          'Revise a descrição e os detalhes do que você precisa.',
+          'Confira a cidade, o bairro e a foto antes de salvar.',
+          'Depois da primeira indicação, os dados do pedido ficam bloqueados.',
+        ]
+      }}
+    >
       <RequestComposer city={city} request={request} />
-    </div>
+    </TaskPage>
   );
 }

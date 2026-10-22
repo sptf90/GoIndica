@@ -15,11 +15,6 @@
   gap: var(--space-6);
   font-size: var(--text-md);
 }
-.public-header .button {
-  --button-height: var(--control-sm);
-  --button-pad: var(--space-4);
-  --button-font: var(--text-sm);
-}
 .hero {
   display: grid;
   grid-template-columns: 1.15fr 1fr;
@@ -27,6 +22,9 @@
   gap: var(--space-16);
   padding-top: var(--space-12);
   padding-bottom: var(--space-16);
+}
+.hero > * {
+  min-width: 0;
 }
 .hero h1 {
   font-size: var(--text-display);
@@ -48,7 +46,7 @@
   margin-top: var(--space-8);
 }
 .hero-actions .button {
-  --button-height: 48px;
+  --button-height: var(--space-12);
   --button-pad: var(--space-6);
 }
 .hero-actions .text-link {
@@ -229,6 +227,7 @@
 }
 .public-footer nav {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-6);
 }
 .auth-page {

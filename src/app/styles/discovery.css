@@ -22,6 +22,9 @@
   height: 100%;
   cursor: pointer;
 }
+.photo-preview .avatar {
+  --avatar-size: 96px;
+}
 .photo-preview {
   display: flex;
   align-items: flex-start;

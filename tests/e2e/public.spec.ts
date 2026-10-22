@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures';
-const widths = [320, 375, 390, 414, 768, 1024, 1280, 1440];
+const widths = [320, 375, 390, 430, 768, 1024, 1200, 1280, 1440];
 test('páginas públicas usam rolagem natural e rodapé acessível fora do painel do app', async ({
   page,
 }) => {
@@ -46,6 +46,31 @@ test('landing explica o ciclo e não promete estoque', async ({ page }) => {
   await expect(
     page.getByText('Uma descoberta anterior não garante disponibilidade atual.'),
   ).toBeVisible();
+});
+test('páginas públicas mantêm reflow com texto a 200% em 320px', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 600 });
+  for (const route of ['/', '/entrar', '/cadastro', '/cadastro?tipo=empresa', '/recuperar-senha', '/privacidade', '/termos']) {
+    await page.goto(route);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await page.evaluate(() => {
+      const sizes = [...document.querySelectorAll<HTMLElement>('body *')].map((el) => [el, getComputedStyle(el).fontSize] as const);
+      sizes.forEach(([el, size]) => { el.style.fontSize = `${parseFloat(size) * 2}px`; });
+    });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), route).toBe(true);
+    await expect(page.getByRole('link', { name: 'Pular para o conteúdo' })).not.toBeInViewport();
+    for (const label of await page.locator('.ranking-preview .ranking-row > div').all()) {
+      expect(await label.evaluate((el) => {
+        const text = el.querySelector('.hint')!;
+        const canvas = document.createElement('canvas').getContext('2d')!;
+        canvas.font = getComputedStyle(text).font;
+        return el.getBoundingClientRect().width >= canvas.measureText('comunidade').width;
+      })).toBe(true);
+    }
+    const footer = page.getByRole('contentinfo');
+    await footer.scrollIntoViewIfNeeded();
+    await expect(footer.getByRole('link', { name: 'Termos de uso' })).toBeInViewport({ ratio: 1 });
+    await page.screenshot({ path: `test-results/publico-texto-200-${route.replaceAll('/', '-').replaceAll('?', '-')}.png`, fullPage: true });
+  }
 });
 for (const width of widths)
   test(`landing responsiva e navegável: ${width}px`, async ({ page }) => {

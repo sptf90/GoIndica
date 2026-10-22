@@ -61,6 +61,9 @@
   --space-16: 64px;
   --space-20: 80px;
 
+  /* Tight icon/label spacing shared by status pills and compact metadata. */
+  --gap-inline-tight: 6px;
+
   /* Corners: controls, cards, panels and pills */
   --radius-sm: 8px;
   --radius-md: 10px;
@@ -220,6 +223,7 @@ img {
   justify-content: center;
   gap: var(--space-2);
   min-height: var(--button-height);
+  min-width: var(--button-height);
   padding: var(--space-2) var(--button-pad);
   border: 1px solid var(--button-border);
   border-radius: var(--radius-control);
@@ -280,9 +284,16 @@ img {
   --button-font: var(--text-sm);
 }
 .button.lg {
-  --button-height: 48px;
+  --button-height: var(--space-12);
   --button-pad: var(--space-6);
   --button-font: var(--text-base);
+}
+/* Touch layouts enlarge compact targets while preserving desktop density. */
+@media (max-width: 767px), (any-pointer: coarse) {
+  .button {
+    min-height: max(var(--button-height), var(--touch-target));
+    min-width: max(var(--button-height), var(--touch-target));
+  }
 }
 .button.block {
   width: 100%;
@@ -338,12 +349,14 @@ button.text-link {
   position: fixed;
   z-index: 100;
   left: var(--space-4);
-  top: -100px;
+  top: 0;
+  transform: translateY(-100%);
   background: var(--surface);
   padding: var(--space-3);
 }
 .skip-link:focus {
   top: max(var(--space-4), env(safe-area-inset-top));
+  transform: none;
 }
 .icon {
   display: inline-block;

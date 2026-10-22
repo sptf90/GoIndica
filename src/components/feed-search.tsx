@@ -9,7 +9,7 @@ export function FeedSearch({ city, query, status }: { city: City; query: string;
   const [text, setText] = useState(query);
   const formId = useId();
   return (
-    <>
+    <div className="feed-tools">
       <form id={formId} className="feed-search" action="/app">
         <div className="search-bar">
           <label className="sr-only" htmlFor="query">
@@ -49,6 +49,6 @@ export function FeedSearch({ city, query, status }: { city: City; query: string;
         <Icon name="plus" size={20} />
         {text.trim() ? 'Publicar esta busca' : 'Novo pedido'}
       </button>
-    </>
+    </div>
   );
 }

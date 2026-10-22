@@ -21,16 +21,11 @@ export function RequestCard({
       <div className="request-summary">
         <div className="row-meta">
           <Status status={request.status} />
-          <span>{date(request.created_at)}</span>
+          <time dateTime={request.created_at}>{date(request.created_at)}</time>
         </div>
         <h2>
           <Link href={'/pedidos/' + request.id}>{request.description}</Link>
         </h2>
-        <p className="muted request-location">
-          <Icon name="pin" size={14} />
-          {city ? `${city.name} — ${city.state_code}` : ''}
-          {request.neighborhood ? ` · ${request.neighborhood}` : ''}
-        </p>
         {request.has_photo || request.wanting_count > 0 ? (
           <p className="hint request-signals">
             {request.has_photo ? <span>Com foto</span> : null}
@@ -68,16 +63,23 @@ export function RequestCard({
           <DiscoveryPlace requestId={request.id} placeId={resolution.place_id} />
         ) : null}
       </div>
-      <Link
-        href={'/pedidos/' + request.id}
-        className="request-count"
-        aria-label={`${request.indication_count} ${request.indication_count === 1 ? 'indicação' : 'indicações'} — Abrir pedido: ${request.description}`}
-      >
-        <Icon name="message" size={17} />
-        <strong>{request.indication_count}</strong>{' '}
-        <span>{request.indication_count === 1 ? 'indicação' : 'indicações'}</span>
-        <Icon name="arrow" size={16} />
-      </Link>
+      <div className="request-card-footer">
+        <p className="muted request-location">
+          <Icon name="pin" size={14} />
+          {city ? `${city.name} — ${city.state_code}` : ''}
+          {request.neighborhood ? ` · ${request.neighborhood}` : ''}
+        </p>
+        <Link
+          href={'/pedidos/' + request.id}
+          className="request-count"
+          aria-label={`${request.indication_count} ${request.indication_count === 1 ? 'indicação' : 'indicações'} — Abrir pedido: ${request.description}`}
+        >
+          <Icon name="message" size={17} />
+          <strong>{request.indication_count}</strong>{' '}
+          <span>{request.indication_count === 1 ? 'indicação' : 'indicações'}</span>
+          <Icon name="arrow" size={16} />
+        </Link>
+      </div>
     </article>
   );
 }

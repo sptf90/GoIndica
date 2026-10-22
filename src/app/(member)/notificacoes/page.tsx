@@ -34,34 +34,36 @@ export default async function Notifications({
   );
   const requests = rows.length
     ? check(
-        await db
-          .from('requests')
-          .select('id,description')
-          .in(
-            'id',
-            rows.map((r) => r.request_id),
-          ),
-      )
+      await db
+        .from('requests')
+        .select('id,description')
+        .in(
+          'id',
+          rows.map((r) => r.request_id),
+        ),
+    )
     : [];
   const descriptions = new Map(requests.map((r) => [r.id, r.description]));
   return (
-    <>
+    <div className="collection-page notifications-page">
       <PageHeading
         title="Notificações"
         description="Indicações, descobertas e reconhecimento. Tudo por aqui."
       />
-      <Link className="text-link" href="/atividades?tab=decision">
-        Pedidos aguardando minha decisão ↗
-      </Link>
-      <ActionForm
-        action={readNotifications}
-        label="Marcar todas como lidas"
-        className="compact quiet"
-      />
+      <div className="notification-toolbar">
+        <Link className="text-link" href="/atividades?tab=decision">
+          Pedidos aguardando minha decisão ↗
+        </Link>
+        <ActionForm
+          action={readNotifications}
+          label="Marcar todas como lidas"
+          className="compact quiet"
+        />
+      </div>
       {rows.length ? (
         <div className="community-list">
           {rows.slice(0, 20).map((r) => (
-            <article className="community-row" key={r.id}>
+            <article className={`community-row notification-row${!r.read_at ? ' is-unread' : ''}`} key={r.id}>
               <span className="notification-event">
                 <Icon name={r.kind === 'REWARD_RECEIVED' ? 'award' : 'message'} size={22} />
               </span>
@@ -98,6 +100,6 @@ export default async function Notifications({
         </Empty>
       )}
       <Pagination page={page} hasMore={rows.length > 20} base="/notificacoes" />
-    </>
+    </div>
   );
 }

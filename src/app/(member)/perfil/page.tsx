@@ -21,63 +21,73 @@ export default async function MyProfile() {
   const city = check(cityResult),
     stats = check(statsResult);
   return (
-    <div className="form-page profile-page">
-      <div className="profile-heading">
-        <Avatar name={profile.display_name} size={72} src={profilePhotoUrl(profile)} />
-        <div>
-          <p className="eyebrow">Seu lugar na comunidade</p>
-          <h1>{profile.display_name}</h1>
-          <p className="muted">@{profile.username}</p>
-          <p className="profile-city">
-            <Icon name="pin" size={14} /> {city.name} — {city.state_code}
+    <div className="profile-page">
+      <section className="profile-overview" aria-label="Seu perfil e sua participação">
+        <div className="profile-heading">
+          <Avatar name={profile.display_name} size={72} mobileSize={64} src={profilePhotoUrl(profile)} />
+          <div>
+            <p className="eyebrow">Seu lugar na comunidade</p>
+            <h1>{profile.display_name}</h1>
+            <p className="muted">@{profile.username}</p>
+            <p className="profile-city">
+              <Icon name="pin" size={14} /> {city.name} — {city.state_code}
+            </p>
+          </div>
+        </div>
+        <div className="profile-stats">
+          <p>
+            <strong>
+              <CountUp value={stats.requests} />
+            </strong>{' '}
+            pedidos publicados
+          </p>
+          <p>
+            <strong>
+              <CountUp value={stats.indications} />
+            </strong>{' '}
+            indicações enviadas
+          </p>
+          <p>
+            <strong>
+              <CountUp value={stats.points} />
+            </strong>{' '}
+            pontos
+          </p>
+          <p>
+            <strong>
+              <CountUp value={stats.confirmations} />
+            </strong>{' '}
+            indicações confirmadas
           </p>
         </div>
+        <p className="recognition">{reputationLabel(stats.confirmations)}</p>
+        <p className="hint">
+          Outras pessoas veem apenas seu nome, nome de usuário, foto, cidade e este selo. Os números acima
+          ficam visíveis só para você.
+        </p>
+      </section>
+      <div className="profile-layout">
+        <div className="profile-shortcuts">
+          <h2>Seu espaço</h2>
+          <ProfileMenu pending={summary.pending} username={profile.username} admin={admin} />
+          <InstallApp />
+          <form action={logout} className="logout-form">
+            <button className="button secondary">Sair da conta</button>
+          </form>
+        </div>
+        <div className="profile-editing">
+          <div className="profile-editing-intro"><h2>Seus dados, do seu jeito</h2><p className="muted">Atualize como você aparece para a comunidade.</p></div>
+          <details className="profile-editor">
+            <summary>
+              <Icon name="edit" size={20} />
+              <span>Editar perfil</span>
+              <Icon name="chevron" size={18} />
+            </summary>
+            <h2>Seus dados</h2>
+            <ProfileForm profile={profile} city={city} />
+          </details>
+        </div>
       </div>
-      <div className="profile-stats">
-        <p>
-          <strong>
-            <CountUp value={stats.requests} />
-          </strong>{' '}
-          pedidos publicados
-        </p>
-        <p>
-          <strong>
-            <CountUp value={stats.indications} />
-          </strong>{' '}
-          indicações enviadas
-        </p>
-        <p>
-          <strong>
-            <CountUp value={stats.points} />
-          </strong>{' '}
-          pontos
-        </p>
-        <p>
-          <strong>
-            <CountUp value={stats.confirmations} />
-          </strong>{' '}
-          indicações confirmadas
-        </p>
-      </div>
-      <p className="recognition">{reputationLabel(stats.confirmations)}</p>
-      <p className="hint">
-        Outras pessoas veem apenas seu nome, nome de usuário, foto, cidade e este selo. Os números acima
-        ficam visíveis só para você.
-      </p>
-      <ProfileMenu pending={summary.pending} username={profile.username} admin={admin} />
-      <details className="profile-editor">
-        <summary>
-          <Icon name="edit" size={20} />
-          <span>Editar perfil</span>
-          <Icon name="chevron" size={18} />
-        </summary>
-        <h2>Seus dados</h2>
-        <ProfileForm profile={profile} city={city} />
-      </details>
-      <InstallApp />
-      <form action={logout} className="logout-form">
-        <button className="button secondary">Sair da conta</button>
-      </form>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures';
 import { context } from './helpers';
-const widths = [320, 375, 390, 430, 768, 1024, 1440];
+const widths = [320, 375, 390, 430, 768, 1024, 1200, 1280, 1440];
 
 test('rolagem natural e navegação contextual em todos os tamanhos', async ({ browser }) => {
   test.setTimeout(120000);

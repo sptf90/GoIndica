@@ -193,7 +193,7 @@
     justify-content: flex-start;
   }
   .edit-request {
-    width: var(--control-sm);
+    width: max(var(--control-sm), var(--touch-target));
     --button-pad: 0px;
   }
   .edit-request > span {
@@ -243,16 +243,11 @@
     grid-template-columns: 18px 36px minmax(0, 1fr) auto;
     gap: var(--space-3);
   }
-  .ranking-row .avatar {
-    width: 36px !important;
-    height: 36px !important;
+  .avatar {
+    --avatar-dimension: var(--avatar-mobile-size, var(--avatar-size, 40px));
   }
   .ranking-points {
     font-size: var(--text-xl);
-  }
-  .profile-heading > .avatar {
-    width: 64px !important;
-    height: 64px !important;
   }
   .admin-row {
     flex-direction: column;
@@ -280,6 +275,21 @@
   }
 }
 @media (max-width: 359px) {
+  .ranking-row {
+    grid-template-columns: max-content 36px minmax(0, 1fr);
+  }
+  .ranking-row > .rank-number,
+  .ranking-row > .avatar-link,
+  .ranking-row > .avatar {
+    grid-row: 1 / span 2;
+    align-self: start;
+  }
+  .ranking-row > strong:last-child {
+    grid-column: 3;
+    justify-self: end;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
   .tabs {
     font-size: var(--text-xs);
   }
@@ -300,8 +310,10 @@
     flex-direction: column;
     gap: var(--space-2);
   }
-  .request-journey li {
-    font-size: 10px;
+  .request-journey {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
   }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -1,3 +1,4 @@
+import { PageHeading } from '@/components/page-heading';
 import { ScrollableTabs } from '@/components/scrollable-tabs';
 import Link from 'next/link';
 import { pageNumber } from '@/lib/pagination';
@@ -235,9 +236,9 @@ export default async function Admin({
             {r.status === 'OPEN' ? 'Pendente' : 'Revisada'} · {timestamp(r.created_at)}
             {r.reviewed_at
               ? ' · Revisada em ' +
-                timestamp(r.reviewed_at) +
-                ' por ' +
-                (reviewerMap.get(r.reviewed_by!) || 'Administrador')
+              timestamp(r.reviewed_at) +
+              ' por ' +
+              (reviewerMap.get(r.reviewed_by!) || 'Administrador')
               : ''}
           </p>
           {r.decision_note ? <p>Decisão: {r.decision_note}</p> : null}
@@ -272,14 +273,14 @@ export default async function Admin({
     );
     const people = rows.length
       ? check(
-          await db
-            .from('profiles')
-            .select('id,display_name,username')
-            .in(
-              'id',
-              rows.map((r) => r.user_id),
-            ),
-        )
+        await db
+          .from('profiles')
+          .select('id,display_name,username')
+          .in(
+            'id',
+            rows.map((r) => r.user_id),
+          ),
+      )
       : [];
     const peopleMap = new Map(people.map((p) => [p.id, p]));
     more = rows.length > 30;
@@ -342,14 +343,14 @@ export default async function Admin({
     more = rows.length > 30;
     const names = rows.length
       ? check(
-          await db
-            .from('profiles')
-            .select('id,display_name,username')
-            .in(
-              'id',
-              rows.map((r) => r.user_id),
-            ),
-        )
+        await db
+          .from('profiles')
+          .select('id,display_name,username')
+          .in(
+            'id',
+            rows.map((r) => r.user_id),
+          ),
+      )
       : [];
     const nameMap = new Map(names.map((p) => [p.id, p]));
     body = rows.slice(0, 30).map((r) => (
@@ -468,7 +469,7 @@ export default async function Admin({
             <input type="date" name="until" defaultValue={until} />
           </label>
           <button className="button secondary">Filtrar métricas</button>
-          <Link href="/admin?tab=metrics">Limpar filtros</Link>
+          <Link href="/admin?tab=metrics" className="text-link">Limpar filtros</Link>
         </form>
         {!validRange ? (
           <p className="notice error">
@@ -580,9 +581,10 @@ export default async function Admin({
     );
   }
   return (
-    <>
-      <p className="eyebrow">Revisão humana, ações auditáveis</p>
-      <h1>Administração</h1>
+    <div className="admin-page">
+      <PageHeading title="Administração" eyebrow="Revisão humana, ações auditáveis"
+        description="Cuide da comunidade, acompanhe os registros e mantenha as operações em ordem."
+      />
       <ScrollableTabs active={tab} label="Áreas administrativas" className="activity-tabs">
         {Object.entries(tabs).map(([key, label]) => (
           <Link
@@ -619,13 +621,16 @@ export default async function Admin({
           <button className="button secondary">Buscar</button>
         </form>
       ) : null}
-      {Array.isArray(body) && !body.length ? <Empty title="Nenhum registro para revisar." /> : body}
+      <section className={`admin-results admin-results-${tab}`} aria-label={tabs[tab]}>
+        <div className="admin-section-heading"><h2>{tabs[tab]}</h2><span className="hint">{['metrics', 'operations'].includes(tab) ? 'Visão operacional' : 'Registros da comunidade'}</span></div>
+        {Array.isArray(body) && !body.length ? <Empty title="Nenhum registro para revisar." headingLevel={3} /> : body}
+      </section>
       <Pagination
         page={page}
         hasMore={more}
         base="/admin"
         params={{ tab, q, ...(params.status ? { status: params.status } : {}) }}
       />
-    </>
+    </div>
   );
 }

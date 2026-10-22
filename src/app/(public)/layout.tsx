@@ -16,7 +16,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <Link className="text-link" href="/entrar">
               Entrar
             </Link>
-            <Link className="button header-cta" href="/entrar">
+            <Link className="button sm header-cta" href="/entrar">
               Começar agora
             </Link>
           </nav>

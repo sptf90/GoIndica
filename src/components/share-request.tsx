@@ -44,7 +44,7 @@ export function ShareRequest({
     <div className={`share-request${compact ? ' share-compact' : ''}`}>
       <button
         type="button"
-        className={`button secondary${compact ? ' icon-button' : ''}`}
+        className={`button secondary${compact ? ' sm icon-button' : ''}`}
         onClick={share}
         disabled={busy}
         aria-label={compact ? 'Compartilhar pedido' : undefined}

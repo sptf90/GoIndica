@@ -15,6 +15,9 @@ test('paleta de comandos abre com o atalho e leva a busca para um novo pedido', 
       await expect(palette).toBeVisible({ timeout: 1000 });
     }).toPass();
     await expect(palette.getByRole('combobox')).toBeFocused();
+    await expect(palette.locator('.command-search')).toHaveCSS('outline-style', 'solid');
+    await expect(palette.locator('.command-search')).toHaveCSS('outline-width', '3px');
+    await expect(palette.locator('.command-search')).toHaveCSS('outline-color', 'rgb(181, 65, 21)');
     await palette.getByRole('combobox').fill('farinha');
     await expect(
       palette.getByRole('option', { name: 'Perguntar à cidade: “farinha”' }),
@@ -24,8 +27,12 @@ test('paleta de comandos abre com o atalho e leva a busca para um novo pedido', 
     await expect(palette).toBeHidden();
 
     await page.getByRole('button', { name: 'Buscar e navegar' }).click();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('button', { name: 'Buscar e navegar' })).toBeFocused();
+    await page.getByRole('button', { name: 'Buscar e navegar' }).click();
     await page.getByRole('combobox').fill('farinha');
-    await page.getByRole('option', { name: 'Perguntar à cidade: “farinha”' }).click();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
     await page.waitForURL(/\/pedidos\/novo\?q=farinha$/);
     await expect(page.getByLabel('O que você está procurando?')).toHaveValue('farinha');
   } finally {

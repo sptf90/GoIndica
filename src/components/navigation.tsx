@@ -51,12 +51,14 @@ export function DesktopNavigation({ admin }: { admin: boolean }) {
   const path = usePathname();
   return (
     <nav className="desktop-nav" aria-label="Navegação principal">
+      <p className="nav-group-label">Sua cidade</p>
       {destinations
         .filter((item) => item.href !== '/perfil')
         .map((item) => (
           <SidebarLink key={item.href} {...item} active={selected(path, item.href)} />
         ))}
       <div className="nav-secondary">
+        <p className="nav-group-label">Seu espaço</p>
         {secondary.map((item) => (
           <SidebarLink key={item.href} {...item} active={selected(path, item.href)} />
         ))}
@@ -86,7 +88,7 @@ export function MobileNavigation() {
               ) : null}
               <Icon name={item.icon} size={22} />
             </span>
-            <span>{item.label}</span>
+            <span className="nav-label">{item.label}</span>
           </Link>
         );
       })}
