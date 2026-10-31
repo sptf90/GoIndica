@@ -64,8 +64,17 @@ export default async function Activities({
       .order('created_at', { ascending: false })
       .order('id');
     if (tab === 'decision')
-      query = query.or('status.eq.REVEALED,and(status.eq.OPEN,indication_count.gt.0)');
-    if (tab === 'closed') query = query.in('status', ['RESOLVED', 'CLOSED_NO_RESULT', 'CANCELED']);
+      query = query.or(
+        'status.eq.EVALUATING,status.eq.REVEALED,and(status.eq.OPEN,indication_count.gt.0)',
+      );
+    if (tab === 'closed')
+      query = query.in('status', [
+        'RESOLVED',
+        'CLOSED_NO_RESULT',
+        'CLOSED_TIMEOUT',
+        'CLOSED_EXHAUSTED',
+        'CANCELED',
+      ]);
     requests = check(await query.range(start, start + 20));
   }
   const [cities, resolutions] = await Promise.all([citiesFor(requests), resolutionsFor(requests)]);

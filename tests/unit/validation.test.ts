@@ -85,5 +85,5 @@ test('erros não expõem SQL, secrets ou emails', () => {
   expect(
     safeError({ message: 'database password secret@example.com', code: 'XX000' }).error,
   ).not.toContain('secret');
-  expect(safeError({ message: 'RESPONSES_LOCKED' }).error).toContain('não são mais aceitas');
+  expect(safeError({ message: 'RESPONSES_LOCKED' }).error).toContain('não aceita novas indicações');
 });

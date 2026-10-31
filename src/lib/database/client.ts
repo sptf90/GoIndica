@@ -136,11 +136,21 @@ class Query<T> implements PromiseLike<Result<T[]>> {
     return this;
   }
   or(expression: string) {
-    // The only compound filter exposed by application pages. No raw SQL is accepted.
-    if (expression !== 'status.eq.REVEALED,and(status.eq.OPEN,indication_count.gt.0)')
-      throw new Error('INVALID_INPUT');
-    this.filters.push("(t.status='REVEALED' OR (t.status='OPEN' AND t.indication_count>0))");
-    return this;
+    // Compound filters allowlisted for application pages. No raw SQL is accepted.
+    if (expression === 'status.eq.REVEALED,and(status.eq.OPEN,indication_count.gt.0)') {
+      this.filters.push("(t.status='REVEALED' OR (t.status='OPEN' AND t.indication_count>0))");
+      return this;
+    }
+    if (
+      expression ===
+      'status.eq.EVALUATING,status.eq.REVEALED,and(status.eq.OPEN,indication_count.gt.0)'
+    ) {
+      this.filters.push(
+        "(t.status='EVALUATING' OR t.status='REVEALED' OR (t.status='OPEN' AND t.indication_count>0))",
+      );
+      return this;
+    }
+    throw new Error('INVALID_INPUT');
   }
   order(column: string, options?: { ascending?: boolean }) {
     this.orders.push(`t.${identifier(column)} ${options?.ascending === false ? 'DESC' : 'ASC'}`);

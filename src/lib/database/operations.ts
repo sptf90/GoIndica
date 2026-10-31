@@ -14,6 +14,7 @@ const serviceOnly = new Set([
   'claim_email_jobs',
   'email_job_eligible',
   'finish_email_job',
+  'expire_evaluation_deadlines',
 ]);
 const publicCalls = new Set(['public_city_ranking']);
 const withoutProfile = new Set([
@@ -300,8 +301,22 @@ async function mutate(
           .length
       )
         throw new Error('ALREADY_INDICATED');
+      // ANT-01 / R-08: 24h corridas contra o mesmo solicitante, mensagem neutra.
+      if (
+        (
+          await rows(
+            db,
+            `SELECT i.id FROM indications i
+             JOIN requests req ON req.id=i.request_id
+             WHERE i.user_id=? AND req.requester_id=? AND i.created_at>DATE_SUB(UTC_TIMESTAMP(3),INTERVAL 24 HOUR)
+             LIMIT 1`,
+            [id, r.requester_id],
+          )
+        ).length
+      )
+        throw new Error('ANTIFRAUD_WINDOW');
       const comment = text(p.p_comment).trim();
-      if (comment.length > 300) throw new Error('INVALID_INPUT');
+      if (comment.length > 500) throw new Error('INVALID_INPUT');
       await rate(db, id, 'indications', 30, 3600);
       const indicationId = randomUUID();
       await db.execute(
@@ -344,17 +359,226 @@ async function mutate(
         );
       return indicationId;
     }
-    case 'reveal_responses': {
+    case 'reveal_responses':
+    case 'open_comparison': {
+      // DEC-02/08: abrir comparação NÃO bloqueia envios nem muda status; só marca 1ª abertura.
       const r = await requestLock(db, p, actor, true);
-      if (r.status === 'REVEALED') return;
-      if (r.status !== 'OPEN') throw new Error('REQUEST_CLOSED');
-      if (!r.indication_count) throw new Error('NO_INDICATIONS');
+      if (!['OPEN', 'REVEALED'].includes(r.status)) throw new Error('REQUEST_CLOSED');
+      if (r.status === 'REVEALED') {
+        await db.execute(
+          "UPDATE requests SET status='OPEN',responses_revealed_at=NULL,first_comparison_opened_at=COALESCE(first_comparison_opened_at,UTC_TIMESTAMP(3)),updated_at=UTC_TIMESTAMP(3) WHERE id=?",
+          [r.id],
+        );
+      } else if (!r.first_comparison_opened_at) {
+        await db.execute(
+          'UPDATE requests SET first_comparison_opened_at=UTC_TIMESTAMP(3),updated_at=UTC_TIMESTAMP(3) WHERE id=? AND first_comparison_opened_at IS NULL',
+          [r.id],
+        );
+      }
+      // DEC-06: toda resposta entregue nesta abertura fica apresentada/imutável.
       await db.execute(
-        "UPDATE requests SET status='REVEALED',responses_revealed_at=UTC_TIMESTAMP(3),updated_at=UTC_TIMESTAMP(3) WHERE id=?",
+        'UPDATE indications SET presented_at=COALESCE(presented_at,UTC_TIMESTAMP(3)) WHERE request_id=? AND hidden_at IS NULL',
         [r.id],
       );
-      await log(db, id, 'RESPONSES_REVEALED', 'REQUEST', r.id);
+      await log(db, id, 'COMPARISON_OPENED', 'REQUEST', r.id);
       return;
+    }
+    case 'select_indication': {
+      const r = await requestLock(db, p, actor, true);
+      const indicationId = text(p.p_indication_id);
+      if (!['OPEN', 'REVEALED', 'EVALUATING'].includes(r.status)) throw new Error('REQUEST_CLOSED');
+      if (r.status === 'EVALUATING' && r.selected_indication_id)
+        throw new Error('EVALUATION_ACTIVE');
+      const [indication] = await rows<{
+        id: string;
+        user_id: string;
+        hidden_at: string | null;
+        presented_at: string | null;
+        round_index: number;
+      }>(db, 'SELECT id,user_id,hidden_at,presented_at,round_index FROM indications WHERE id=? AND request_id=? FOR UPDATE', [
+        indicationId,
+        r.id,
+      ]);
+      if (!indication || indication.hidden_at) throw new Error('INVALID_INDICATION');
+      if (
+        (
+          await rows(
+            db,
+            "SELECT id FROM indication_evaluations WHERE indication_id=? AND result='INVALID'",
+            [indicationId],
+          )
+        ).length
+      )
+        throw new Error('INVALID_INDICATION');
+      if (!r.first_comparison_opened_at) {
+        await db.execute(
+          'UPDATE requests SET first_comparison_opened_at=UTC_TIMESTAMP(3) WHERE id=?',
+          [r.id],
+        );
+      }
+      if (!indication.presented_at) {
+        await db.execute(
+          'UPDATE indications SET presented_at=UTC_TIMESTAMP(3) WHERE id=?',
+          [indication.id],
+        );
+      }
+      await db.execute(
+        `UPDATE requests SET status='EVALUATING',selected_indication_id=?,evaluation_started_at=UTC_TIMESTAMP(3),evaluation_deadline_at=DATE_ADD(UTC_TIMESTAMP(3),INTERVAL 36 HOUR),next_choice_started_at=NULL,next_choice_deadline_at=NULL,updated_at=UTC_TIMESTAMP(3) WHERE id=?`,
+        [indication.id, r.id],
+      );
+      await notify(db, indication.user_id, r.id, 'INDICATION_SELECTED', 'selected:' + indication.id);
+      await log(db, id, 'INDICATION_SELECTED', 'REQUEST', r.id, { indication_id: indication.id });
+      return indication.id;
+    }
+    case 'evaluate_indication': {
+      const r = await requestLock(db, p, actor, true);
+      if (r.status !== 'EVALUATING' || !r.selected_indication_id) throw new Error('NOT_ALLOWED');
+      if (r.evaluation_deadline_at && Date.parse(r.evaluation_deadline_at) < Date.now())
+        throw new Error('EVALUATION_EXPIRED');
+      const result = text(p.p_result);
+      if (result !== 'VALID' && result !== 'INVALID') throw new Error('INVALID_INPUT');
+      const reasonCode = p.p_reason_code ? text(p.p_reason_code) : null;
+      const reasonNote = p.p_reason_note ? text(p.p_reason_note).trim().slice(0, 500) : null;
+      const allowedReasons = [
+        'INCORRECT_OR_INSUFFICIENT',
+        'UNAVAILABLE',
+        'CLOSED_OR_MISSING',
+        'NO_CONTACT',
+        'OTHER',
+      ];
+      if (result === 'INVALID' && (!reasonCode || !allowedReasons.includes(reasonCode)))
+        throw new Error('INVALID_INPUT');
+      if (result === 'VALID' && reasonCode) throw new Error('INVALID_INPUT');
+      const [existing] = await rows(db, 'SELECT id FROM indication_evaluations WHERE indication_id=?', [
+        r.selected_indication_id,
+      ]);
+      if (existing) throw new Error('ALREADY_EVALUATED');
+      const evaluationId = randomUUID();
+      await db.execute(
+        'INSERT INTO indication_evaluations(id,request_id,indication_id,resolved_by,result,reason_code,reason_note,round_index) VALUES(?,?,?,?,?,?,?,?)',
+        [
+          evaluationId,
+          r.id,
+          r.selected_indication_id,
+          id,
+          result,
+          result === 'INVALID' ? reasonCode : null,
+          reasonNote || null,
+          r.current_round || 0,
+        ],
+      );
+      const [selected] = await rows<{ user_id: string; place_id: string | null }>(
+        db,
+        'SELECT user_id,place_id FROM indications WHERE id=?',
+        [r.selected_indication_id],
+      );
+      if (result === 'VALID') {
+        await db.execute(
+          "UPDATE requests SET status='RESOLVED',close_reason='VALID_INDICATION',evaluation_started_at=NULL,evaluation_deadline_at=NULL,next_choice_started_at=NULL,next_choice_deadline_at=NULL,updated_at=UTC_TIMESTAMP(3) WHERE id=?",
+          [r.id],
+        );
+        const rewardId = randomUUID();
+        await db.execute(
+          "INSERT INTO reward_events(id,user_id,request_id,indication_id,city_id,type,points) VALUES(?,?,?,?,?,'VALID_INDICATION_REWARD',10)",
+          [rewardId, selected.user_id, r.id, r.selected_indication_id, r.city_id],
+        );
+        await notify(db, selected.user_id, r.id, 'REWARD_RECEIVED', 'reward:' + rewardId);
+        await log(db, id, 'INDICATION_VALIDATED', 'REQUEST', r.id, {
+          indication_id: r.selected_indication_id,
+        });
+        return evaluationId;
+      }
+      await notify(
+        db,
+        selected.user_id,
+        r.id,
+        'INDICATION_INVALIDATED',
+        'invalid:' + r.selected_indication_id,
+      );
+      const remaining = await rows<{ id: string }>(
+        db,
+        `SELECT i.id FROM indications i
+         WHERE i.request_id=? AND i.hidden_at IS NULL AND i.id<>?
+           AND i.round_index=?
+           AND NOT EXISTS(SELECT 1 FROM indication_evaluations e WHERE e.indication_id=i.id)`,
+        [r.id, r.selected_indication_id, r.current_round || 0],
+      );
+      if (remaining.length) {
+        await db.execute(
+          `UPDATE requests SET selected_indication_id=NULL,evaluation_started_at=NULL,evaluation_deadline_at=NULL,next_choice_started_at=UTC_TIMESTAMP(3),next_choice_deadline_at=DATE_ADD(UTC_TIMESTAMP(3),INTERVAL 36 HOUR),updated_at=UTC_TIMESTAMP(3) WHERE id=?`,
+          [r.id],
+        );
+      } else {
+        await db.execute(
+          'UPDATE requests SET selected_indication_id=NULL,evaluation_started_at=NULL,evaluation_deadline_at=NULL,next_choice_started_at=NULL,next_choice_deadline_at=NULL,updated_at=UTC_TIMESTAMP(3) WHERE id=?',
+          [r.id],
+        );
+      }
+      await log(db, id, 'INDICATION_INVALIDATED', 'REQUEST', r.id, {
+        indication_id: r.selected_indication_id,
+        remaining: remaining.length,
+      });
+      return evaluationId;
+    }
+    case 'close_request_voluntarily': {
+      const r = await requestLock(db, p, actor, true);
+      if (!r.first_comparison_opened_at && r.status === 'OPEN') throw new Error('NOT_ALLOWED');
+      if (!['OPEN', 'REVEALED', 'EVALUATING'].includes(r.status)) throw new Error('REQUEST_CLOSED');
+      if (r.status === 'EVALUATING' && r.selected_indication_id) throw new Error('EVALUATION_ACTIVE');
+      await db.execute(
+        "UPDATE requests SET status='CLOSED_NO_RESULT',close_reason='VOLUNTARY',selected_indication_id=NULL,evaluation_started_at=NULL,evaluation_deadline_at=NULL,next_choice_started_at=NULL,next_choice_deadline_at=NULL,updated_at=UTC_TIMESTAMP(3) WHERE id=?",
+        [r.id],
+      );
+      await log(db, id, 'REQUEST_CLOSED_VOLUNTARY', 'REQUEST', r.id);
+      return;
+    }
+    case 'reopen_request': {
+      const r = await requestLock(db, p, actor, true);
+      if (r.status !== 'EVALUATING' || r.selected_indication_id) throw new Error('NOT_ALLOWED');
+      if ((r.reopen_count || 0) >= 3) {
+        await db.execute(
+          "UPDATE requests SET status='CLOSED_EXHAUSTED',close_reason='NO_VALID_AFTER_REOPENS',updated_at=UTC_TIMESTAMP(3) WHERE id=?",
+          [r.id],
+        );
+        throw new Error('REOPEN_LIMIT');
+      }
+      const pending = await rows(
+        db,
+        `SELECT i.id FROM indications i WHERE i.request_id=? AND i.hidden_at IS NULL AND i.round_index=? AND NOT EXISTS(SELECT 1 FROM indication_evaluations e WHERE e.indication_id=i.id)`,
+        [r.id, r.current_round || 0],
+      );
+      if (pending.length) throw new Error('OPTIONS_REMAIN');
+      await db.execute(
+        'UPDATE requests SET status=?,reopen_count=reopen_count+1,current_round=current_round+1,selected_indication_id=NULL,evaluation_started_at=NULL,evaluation_deadline_at=NULL,next_choice_started_at=NULL,next_choice_deadline_at=NULL,updated_at=UTC_TIMESTAMP(3) WHERE id=?',
+        ['OPEN', r.id],
+      );
+      await log(db, id, 'REQUEST_REOPENED', 'REQUEST', r.id, {
+        reopen_count: (r.reopen_count || 0) + 1,
+      });
+      return;
+    }
+    case 'expire_evaluation_deadlines': {
+      const due = await rows<{ id: string; requester_id: string; city_id: number }>(
+        db,
+        `SELECT id,requester_id,city_id FROM requests WHERE status='EVALUATING' AND selected_indication_id IS NOT NULL AND evaluation_deadline_at IS NOT NULL AND evaluation_deadline_at<=UTC_TIMESTAMP(3) FOR UPDATE`,
+      );
+      for (const item of due) {
+        await db.execute(
+          "UPDATE requests SET status='CLOSED_TIMEOUT',close_reason='falta_de_avaliacao',updated_at=UTC_TIMESTAMP(3) WHERE id=? AND status='EVALUATING'",
+          [item.id],
+        );
+        const rewardId = randomUUID();
+        try {
+          await db.execute(
+            "INSERT INTO reward_events(id,user_id,request_id,indication_id,city_id,type,points) VALUES(?,?,?,NULL,?,'EVALUATION_TIMEOUT_PENALTY',-5)",
+            [rewardId, item.requester_id, item.id, item.city_id],
+          );
+        } catch {
+          // idempotência: UNIQUE(user_id,request_id,type)
+        }
+        await log(db, null, 'EVALUATION_TIMEOUT', 'REQUEST', item.id);
+      }
+      return due.length;
     }
     case 'resolve_request': {
       const r = await requestLock(db, p, actor, true),
@@ -453,7 +677,8 @@ async function mutate(
     case 'cancel_request': {
       const r = await requestLock(db, p, actor, true);
       if (r.status === 'CANCELED') return;
-      if (r.status !== 'OPEN') throw new Error('REQUEST_CLOSED');
+      if (r.status !== 'OPEN' && r.status !== 'REVEALED') throw new Error('REQUEST_CLOSED');
+      if (r.first_comparison_opened_at) throw new Error('COMPARISON_OPENED');
       await db.execute(
         "UPDATE requests SET status='CANCELED',canceled_at=UTC_TIMESTAMP(3),updated_at=UTC_TIMESTAMP(3) WHERE id=?",
         [r.id],

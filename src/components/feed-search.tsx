@@ -4,11 +4,23 @@ import type { City } from '@/lib/types';
 import { CitySelector } from './city-selector';
 import { Icon } from './icon';
 
-export function FeedSearch({ city, query, status }: { city: City; query: string; status: string }) {
+export function FeedSearch({
+  city,
+  query,
+  status,
+  action = '/app',
+  showCreate = true,
+}: {
+  city: City;
+  query: string;
+  status: string;
+  action?: string;
+  showCreate?: boolean;
+}) {
   const [selected, setSelected] = useState<City | null>(city);
   const [text, setText] = useState(query);
   return (
-    <form className="feed-tools" action="/app">
+    <form className="feed-tools" action={action}>
       <div className="feed-tools-primary">
         <div className="search-bar">
           <label className="sr-only" htmlFor="query">
@@ -29,10 +41,12 @@ export function FeedSearch({ city, query, status }: { city: City; query: string;
             <Icon name="arrow" />
           </button>
         </div>
-        <button type="submit" formAction="/pedidos/novo" className="button feed-create">
-          <Icon name="plus" size={20} />
-          {text.trim() ? 'Publicar esta busca' : 'Novo pedido'}
-        </button>
+        {showCreate ? (
+          <button type="submit" formAction="/pedidos/novo" className="button feed-create">
+            <Icon name="plus" size={20} />
+            {text.trim() ? 'Publicar esta busca' : 'Novo pedido'}
+          </button>
+        ) : null}
       </div>
       <details className="city-disclosure">
         <summary>

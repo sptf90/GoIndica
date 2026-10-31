@@ -63,14 +63,13 @@ export async function checkUsername(
 }
 export async function createRequest(_state: ActionState, f: FormData): Promise<ActionState> {
   const { db } = await member();
-  let id: string;
   try {
     const input = requestSchema.parse({
       description: value(f, 'description'),
       cityId: value(f, 'cityId'),
       neighborhood: value(f, 'neighborhood'),
     });
-    id = check(
+    check(
       await db.call('create_request_with_photo', {
         p_description: input.description,
         p_city_id: input.cityId,
@@ -82,7 +81,8 @@ export async function createRequest(_state: ActionState, f: FormData): Promise<A
     return safeError(e);
   }
   revalidatePath('/app');
-  return { success: 'Pedido publicado.', redirectTo: '/pedidos/' + id };
+  revalidatePath('/pedir');
+  return { success: 'Pedido publicado.', redirectTo: '/app' };
 }
 export async function editRequest(_state: ActionState, f: FormData): Promise<ActionState> {
   const { db } = await member();
@@ -147,9 +147,75 @@ export async function reveal(_state: ActionState, f: FormData): Promise<ActionSt
   const { db } = await member();
   try {
     const id = uuid.parse(value(f, 'requestId'));
-    check(await db.call('reveal_responses', { p_request_id: id }));
+    check(await db.call('open_comparison', { p_request_id: id }));
     revalidatePath('/pedidos/' + id);
-    return { success: 'Indicações abertas. Novas respostas estão bloqueadas.' };
+    return {
+      success:
+        'Comparação aberta. Você pode comparar as respostas; o pedido continua recebendo indicações até você escolher uma para testar.',
+    };
+  } catch (e) {
+    return safeError(e);
+  }
+}
+export async function selectIndication(_state: ActionState, f: FormData): Promise<ActionState> {
+  const { db } = await member();
+  try {
+    const requestId = uuid.parse(value(f, 'requestId'));
+    const indicationId = uuid.parse(value(f, 'indicationId'));
+    check(
+      await db.call('select_indication', {
+        p_request_id: requestId,
+        p_indication_id: indicationId,
+      }),
+    );
+    revalidatePath('/pedidos/' + requestId);
+    return {
+      success:
+        'Indicação selecionada para teste. Você tem 36 horas para avaliar. Novas indicações estão bloqueadas.',
+    };
+  } catch (e) {
+    return safeError(e);
+  }
+}
+export async function evaluateIndication(_state: ActionState, f: FormData): Promise<ActionState> {
+  const { db } = await member();
+  try {
+    const requestId = uuid.parse(value(f, 'requestId'));
+    check(
+      await db.call('evaluate_indication', {
+        p_request_id: requestId,
+        p_result: value(f, 'result'),
+        p_reason_code: value(f, 'reasonCode') || null,
+        p_reason_note: value(f, 'reasonNote') || null,
+      }),
+    );
+    revalidatePath('/pedidos/' + requestId);
+    return { success: 'Avaliação registrada.' };
+  } catch (e) {
+    return safeError(e);
+  }
+}
+export async function closeRequestVoluntarily(
+  _state: ActionState,
+  f: FormData,
+): Promise<ActionState> {
+  const { db } = await member();
+  try {
+    const id = uuid.parse(value(f, 'requestId'));
+    check(await db.call('close_request_voluntarily', { p_request_id: id }));
+    revalidatePath('/pedidos/' + id);
+    return { success: 'Pedido encerrado sem solução.' };
+  } catch (e) {
+    return safeError(e);
+  }
+}
+export async function reopenRequest(_state: ActionState, f: FormData): Promise<ActionState> {
+  const { db } = await member();
+  try {
+    const id = uuid.parse(value(f, 'requestId'));
+    check(await db.call('reopen_request', { p_request_id: id }));
+    revalidatePath('/pedidos/' + id);
+    return { success: 'Pedido reaberto para novas indicações.' };
   } catch (e) {
     return safeError(e);
   }

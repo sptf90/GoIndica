@@ -1,5 +1,13 @@
 import type { Database } from './database/types';
-export type RequestStatus = 'OPEN' | 'REVEALED' | 'RESOLVED' | 'CLOSED_NO_RESULT' | 'CANCELED';
+export type RequestStatus =
+  | 'OPEN'
+  | 'REVEALED'
+  | 'EVALUATING'
+  | 'RESOLVED'
+  | 'CLOSED_NO_RESULT'
+  | 'CLOSED_TIMEOUT'
+  | 'CLOSED_EXHAUSTED'
+  | 'CANCELED';
 export type City = Database['public']['Tables']['cities']['Row'];
 export type Profile = Database['public']['Tables']['profiles']['Row'];
 export type LocalRequest = Database['public']['Tables']['requests']['Row'];

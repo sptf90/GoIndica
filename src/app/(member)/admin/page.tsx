@@ -194,7 +194,9 @@ export default async function Admin({
               <p>
                 {person?.display_name} · @{person?.username}
               </p>
-              <PlacePanel requestId={r.request_id} placeId={r.place_id} autoLoad />
+              {r.place_id ? (
+                <PlacePanel requestId={r.request_id} placeId={r.place_id} autoLoad />
+              ) : null}
             </>
           ) : (
             <Link href={'/admin?tab=indications&target=' + r.id}>Inspecionar indicação ↗</Link>

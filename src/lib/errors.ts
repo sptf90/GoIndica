@@ -21,10 +21,22 @@ const messages: Record<string, string> = {
   INVALID_CITY:
     'Este estabelecimento fica em outra cidade. Escolha um local dentro da cidade do pedido.',
   RESPONSES_LOCKED:
-    'As indicações desta solicitação já foram abertas ou o pedido foi encerrado. Novas respostas não são mais aceitas.',
+    'Este pedido está em avaliação ou encerrado e não aceita novas indicações.',
   REQUEST_CLOSED: 'Esta solicitação já foi encerrada.',
   REVEAL_REQUIRED: 'Abra as indicações antes de confirmar o resultado.',
   NO_INDICATIONS: 'Ainda ninguém indicou um local.',
+  COMPARISON_OPENED:
+    'Não é possível excluir o pedido depois de abrir a comparação. Você pode encerrar sem solução.',
+  EVALUATION_ACTIVE:
+    'Há uma indicação em teste. Avalie-a como válida ou não válida antes de continuar.',
+  EVALUATION_EXPIRED: 'O prazo de 36 horas para avaliar esta indicação já encerrou.',
+  INVALID_INDICATION: 'Esta indicação não está disponível para seleção.',
+  ALREADY_EVALUATED: 'Esta indicação já foi avaliada.',
+  REOPEN_LIMIT: 'Este pedido já usou as três reaberturas permitidas.',
+  OPTIONS_REMAIN: 'Ainda há indicações disponíveis para escolher nesta rodada.',
+  ANTIFRAUD_WINDOW:
+    'Não é possível enviar outra indicação neste momento. Tente novamente mais tarde.',
+  INDICATION_LOCKED: 'Esta indicação já foi apresentada ao solicitante e não pode ser alterada.',
   INVALID_PLACE: 'Selecione um estabelecimento indicado neste pedido.',
   EDIT_LOCKED:
     'O pedido só pode ser editado enquanto estiver aberto e não tiver recebido nenhuma indicação.',

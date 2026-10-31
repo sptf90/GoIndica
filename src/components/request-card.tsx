@@ -72,11 +72,10 @@ export function RequestCard({
         <Link
           href={'/pedidos/' + request.id}
           className="request-count"
-          aria-label={`${request.indication_count} ${request.indication_count === 1 ? 'indicação' : 'indicações'} — Abrir pedido: ${request.description}`}
+          aria-label={`Abrir pedido: ${request.description}`}
         >
           <Icon name="message" size={17} />
-          <strong>{request.indication_count}</strong>{' '}
-          <span>{request.indication_count === 1 ? 'indicação' : 'indicações'}</span>
+          <span>Abrir</span>
           <Icon name="arrow" size={16} />
         </Link>
       </div>

@@ -37,9 +37,9 @@ function NotificationCard({
   createdAt,
   unread,
 }: {
-  id: number;
+  id: string;
   kind: NotificationKind;
-  requestId: number;
+  requestId: string;
   description: string;
   createdAt: string;
   unread: boolean;

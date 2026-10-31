@@ -42,9 +42,14 @@ export type Database = {
           id: string;
           request_id: string;
           user_id: string;
-          place_id: string;
+          place_id: string | null;
           comment: string | null;
+          links_json: unknown | null;
+          manual_place_name: string | null;
+          manual_place_address: string | null;
           created_at: string;
+          presented_at: string | null;
+          round_index: number;
           hidden_at: string | null;
         };
       };
@@ -127,9 +132,26 @@ export type Database = {
           description: string;
           city_id: number;
           neighborhood: string | null;
-          status: 'OPEN' | 'REVEALED' | 'RESOLVED' | 'CLOSED_NO_RESULT' | 'CANCELED';
+          status:
+            | 'OPEN'
+            | 'REVEALED'
+            | 'EVALUATING'
+            | 'RESOLVED'
+            | 'CLOSED_NO_RESULT'
+            | 'CLOSED_TIMEOUT'
+            | 'CLOSED_EXHAUSTED'
+            | 'CANCELED';
           indication_count: number;
           responses_revealed_at: string | null;
+          first_comparison_opened_at: string | null;
+          reopen_count: number;
+          current_round: number;
+          selected_indication_id: string | null;
+          evaluation_started_at: string | null;
+          evaluation_deadline_at: string | null;
+          next_choice_started_at: string | null;
+          next_choice_deadline_at: string | null;
+          close_reason: string | null;
           canceled_at: string | null;
           hidden_at: string | null;
           created_at: string;
@@ -146,7 +168,7 @@ export type Database = {
           id: string;
           user_id: string;
           request_id: string;
-          indication_id: string;
+          indication_id: string | null;
           city_id: number;
           type: string;
           points: number;
@@ -313,6 +335,23 @@ export type Database = {
         Returns: string;
       };
       reveal_responses: { Args: { p_request_id: string }; Returns: undefined };
+      open_comparison: { Args: { p_request_id: string }; Returns: undefined };
+      select_indication: {
+        Args: { p_request_id: string; p_indication_id: string };
+        Returns: string;
+      };
+      evaluate_indication: {
+        Args: {
+          p_request_id: string;
+          p_result: string;
+          p_reason_code?: string | null;
+          p_reason_note?: string | null;
+        };
+        Returns: string;
+      };
+      close_request_voluntarily: { Args: { p_request_id: string }; Returns: undefined };
+      reopen_request: { Args: { p_request_id: string }; Returns: undefined };
+      expire_evaluation_deadlines: { Args: Record<string, never>; Returns: number };
       save_preferences: { Args: { p_email_reminders: boolean }; Returns: undefined };
       save_profile: {
         Args: {

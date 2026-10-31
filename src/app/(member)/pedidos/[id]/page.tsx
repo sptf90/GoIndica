@@ -18,7 +18,16 @@ import {
 } from '@/components/ui';
 import { Icon } from '@/components/icon';
 import { ShareRequest } from '@/components/share-request';
-import { reveal, resolve, cancel, report } from '@/server/actions';
+import {
+  reveal,
+  cancel,
+  report,
+  selectIndication,
+  evaluateIndication,
+  closeRequestVoluntarily,
+  reopenRequest,
+} from '@/server/actions';
+import { ComparisonLive } from '@/components/comparison-live';
 import { date, timestamp } from '@/server/queries';
 import { PlacePanel } from '@/components/place-panel';
 import { DiscoveryFeedback } from '@/components/discovery-feedback';
@@ -49,16 +58,26 @@ export default async function Detail({
   if (result.error) throw result.error;
   const request = result.data;
   if (!request) notFound();
+  const owner = request.requester_id === user.id;
   const [cityResult, authorResult, resolutionResult, ownResult] = await Promise.all([
     db.from('cities').select('*').eq('id', request.city_id).single(),
-    db.from('profiles').select('*').eq('id', request.requester_id).maybeSingle(),
+    // DEC-05: nunca carregar perfil do solicitante para indicadores.
+    owner
+      ? db.from('profiles').select('*').eq('id', request.requester_id).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
     db.from('request_resolutions').select('*').eq('request_id', id).maybeSingle(),
     db.from('indications').select('*').eq('request_id', id).eq('user_id', user.id).maybeSingle(),
   ]);
   const city = check(cityResult),
     author = authorResult.data,
     resolution = resolutionResult.data;
-  const owner = request.requester_id === user.id;
+  const comparisonOpen = Boolean(request.first_comparison_opened_at) || request.status === 'REVEALED';
+  const canCompare =
+    owner &&
+    (comparisonOpen ||
+      ['EVALUATING', 'RESOLVED', 'CLOSED_NO_RESULT', 'CLOSED_TIMEOUT', 'CLOSED_EXHAUSTED'].includes(
+        request.status,
+      ));
   const interests = check(
     await db.from('request_interests').select('*').eq('request_id', id).maybeSingle(),
   );
@@ -76,10 +95,9 @@ export default async function Detail({
     owner && request.status === 'OPEN'
       ? check(await db.call('request_editable', { p_request_id: id }))
       : false;
-  const rawGroups =
-    owner && ['REVEALED', 'RESOLVED', 'CLOSED_NO_RESULT'].includes(request.status)
-      ? check(await db.call('indication_groups', { p_request_id: id, p_offset: (page - 1) * 10 }))
-      : [];
+  const rawGroups = canCompare
+    ? check(await db.call('indication_groups', { p_request_id: id, p_offset: (page - 1) * 10 }))
+    : [];
   const peopleResults = await Promise.all(
     rawGroups.slice(0, 10).map((g) => {
       const current = search.peopleFor === g.place_id ? peoplePage : 1;
@@ -94,14 +112,33 @@ export default async function Detail({
     }),
   );
   const peopleRows = peopleResults.map((r) => check(r));
-  const profileIds = [...new Set(peopleRows.flatMap((rows) => rows.map((i) => i.user_id)))];
+  // DEC-01/09: revelar identidade somente do indicador selecionado (em avaliação/concluído).
+  const revealSelectedId =
+    request.status === 'EVALUATING' || request.status === 'RESOLVED'
+      ? request.selected_indication_id
+      : null;
+  const profileIds = revealSelectedId
+    ? [
+        ...new Set(
+          peopleRows
+            .flatMap((rows) => rows)
+            .filter((i) => i.id === revealSelectedId)
+            .map((i) => i.user_id),
+        ),
+      ]
+    : [];
   const profileRows = profileIds.length
     ? check(await db.from('profiles').select('*').in('id', profileIds))
     : [];
   const profileMap = new Map(profileRows.map((p) => [p.id, p]));
   const groups = rawGroups.slice(0, 10).map((g, index) => ({
     ...g,
-    people: peopleRows[index],
+    people:
+      request.status === 'EVALUATING' && request.selected_indication_id
+        ? peopleRows[index].filter((i) => i.id === request.selected_indication_id)
+        : request.status === 'RESOLVED' && request.selected_indication_id
+          ? peopleRows[index].filter((i) => i.id === request.selected_indication_id)
+          : peopleRows[index],
     peoplePage: search.peopleFor === g.place_id ? peoplePage : 1,
     profiles: profileMap,
   }));
@@ -114,6 +151,7 @@ export default async function Detail({
   return (
     <div className="detail-page">
       <LiveRequest id={id} count={request.indication_count} status={request.status} />
+      <ComparisonLive requestId={id} enabled={owner && comparisonOpen && request.status === 'OPEN'} />
       <header className="request-header">
         <Link href="/app" className="back-link">
           <Icon name="back" size={18} /> Pedidos da cidade
@@ -179,7 +217,7 @@ export default async function Detail({
               </p>
             </div>
           </div>
-          {author ? (
+          {owner && author ? (
             <Link className="byline" href={profileUrl(author.username, { request: id })}>
               <Avatar
                 name={author.display_name}
@@ -187,14 +225,12 @@ export default async function Detail({
                 src={profilePhotoUrl(author, { request: id })}
               />
               <span>
-                <span className="metadata-label">Publicado por</span>
+                <span className="metadata-label">Seu pedido</span>
                 <strong>{author.display_name}</strong>{' '}
                 <span className="hint">— @{author.username}</span>
               </span>
             </Link>
-          ) : (
-            <p className="hint">Autor indisponível</p>
-          )}
+          ) : null}
         </div>
       </header>
       <div className="request-community-interest request-interest-bar">
@@ -235,10 +271,6 @@ export default async function Detail({
                   <p className="eyebrow">Respostas da comunidade</p>
                   <h2>Indicações</h2>
                 </div>
-                <span className="response-total">
-                  {request.indication_count}{' '}
-                  {request.indication_count === 1 ? 'indicação recebida' : 'indicações recebidas'}
-                </span>
               </div>
               <section className="response-gate">
                 {request.indication_count === 0 ? (
@@ -251,51 +283,55 @@ export default async function Detail({
                   </>
                 ) : (
                   <>
-                    <p className="eyebrow">O conhecimento está chegando</p>
-                    <div className="big-count">
-                      {request.indication_count}
-                      <span>
-                        {request.indication_count === 1
-                          ? 'indicação recebida'
-                          : 'indicações recebidas'}
-                      </span>
-                    </div>
+                    <p className="eyebrow">Há respostas disponíveis</p>
+                    <p className="muted">
+                      Abra a comparação para ver o conteúdo completo, sem identidade dos
+                      indicadores. O pedido continua Aberto e pode receber novas indicações.
+                    </p>
                   </>
                 )}
                 {owner ? (
                   <>
-                    {request.indication_count > 0 ? (
-                      <p className="muted">
-                        Ao abrir as indicações, você encerra o recebimento de novas respostas. Os
-                        locais ficam disponíveis para você conferir.
-                      </p>
-                    ) : null}
-                    {request.indication_count > 0 ? (
+                    {request.indication_count > 0 && !comparisonOpen ? (
                       <ActionForm
                         action={reveal}
-                        label="Ver indicações"
+                        label="Abrir comparação"
                         pendingLabel="Abrindo…"
-                        confirm="Abrir as indicações? Novas respostas serão bloqueadas definitivamente."
+                        confirm="Abrir a comparação? Você não poderá mais excluir este pedido. Novas indicações continuam sendo aceitas até você escolher uma para testar."
                       >
                         <input type="hidden" name="requestId" value={id} />
                       </ActionForm>
-                    ) : (
+                    ) : null}
+                    {request.indication_count === 0 ? (
                       <ShareRequest description={request.description} />
-                    )}
+                    ) : null}
                     <div className="owner-tools">
                       <span className="hint">
-                        {request.indication_count
-                          ? 'Os locais continuam privados até você abrir.'
-                          : 'Convide quem conhece a cidade.'}
+                        {comparisonOpen
+                          ? 'Comparação aberta: exclusão do pedido bloqueada.'
+                          : request.indication_count
+                            ? 'Os conteúdos permanecem privados até você abrir a comparação.'
+                            : 'Convide quem conhece a cidade.'}
                       </span>
-                      <ActionForm
-                        action={cancel}
-                        label="Cancelar pedido"
-                        className="compact quiet"
-                        confirm="Cancelar esta solicitação?"
-                      >
-                        <input type="hidden" name="requestId" value={id} />
-                      </ActionForm>
+                      {!comparisonOpen ? (
+                        <ActionForm
+                          action={cancel}
+                          label="Excluir pedido"
+                          className="compact quiet"
+                          confirm="Excluir esta solicitação?"
+                        >
+                          <input type="hidden" name="requestId" value={id} />
+                        </ActionForm>
+                      ) : (
+                        <ActionForm
+                          action={closeRequestVoluntarily}
+                          label="Encerrar sem solução"
+                          className="compact quiet"
+                          confirm="Encerrar este pedido sem selecionar indicação? O histórico será preservado."
+                        >
+                          <input type="hidden" name="requestId" value={id} />
+                        </ActionForm>
+                      )}
                     </div>
                   </>
                 ) : ownResult.data ? (
@@ -315,10 +351,15 @@ export default async function Detail({
               </section>
             </>
           ) : null}
-          {!owner && request.status === 'REVEALED' ? (
+          {!owner && request.status === 'EVALUATING' ? (
             <div className="notice">
-              O solicitante abriu as indicações. Novas respostas estão bloqueadas e os locais
-              permanecem privados.
+              Este pedido está em avaliação e não aceita novas indicações.
+            </div>
+          ) : null}
+          {!owner && request.status === 'OPEN' && comparisonOpen ? (
+            <div className="notice">
+              O solicitante está comparando respostas. Você ainda pode enviar uma indicação se
+              ainda não participou.
             </div>
           ) : null}
           {resolution ? (
@@ -389,24 +430,40 @@ export default async function Detail({
               Esta solicitação foi cancelada e não recebe novas indicações.
             </div>
           ) : null}
-          {owner && request.status !== 'OPEN' && request.status !== 'CANCELED' ? (
+          {owner && canCompare ? (
             <section className="indication-groups">
               <div className="section-heading">
-                <p className="eyebrow">Caminhos que a cidade indicou</p>
-                <h2>{request.indication_count} indicações, agrupadas por local.</h2>
+                <p className="eyebrow">Comparação</p>
+                <h2>
+                  {request.status === 'EVALUATING'
+                    ? 'Indicação em teste'
+                    : 'Respostas disponíveis (autores ocultos)'}
+                </h2>
               </div>
+              {request.status === 'EVALUATING' && request.evaluation_deadline_at ? (
+                <p className="notice">
+                  Avalie até{' '}
+                  <time dateTime={request.evaluation_deadline_at}>
+                    {timestamp(request.evaluation_deadline_at)}
+                  </time>
+                  .
+                </p>
+              ) : null}
               {groups.map((g, index) => (
-                <article className="indication-group" key={g.place_id}>
-                  <PlacePanel
-                    requestId={id}
-                    placeId={g.place_id}
-                    count={g.indications}
-                    autoLoad={request.status === 'REVEALED' && index === 0}
-                    allowResolve={request.status === 'REVEALED'}
-                  />
+                <article className="indication-group" key={g.place_id || g.people[0]?.id || index}>
+                  {g.place_id ? (
+                    <PlacePanel
+                      requestId={id}
+                      placeId={g.place_id}
+                      count={undefined}
+                      autoLoad={index === 0}
+                      allowResolve={false}
+                    />
+                  ) : null}
                   <ul className="indicators">
                     {g.people.map((i) => {
-                      const p = g.profiles.get(i.user_id);
+                      const revealed = revealSelectedId === i.id;
+                      const p = revealed ? g.profiles.get(i.user_id) : null;
                       return (
                         <li key={i.id}>
                           {p ? (
@@ -423,7 +480,7 @@ export default async function Detail({
                               />
                             </Link>
                           ) : (
-                            <Avatar name="Pessoa" size={32} />
+                            <Avatar name="Indicação" size={32} />
                           )}
                           <div>
                             {p ? (
@@ -432,12 +489,65 @@ export default async function Detail({
                                 <span className="hint">@{p.username}</span>
                               </Link>
                             ) : (
-                              <strong>Perfil indisponível</strong>
+                              <strong>Indicação anônima</strong>
                             )}
                             {i.comment ? <p>{i.comment}</p> : null}
-                            <time className="hint" dateTime={i.created_at}>
-                              {timestamp(i.created_at)}
-                            </time>
+                            {(request.status === 'OPEN' ||
+                              request.status === 'REVEALED' ||
+                              (request.status === 'EVALUATING' && !request.selected_indication_id)) &&
+                            !i.hidden_at ? (
+                              <ActionForm
+                                action={selectIndication}
+                                label="Escolher para testar"
+                                confirm="Confirmar esta indicação para teste? O autor será revelado, as demais ficam inacessíveis temporariamente e começa o prazo de 36 horas."
+                                className="compact"
+                              >
+                                <input type="hidden" name="requestId" value={id} />
+                                <input type="hidden" name="indicationId" value={i.id} />
+                              </ActionForm>
+                            ) : null}
+                            {request.status === 'EVALUATING' &&
+                            request.selected_indication_id === i.id ? (
+                              <div className="two-actions">
+                                <ActionForm
+                                  action={evaluateIndication}
+                                  label="Válida"
+                                  confirm="Confirmar como válida e concluir o pedido?"
+                                >
+                                  <input type="hidden" name="requestId" value={id} />
+                                  <input type="hidden" name="result" value="VALID" />
+                                </ActionForm>
+                                <ActionForm action={evaluateIndication} label="Não válida">
+                                  <input type="hidden" name="requestId" value={id} />
+                                  <input type="hidden" name="result" value="INVALID" />
+                                  <label className="field">
+                                    Motivo
+                                    <select name="reasonCode" required defaultValue="">
+                                      <option value="" disabled>
+                                        Selecione
+                                      </option>
+                                      <option value="INCORRECT_OR_INSUFFICIENT">
+                                        Informação incorreta ou insuficiente
+                                      </option>
+                                      <option value="UNAVAILABLE">
+                                        Produto ou serviço indisponível
+                                      </option>
+                                      <option value="CLOSED_OR_MISSING">
+                                        Estabelecimento fechado ou inexistente
+                                      </option>
+                                      <option value="NO_CONTACT">
+                                        Não foi possível entrar em contato
+                                      </option>
+                                      <option value="OTHER">Outro motivo</option>
+                                    </select>
+                                  </label>
+                                  <label className="field">
+                                    Detalhe opcional
+                                    <textarea name="reasonNote" maxLength={500} rows={2} />
+                                  </label>
+                                </ActionForm>
+                              </div>
+                            ) : null}
                             <details className="report-details">
                               <summary>Denunciar indicação</summary>
                               <ActionForm action={report} label="Enviar denúncia">
@@ -460,49 +570,31 @@ export default async function Detail({
                       );
                     })}
                   </ul>
-                  {g.indications > 20 ? (
-                    <Pagination
-                      page={g.peoplePage}
-                      hasMore={g.peoplePage * 20 < g.indications}
-                      base={'/pedidos/' + id}
-                      params={{ page: String(page), peopleFor: g.place_id }}
-                      pageKey="peoplePage"
-                    />
-                  ) : null}
                 </article>
               ))}
               {!groups.length ? (
                 <Empty headingLevel={3} title="Nenhuma indicação disponível nesta página." />
               ) : null}
+              {request.status === 'EVALUATING' && !request.selected_indication_id ? (
+                <div className="two-actions">
+                  <ActionForm
+                    action={reopenRequest}
+                    label="Reabrir pedido"
+                    confirm="Reabrir para receber novas indicações? Autores anteriores não poderão participar de novo."
+                  >
+                    <input type="hidden" name="requestId" value={id} />
+                  </ActionForm>
+                  <ActionForm
+                    action={closeRequestVoluntarily}
+                    label="Encerrar sem solução"
+                    className="quiet"
+                    confirm="Encerrar sem solução?"
+                  >
+                    <input type="hidden" name="requestId" value={id} />
+                  </ActionForm>
+                </div>
+              ) : null}
               <Pagination page={page} hasMore={rawGroups.length > 10} base={'/pedidos/' + id} />
-            </section>
-          ) : null}
-          {owner && request.status === 'REVEALED' ? (
-            <section className="other-resolution">
-              <h2>O resultado foi outro?</h2>
-              <div className="two-actions">
-                <ActionForm
-                  action={resolve}
-                  label="Encontrei em outro local"
-                  className="quiet"
-                  confirm="Registrar que encontrou em outro local e encerrar sem recompensas?"
-                >
-                  <input type="hidden" name="requestId" value={id} />
-                  <input type="hidden" name="type" value="OTHER_PLACE" />
-                </ActionForm>
-                <ActionForm
-                  action={resolve}
-                  label="Não encontrei"
-                  className="quiet"
-                  confirm="Encerrar sem resultado? Nenhum ponto será distribuído."
-                >
-                  <input type="hidden" name="requestId" value={id} />
-                  <input type="hidden" name="type" value="NOT_FOUND" />
-                </ActionForm>
-              </div>
-              <p className="hint">
-                Nenhum ponto é distribuído nessas opções. Ninguém perde pontos.
-              </p>
             </section>
           ) : null}
           <details className="report-details">

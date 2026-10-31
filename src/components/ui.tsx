@@ -4,10 +4,13 @@ import type { RequestStatus } from '@/lib/types';
 import { Icon } from './icon';
 import type { CSSProperties } from 'react';
 export const statusLabels: Record<RequestStatus, string> = {
-  OPEN: 'Procurando',
-  REVEALED: 'Indicações abertas',
-  RESOLVED: 'Encontrado',
-  CLOSED_NO_RESULT: 'Não encontrado',
+  OPEN: 'Aberto',
+  REVEALED: 'Aberto', // legado: tratado como comparação já aberta
+  EVALUATING: 'Em avaliação',
+  RESOLVED: 'Concluído',
+  CLOSED_NO_RESULT: 'Encerrado sem solução',
+  CLOSED_TIMEOUT: 'Encerrado por falta de avaliação',
+  CLOSED_EXHAUSTED: 'Encerrado — nenhuma indicação válida',
   CANCELED: 'Cancelado',
 };
 export function Status({ status }: { status: RequestStatus }) {

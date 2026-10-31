@@ -1,4 +1,5 @@
 import { PageHeading } from '@/components/page-heading';
+import Image from 'next/image';
 import Link from 'next/link';
 import { pageNumber } from '@/lib/pagination';
 import { member } from '@/server/auth';
@@ -6,6 +7,7 @@ import { check } from '@/lib/errors';
 import { CitySelector } from '@/components/city-selector';
 import { Empty, Avatar, Pagination } from '@/components/ui';
 import { profilePhotoUrl, profileUrl } from '@/lib/profile-links';
+import { pool, rows } from '@/lib/database/pool';
 export const metadata = { title: 'Ranking da cidade' };
 export default async function Ranking({
   searchParams,
@@ -26,6 +28,19 @@ export default async function Ranking({
   const entries = check(
     await db.call('city_ranking', { p_city_id: city.id, p_offset: (page - 1) * 30 }),
   );
+  let sponsor: { display_name: string; logo_path: string | null } | null = null;
+  try {
+    const active = await rows<{ display_name: string; logo_path: string | null }>(
+      pool(),
+      `SELECT display_name,logo_path FROM ranking_sponsorships
+       WHERE city_id=? AND active=TRUE AND starts_at<=UTC_TIMESTAMP(3) AND ends_at>UTC_TIMESTAMP(3)
+       ORDER BY starts_at DESC LIMIT 1`,
+      [city.id],
+    );
+    sponsor = active[0] || null;
+  } catch {
+    sponsor = null;
+  }
   return (
     <div className="ranking-page">
       <PageHeading title="Quem ajuda a cidade" eyebrow="Conhecimento que fez a diferença"
@@ -47,6 +62,21 @@ export default async function Ranking({
           {city.name} — {city.state_code}
         </h2>
         <p className="hint">Pessoas que transformam indicações em descobertas</p>
+        {sponsor ? (
+          <p className="ranking-sponsor hint">
+            Patrocinado por <strong>{sponsor.display_name}</strong>
+            {sponsor.logo_path ? (
+              <Image
+                className="ranking-sponsor-logo"
+                src={sponsor.logo_path}
+                alt={`Logo ${sponsor.display_name}`}
+                width={96}
+                height={32}
+                unoptimized
+              />
+            ) : null}
+          </p>
+        ) : null}
       </div>
       {entries.length ? (
         <ol className="ranking-list">

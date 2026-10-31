@@ -1150,3 +1150,59 @@ textarea {
     display: none;
   }
 }
+
+/* Home MVP — três ações principais */
+.mvp-home {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: var(--space-6) 0 var(--space-10);
+}
+.mvp-home-hero h1 {
+  font-size: clamp(28px, 4vw, 40px);
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+.mvp-home-hero .muted {
+  margin-top: var(--space-3);
+}
+.mvp-home-city {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+.mvp-home-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-8);
+}
+.mvp-home-action {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: 72px;
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 92%, var(--brand-orange) 8%);
+  color: inherit;
+  text-decoration: none;
+  font-size: 1.125rem;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+.mvp-home-action:hover {
+  border-color: var(--brand-orange);
+  transform: translateY(-1px);
+}
+.mvp-home-action:focus-visible {
+  outline: 2px solid var(--brand-orange);
+  outline-offset: 2px;
+}
+.mvp-home-action-icon {
+  display: inline-flex;
+  color: var(--brand-orange);
+}
+.mvp-home-action strong {
+  font-weight: 650;
+}
