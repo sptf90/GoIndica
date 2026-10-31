@@ -10,10 +10,6 @@
   color: var(--muted);
   font-size: var(--text-md);
 }
-.photo-picker:focus-within {
-  outline: 3px solid var(--orange-strong);
-  outline-offset: 3px;
-}
 .photo-picker .photo-input {
   position: absolute;
   inset: 0;

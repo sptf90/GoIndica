@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { PageHeading } from '@/components/page-heading';
-import { Icon } from '@/components/icon';
+import { Icon, type IconName } from '@/components/icon';
 import { member } from '@/server/auth';
 import { check } from '@/lib/errors';
 import { pageNumber } from '@/lib/pagination';
@@ -8,14 +8,75 @@ import { timestamp } from '@/server/queries';
 import { readNotifications } from '@/server/community-actions';
 import { ActionForm } from '@/components/action-form';
 import { Empty, Pagination } from '@/components/ui';
+
 export const metadata = { title: 'Notificações' };
+
 const labels = {
   INDICATION_RECEIVED: 'Uma nova indicação chegou',
   RESULT_RECORDED: 'O resultado de um pedido foi registrado',
   REWARD_RECEIVED: 'Sua indicação foi confirmada: +10 pontos',
   DECISION_REMINDER: 'Há um pedido aguardando sua decisão',
   TOPIC_MATCH: 'Um novo pedido combina com seus assuntos',
+} as const;
+
+const icons: Record<keyof typeof labels, IconName> = {
+  INDICATION_RECEIVED: 'message',
+  RESULT_RECORDED: 'check',
+  REWARD_RECEIVED: 'award',
+  DECISION_REMINDER: 'clock',
+  TOPIC_MATCH: 'sparkle',
 };
+
+type NotificationKind = keyof typeof labels;
+
+function NotificationCard({
+  id,
+  kind,
+  requestId,
+  description,
+  createdAt,
+  unread,
+}: {
+  id: number;
+  kind: NotificationKind;
+  requestId: number;
+  description: string;
+  createdAt: string;
+  unread: boolean;
+}) {
+  return (
+    <article className={`notification-card${unread ? ' is-unread' : ''}`}>
+      <span className="notification-event" aria-hidden="true">
+        <Icon name={icons[kind] || 'bell'} size={20} />
+      </span>
+      <div className="notification-body">
+        <div className="notification-heading">
+          <p className="notification-title">
+            {unread ? <span className="unread-dot" role="img" aria-label="Não lida" /> : null}
+            <strong>{labels[kind] || 'Nova notificação'}</strong>
+          </p>
+          <time className="notification-time" dateTime={createdAt}>
+            {timestamp(createdAt)}
+          </time>
+        </div>
+        <Link className="notification-request" href={'/pedidos/' + requestId}>
+          {description}
+          <Icon name="external" size={14} />
+        </Link>
+        {unread ? (
+          <ActionForm
+            action={readNotifications}
+            label="Marcar como lida"
+            className="compact quiet notification-read"
+          >
+            <input name="id" type="hidden" value={id} />
+          </ActionForm>
+        ) : null}
+      </div>
+    </article>
+  );
+}
+
 export default async function Notifications({
   searchParams,
 }: {
@@ -32,18 +93,23 @@ export default async function Notifications({
       .order('id')
       .range((page - 1) * 20, page * 20),
   );
-  const requests = rows.length
+  const visible = rows.slice(0, 20);
+  const requests = visible.length
     ? check(
-      await db
-        .from('requests')
-        .select('id,description')
-        .in(
-          'id',
-          rows.map((r) => r.request_id),
-        ),
-    )
+        await db
+          .from('requests')
+          .select('id,description')
+          .in(
+            'id',
+            visible.map((r) => r.request_id),
+          ),
+      )
     : [];
   const descriptions = new Map(requests.map((r) => [r.id, r.description]));
+  const unread = visible.filter((r) => !r.read_at);
+  const read = visible.filter((r) => r.read_at);
+  const showSections = unread.length > 0 && read.length > 0;
+
   return (
     <div className="collection-page notifications-page">
       <PageHeading
@@ -52,44 +118,53 @@ export default async function Notifications({
       />
       <div className="notification-toolbar">
         <Link className="text-link" href="/atividades?tab=decision">
-          Pedidos aguardando minha decisão ↗
+          Pedidos aguardando minha decisão
+          <Icon name="external" size={14} />
         </Link>
-        <ActionForm
-          action={readNotifications}
-          label="Marcar todas como lidas"
-          className="compact quiet"
-        />
+        {unread.length ? (
+          <ActionForm
+            action={readNotifications}
+            label="Marcar todas como lidas"
+            className="compact quiet"
+          />
+        ) : null}
       </div>
-      {rows.length ? (
-        <div className="community-list">
-          {rows.slice(0, 20).map((r) => (
-            <article className={`community-row notification-row${!r.read_at ? ' is-unread' : ''}`} key={r.id}>
-              <span className="notification-event">
-                <Icon name={r.kind === 'REWARD_RECEIVED' ? 'award' : 'message'} size={22} />
-              </span>
-              <div>
-                <p>
-                  {!r.read_at ? (
-                    <span className="unread-dot" role="img" aria-label="Não lida" />
-                  ) : null}
-                  <strong>{labels[r.kind as keyof typeof labels]}</strong>
-                </p>
-                <Link href={'/pedidos/' + r.request_id}>
-                  {descriptions.get(r.request_id) || 'Abrir pedido'} ↗
-                </Link>
-                <p className="hint">{timestamp(r.created_at)}</p>
-              </div>
-              {!r.read_at ? (
-                <ActionForm
-                  action={readNotifications}
-                  label="Marcar como lida"
-                  className="compact quiet"
-                >
-                  <input name="id" type="hidden" value={r.id} />
-                </ActionForm>
-              ) : null}
-            </article>
-          ))}
+      {visible.length ? (
+        <div className="notification-feed">
+          {showSections ? <h2 className="notification-section">Não lidas</h2> : null}
+          {unread.length ? (
+            <ul className="notification-list">
+              {unread.map((r) => (
+                <li key={r.id}>
+                  <NotificationCard
+                    id={r.id}
+                    kind={r.kind as NotificationKind}
+                    requestId={r.request_id}
+                    description={descriptions.get(r.request_id) || 'Abrir pedido'}
+                    createdAt={r.created_at}
+                    unread
+                  />
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {showSections ? <h2 className="notification-section">Anteriores</h2> : null}
+          {read.length ? (
+            <ul className="notification-list">
+              {read.map((r) => (
+                <li key={r.id}>
+                  <NotificationCard
+                    id={r.id}
+                    kind={r.kind as NotificationKind}
+                    requestId={r.request_id}
+                    description={descriptions.get(r.request_id) || 'Abrir pedido'}
+                    createdAt={r.created_at}
+                    unread={false}
+                  />
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       ) : (
         <Empty title="Você está em dia.">

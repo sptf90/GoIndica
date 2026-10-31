@@ -91,7 +91,9 @@
   --shadow-card: none;
   --shadow-lift: none;
   --shadow-menu: 0 12px 32px -16px rgb(31 31 31 / 18%), 0 1px 3px rgb(31 31 31 / 6%);
-  --ring-orange: 0 0 0 3px rgb(236 94 39 / 16%);
+  /* One focus treatment: inset brand edge — sits on the control, no outer glow/box. */
+  --focus-ring: inset 0 0 0 2px var(--brand-orange);
+  --ring-orange: var(--focus-ring);
 
   --motion-fast: 160ms;
   --motion-enter: 280ms;
@@ -185,10 +187,41 @@ img {
 ::selection {
   background: color-mix(in srgb, var(--brand-orange) 28%, white);
 }
+:focus {
+  outline: none;
+}
 :focus-visible {
-  outline: 3px solid var(--orange-strong);
-  outline-offset: 3px;
-  border-radius: 4px;
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+/* Primary buttons need a light inner edge to stay visible on orange fill. */
+.button:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--brand-white);
+}
+.button.secondary:focus-visible,
+.secondary > .button:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+/* Textual controls: underline instead of an inner box. */
+:is(a:not(.button), .text-link, .quiet > .button, .button.quiet, .button.ghost):focus-visible {
+  box-shadow: none;
+  text-decoration: underline;
+  text-decoration-color: var(--brand-orange);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+/* Command items already show keyboard position via data-selected. */
+.command-dialog [cmdk-item]:focus-visible {
+  box-shadow: none;
+}
+/* Compound controls: one inset edge on the shell. */
+:is(.search-bar, .command-search, .photo-picker, .password-input):focus-within {
+  box-shadow: var(--focus-ring);
+}
+:is(.search-bar, .command-search, .photo-picker, .password-input) :is(:focus, :focus-visible) {
+  outline: none;
+  box-shadow: none;
+  text-decoration: none;
 }
 .wrap {
   width: min(1200px, calc(100% - 2 * var(--page-gutter)));
@@ -351,13 +384,26 @@ button.text-link {
   z-index: 100;
   left: var(--space-4);
   top: 0;
-  transform: translateY(-100%);
+  transform: translateY(-120%);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
   background: var(--surface);
-  padding: var(--space-3);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: var(--shadow-menu);
+  pointer-events: none;
 }
 .skip-link:focus {
+  outline: none;
+  box-shadow: var(--shadow-menu);
+}
+.skip-link:focus-visible {
   top: max(var(--space-4), env(safe-area-inset-top));
   transform: none;
+  pointer-events: auto;
+  box-shadow: var(--shadow-menu), var(--focus-ring);
+  text-decoration: none;
 }
 .icon {
   display: inline-block;

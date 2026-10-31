@@ -286,12 +286,10 @@
   box-shadow: none;
   font-size: var(--text-base);
 }
-.search-bar input:focus {
+.search-bar input:focus,
+.search-bar input:focus-visible {
   outline: none;
-}
-.search-bar:focus-within {
-  outline: 3px solid var(--orange-strong);
-  outline-offset: 3px;
+  box-shadow: none;
 }
 .search-submit {
   display: grid;
@@ -975,15 +973,6 @@ textarea {
   transition:
     border-color var(--motion-fast),
     box-shadow var(--motion-fast);
-}
-input:focus,
-textarea:focus {
-  border-color: var(--brand-orange);
-  box-shadow: var(--ring-orange);
-}
-input:focus-visible,
-textarea:focus-visible {
-  box-shadow: none;
 }
 .field textarea {
   resize: vertical;

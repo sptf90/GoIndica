@@ -1286,13 +1286,10 @@ html:has(.command-dialog[open]) {
   background: transparent;
   font-size: var(--text-lg);
 }
-.command-search input:focus {
+.command-search input:focus,
+.command-search input:focus-visible {
   outline: none;
   box-shadow: none;
-}
-.command-search:focus-within {
-  outline: 3px solid var(--orange-strong);
-  outline-offset: -3px;
 }
 .command-dialog kbd {
   display: inline-block;
