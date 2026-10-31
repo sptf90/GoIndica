@@ -14,8 +14,8 @@ export default async function Image() {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        background: '#fdfdf1',
-        color: '#29231f',
+        background: '#ffffff',
+        color: '#1f1f1f',
         borderLeft: '16px solid #ec5e27',
         padding: '40px 70px 60px',
         width: '100%',
@@ -30,7 +30,7 @@ export default async function Image() {
       >
         Procurando algo na sua cidade?
       </div>
-      <div style={{ display: 'flex', fontSize: 56, color: '#b54115', marginTop: 20 }}>
+      <div style={{ display: 'flex', fontSize: 56, color: '#ec5e27', marginTop: 20 }}>
         Pergunte para quem conhece.
       </div>
       <div
@@ -39,8 +39,8 @@ export default async function Image() {
           fontSize: 25,
           marginTop: 'auto',
           padding: '20px 24px',
-          borderRadius: 12,
-          background: '#fceee3',
+          border: '1px solid #ec5e27',
+          background: '#ffffff',
         }}
       >
         Pessoas indicam. Você encontra. Quem ajudou ganha pontos.

@@ -33,7 +33,7 @@
   margin-top: var(--space-5);
   padding: var(--space-5);
   border: 1px solid var(--orange-line);
-  border-radius: var(--radius-lg);
+  border-radius: 0;
   background: var(--orange-pale);
   overflow-wrap: anywhere;
 }

@@ -28,6 +28,7 @@ export default async function Login({
       <p className="lead small">
         Entre para perguntar, compartilhar o que sabe e acompanhar suas descobertas.
       </p>
+      <p className="hint auth-local-cue">O conhecimento da cidade continua do outro lado deste formulário.</p>
       {motivo && reasons[motivo] ? (
         <p className="notice error" role="alert">
           {reasons[motivo]}

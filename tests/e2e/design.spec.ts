@@ -37,9 +37,9 @@ test('identidade GoIndica e contexto do pedido se adaptam aos nove tamanhos', as
           fits: document.documentElement.scrollWidth <= innerWidth,
         };
       });
-      expect(appearance.canvas).toBe('rgb(253, 253, 241)');
-      expect(appearance.surface).toBe('rgb(246, 242, 231)');
-      await expect(ana.page.locator('.request-header')).toHaveCSS('background-color', 'rgb(255, 254, 249)');
+      expect(appearance.canvas).toBe('rgb(255, 255, 255)');
+      expect(appearance.surface).toBe('rgb(255, 255, 255)');
+      await expect(ana.page.locator('.request-header')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
       expect(appearance.font).toContain('Inter Variable');
       expect(appearance.loaded).toBe(true);
       expect(appearance.fits, `${width}px`).toBe(true);

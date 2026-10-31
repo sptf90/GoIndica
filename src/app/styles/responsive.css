@@ -29,7 +29,8 @@
   .public-header nav {
     gap: var(--space-4);
   }
-  .desktop-link,
+  /* Keep one teaching path on mobile; hide the rest of the marketing nav. */
+  .desktop-link:not(.nav-essential),
   .header-cta {
     display: none;
   }
@@ -233,11 +234,14 @@
     flex-direction: column;
     gap: var(--space-3);
   }
-  .city-filter > .field {
+  .city-filter > .field,
+  .city-filter > .field-action {
     width: 100%;
   }
-  .city-filter > .button {
-    margin: 0;
+  .city-filter .field-action-label,
+  .city-disclosure-content .field-action-label,
+  .metrics-filter .field-action-label {
+    display: none;
   }
   .ranking-row {
     grid-template-columns: 18px 36px minmax(0, 1fr) auto;

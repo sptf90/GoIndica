@@ -46,12 +46,12 @@
 .notice.error {
   background: var(--danger-soft);
   color: var(--danger);
-  border-left: 3px solid var(--danger);
+  border-top: 2px solid var(--danger);
 }
 .notice.success {
   background: var(--wash);
   color: var(--accent-dark);
-  border-left: 3px solid var(--accent);
+  border-top: 2px solid var(--accent);
 }
 .checkbox {
   display: flex;
@@ -73,9 +73,10 @@
 }
 .reuse {
   margin-top: var(--space-6);
-  border-left: 3px solid var(--accent);
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--accent);
   background: var(--wash);
-  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  border-radius: 0;
   padding: var(--space-4) var(--space-5);
 }
 .reuse strong {
@@ -89,8 +90,9 @@
   color: var(--accent);
 }
 .request-quote {
-  border-left: 3px solid var(--accent);
-  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--accent);
+  border-radius: 0;
   padding: var(--space-3) var(--space-4);
   background: var(--wash);
   margin: var(--space-5) 0 var(--space-6);
@@ -577,9 +579,22 @@
   margin-top: var(--space-6);
   max-width: var(--content-narrow);
 }
-/* Aligns with the input below the field label (label line + field gap). */
-.city-filter > .button {
-  margin-top: calc(var(--text-md) * 1.5 + var(--space-2));
+/* Mirrors .field (label stack + gap) so sibling buttons sit on the input row. */
+.field-action {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.field-action-label {
+  font-size: var(--text-md);
+  font-weight: 600;
+  line-height: 1.5;
+  visibility: hidden;
+  user-select: none;
+}
+.field-action > .button {
+  margin: 0;
 }
 .city-title {
   font-size: var(--text-xl);

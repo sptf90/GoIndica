@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Empty, Avatar } from '@/components/ui';
+import { Icon } from '@/components/icon';
 import { LandingAnalytics } from '@/components/landing-analytics';
 import { configured, pilotCityId } from '@/lib/env';
 import { database } from '@/lib/database/server';
@@ -36,10 +37,10 @@ export default async function Landing() {
           </p>
           <div className="hero-actions">
             <Link href="/entrar" className="button">
-              Perguntar à cidade <span aria-hidden="true">↗</span>
+              Perguntar à cidade <Icon name="external" size={18} />
             </Link>
             <Link href="#como-funciona" className="text-link">
-              Entender como funciona ↓
+              Entender como funciona <Icon name="down" size={18} />
             </Link>
           </div>
           <p className="hero-note">Respostas de pessoas. Descobertas de verdade.</p>
@@ -64,7 +65,7 @@ export default async function Landing() {
             </div>
           </div>
           <div className="demo-line" aria-hidden="true">
-            ↓
+            <Icon name="down" size={22} />
           </div>
           <div className="demo-answer">
             <span className="status status-resolved">Encontrado</span>
@@ -139,7 +140,7 @@ export default async function Landing() {
           </p>
           <p className="hint">Uma descoberta anterior não garante disponibilidade atual.</p>
           <Link className="text-link" href="/entrar">
-            Explorar minha cidade ↗
+            Explorar minha cidade <Icon name="external" size={16} />
           </Link>
         </div>
       </section>
@@ -174,7 +175,7 @@ export default async function Landing() {
             </Empty>
           )}
           <Link href="/ranking" className="text-link">
-            Ver ranking da comunidade ↗
+            Ver ranking da comunidade <Icon name="external" size={16} />
           </Link>
         </div>
       </section>
@@ -186,7 +187,7 @@ export default async function Landing() {
           cidade saiba a resposta.
         </h2>
         <Link href="/entrar" className="button">
-          Fazer minha primeira pergunta ↗
+          Fazer minha primeira pergunta <Icon name="external" size={18} />
         </Link>
       </section>
     </main>

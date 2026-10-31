@@ -468,7 +468,12 @@ export default async function Admin({
             Até (UTC)
             <input type="date" name="until" defaultValue={until} />
           </label>
-          <button className="button secondary">Filtrar métricas</button>
+          <div className="field-action">
+            <span className="field-action-label" aria-hidden="true">
+              &nbsp;
+            </span>
+            <button className="button secondary">Filtrar métricas</button>
+          </div>
           <Link href="/admin?tab=metrics" className="text-link">Limpar filtros</Link>
         </form>
         {!validRange ? (

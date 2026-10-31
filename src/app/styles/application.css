@@ -2,7 +2,7 @@
 .app-shell {
   min-height: 100svh;
   background-color: var(--surface);
-  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + var(--space-10));
+  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + var(--space-6));
 }
 .focused-shell {
   padding-bottom: max(var(--space-8), env(safe-area-inset-bottom));
@@ -88,21 +88,20 @@
   margin-top: var(--space-3);
 }
 
-/* Floating dock (mobile) */
+/* Edge-aligned bottom navigation (mobile) */
 .bottom-nav {
   position: fixed;
   z-index: 40;
-  inset: auto max(var(--space-3), env(safe-area-inset-right))
-    calc(var(--space-3) + env(safe-area-inset-bottom))
-    max(var(--space-3), env(safe-area-inset-left));
+  inset: auto 0 0 0;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   min-height: var(--nav-height);
-  padding: 6px;
-  background: var(--canvas);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lift);
+  padding: 6px 0 calc(6px + env(safe-area-inset-bottom));
+  background: var(--surface);
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  box-shadow: none;
 }
 .bottom-nav a {
   display: flex;
@@ -180,7 +179,20 @@
   margin-bottom: var(--space-6);
 }
 .page-heading .eyebrow {
-  margin-bottom: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+}
+.page-heading .eyebrow::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brand-orange);
 }
 .page-heading > .muted {
   margin-top: var(--space-3);
@@ -234,8 +246,18 @@
   margin-top: var(--space-3);
   font-size: var(--text-base);
 }
-.feed-search {
+.feed-tools {
   margin: var(--space-6) 0 var(--space-3);
+}
+.feed-tools-primary {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.feed-tools-primary .search-bar {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 .search-bar {
   display: flex;
@@ -280,7 +302,7 @@
   border: 0;
   border-radius: 50%;
   background: var(--brand-orange);
-  color: var(--ink);
+  color: var(--brand-white);
   transition: background-color var(--motion-fast);
 }
 .search-submit:hover {
@@ -321,15 +343,14 @@
   display: grid;
   gap: var(--space-3);
 }
-.city-disclosure-content > .button {
+.city-disclosure-content > .field-action {
   justify-self: start;
 }
 .feed-create {
-  position: fixed;
-  z-index: 25;
-  right: max(var(--space-5), env(safe-area-inset-right));
-  bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + var(--space-8));
-  border-radius: var(--radius-pill);
+  position: static;
+  flex: 0 0 auto;
+  align-self: stretch;
+  border-radius: var(--radius-control);
 }
 .decision-banner {
   display: flex;
@@ -337,7 +358,7 @@
   gap: var(--space-3);
   padding: var(--space-4);
   border: 1px solid var(--orange-line);
-  border-radius: var(--radius-lg);
+  border-radius: 0;
   background: var(--orange-pale);
   margin: var(--space-3) 0;
   transition: border-color var(--motion-fast);
@@ -352,7 +373,7 @@
   height: 44px;
   flex-shrink: 0;
   background: var(--brand-orange);
-  color: var(--ink);
+  color: var(--brand-white);
   border-radius: var(--radius-md);
 }
 .decision-banner > span:nth-child(2) {
@@ -632,8 +653,8 @@
 @media (min-width: 768px) {
   .app-shell {
     --sidebar-width: 76px;
-    --sidebar-gap: var(--space-3);
-    padding-left: calc(var(--sidebar-width) + 2 * var(--sidebar-gap));
+    --sidebar-gap: 0px;
+    padding-left: var(--sidebar-width);
     padding-bottom: var(--space-12);
   }
   .bottom-nav {
@@ -643,7 +664,7 @@
   .app-sidebar {
     position: fixed;
     z-index: 45;
-    inset: var(--sidebar-gap) auto var(--sidebar-gap) var(--sidebar-gap);
+    inset: 0 auto 0 0;
     width: var(--sidebar-width);
     display: flex;
     flex-direction: column;
@@ -651,9 +672,10 @@
     gap: var(--space-4);
     padding: var(--space-5) var(--space-3);
     background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-card);
+    border: 0;
+    border-right: 1px solid var(--line);
+    border-radius: 0;
+    box-shadow: none;
   }
   .app-sidebar > .brand {
     width: 44px;
@@ -782,8 +804,7 @@
   }
   .feed-create {
     position: static;
-    float: right;
-    border-radius: var(--radius-pill);
+    float: none;
   }
   .section-bar {
     clear: none;
@@ -791,10 +812,6 @@
   .city-disclosure-content {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
-  }
-  /* Aligns with the input below the field label (label line + field gap). */
-  .city-disclosure-content > .button {
-    margin-top: calc(var(--text-md) * 1.5 + var(--space-2));
   }
 }
 @media (min-width: 1200px) {
@@ -936,6 +953,11 @@
 .field > span:first-child {
   font-size: var(--text-md);
   font-weight: 600;
+  line-height: 1.5;
+}
+label.field {
+  font-weight: 600;
+  line-height: 1.5;
 }
 .field input,
 .field textarea,

@@ -34,7 +34,12 @@ export default async function Ranking({
       <div className="ranking-filter-panel">
         <form action="/ranking" className="city-filter">
           <CitySelector key={city.id} initial={city} name="city" />
-          <button className="button secondary">Ver ranking</button>
+          <div className="field-action">
+            <span className="field-action-label" aria-hidden="true">
+              &nbsp;
+            </span>
+            <button className="button secondary">Ver ranking</button>
+          </div>
         </form>
       </div>
       <div className="ranking-section-heading">

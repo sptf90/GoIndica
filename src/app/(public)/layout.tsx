@@ -10,7 +10,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <Link className="desktop-link" href="/#como-funciona">
               Como funciona
             </Link>
-            <Link className="desktop-link" href="/ranking">
+            <Link className="desktop-link nav-essential" href="/ranking">
               Ranking
             </Link>
             <Link className="text-link" href="/entrar">

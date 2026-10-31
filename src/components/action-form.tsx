@@ -4,6 +4,28 @@ import type { FormAction, ActionState } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { returnPath } from '@/lib/return-path';
+import { Icon } from './icon';
+
+function restoreFields(form: HTMLFormElement, data: FormData) {
+  for (const [key, value] of data.entries()) {
+    if (typeof value !== 'string') continue;
+    const control = form.elements.namedItem(key);
+    if (control instanceof RadioNodeList) {
+      for (const option of control) {
+        if (option instanceof HTMLInputElement && option.value === value) option.checked = true;
+      }
+    } else if (
+      control instanceof HTMLInputElement ||
+      control instanceof HTMLTextAreaElement ||
+      control instanceof HTMLSelectElement
+    ) {
+      if (control instanceof HTMLInputElement && control.type === 'checkbox')
+        control.checked = value === 'on' || value === 'true' || value === control.value;
+      else control.value = value;
+    }
+  }
+}
+
 export function ActionForm({
   action,
   children,
@@ -24,27 +46,23 @@ export function ActionForm({
   onSuccess?: () => void;
 }) {
   const router = useRouter();
-  const preserveValues = useRef(false);
+  const submitted = useRef<FormData | null>(null);
   const form = useRef<HTMLFormElement>(null);
   const error = useRef<HTMLParagraphElement>(null);
-  const [state, formAction, pending] = useActionState<ActionState, FormData>(
-    async (previous, data) => {
-      preserveValues.current = false;
-      const result = await action(previous, data);
-      // React reseta os campos após uma action. Uma falha precisa preservar a edição
-      // no próprio formulário, sem armazenar senhas ou outros valores fora dele.
-      preserveValues.current = Boolean(result.error);
-      if (result.success) onSuccess?.();
-      return result;
-    },
-    {},
-  );
+  // Pass the server action directly so Next can expose a real form endpoint.
+  // Client wrappers leave action="javascript:throw…" and break Entrar on mobile
+  // when /_next hydration is delayed or blocked on a LAN IP.
+  const [state, formAction, pending] = useActionState<ActionState, FormData>(action, {});
   const errorId = useId();
   useEffect(() => {
     if (state.redirectTo) router.push(returnPath(state.redirectTo));
   }, [state.redirectTo, router]);
   useEffect(() => {
+    if (state.success) onSuccess?.();
+  }, [state.success, onSuccess]);
+  useEffect(() => {
     if (!state.error) return;
+    if (submitted.current && form.current) restoreFields(form.current, submitted.current);
     const field = Object.keys(state.fields || {})[0];
     const control = field ? form.current?.elements.namedItem(field) : null;
     if (control instanceof HTMLInputElement && control.type === 'hidden') {
@@ -62,11 +80,12 @@ export function ActionForm({
       className={`action-form ${className}`}
       aria-describedby={state.error ? errorId : undefined}
       aria-busy={pending}
-      onReset={(event) => {
-        if (preserveValues.current) event.preventDefault();
-      }}
       onSubmit={(e) => {
-        if (confirm && !window.confirm(confirm)) e.preventDefault();
+        if (confirm && !window.confirm(confirm)) {
+          e.preventDefault();
+          return;
+        }
+        submitted.current = new FormData(e.currentTarget);
       }}
     >
       {children}
@@ -82,7 +101,7 @@ export function ActionForm({
       ) : null}
       {state.redirectTo ? (
         <Link href={returnPath(state.redirectTo)} className="text-link">
-          Abrir pedido ↗
+          Abrir pedido <Icon name="external" size={16} />
         </Link>
       ) : null}
       <button

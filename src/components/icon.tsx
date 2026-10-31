@@ -1,4 +1,5 @@
 import {
+  ArrowDown,
   ArrowRight,
   ArrowUpRight,
   Award,
@@ -42,6 +43,7 @@ const icons = {
   eyeClosed: EyeOff,
   plus: Plus,
   arrow: ArrowRight,
+  down: ArrowDown,
   external: ArrowUpRight,
   bookmark: Bookmark,
   person: UserRound,

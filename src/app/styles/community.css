@@ -99,7 +99,7 @@
 .metrics-filter {
   display: flex;
   gap: var(--space-4);
-  align-items: end;
+  align-items: start;
   flex-wrap: wrap;
   margin: var(--space-6) 0;
 }

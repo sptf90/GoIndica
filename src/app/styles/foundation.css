@@ -2,26 +2,27 @@
    Every size in the other stylesheets must come from the scales below. */
 :root {
   --brand-orange: #ec5e27;
-  --brand-white: #fdfdf1;
+  --brand-white: #ffffff;
   --orange-strong: #b54115;
   --orange-dark: #92330f;
-  --orange-soft: #fceee3;
-  --orange-pale: #fdf7ee;
-  --orange-line: #f1cbb7;
-  --orange-tint: #f9dfcf;
+  /* Soft accents stay neutral gray/white — peach washes were reading as bege. */
+  --orange-soft: #f5f5f5;
+  --orange-pale: #ffffff;
+  --orange-line: #ec5e27;
+  --orange-tint: #ebebeb;
   --canvas: var(--brand-white);
   --surface: var(--brand-white);
-  --surface-subtle: #f6f2e7;
-  --ink: #29231f;
-  --ink-soft: #6c6158;
-  --line: #e6ddcf;
-  --line-soft: #f0eade;
-  --line-strong: #bfb09f;
+  --surface-subtle: #f5f5f5;
+  --ink: #1f1f1f;
+  --ink-soft: #5c5c5c;
+  --line: #e6e6e6;
+  --line-soft: #f0f0f0;
+  --line-strong: #c4c4c4;
   --paper: var(--canvas);
   --muted: var(--ink-soft);
   --accent: var(--orange-strong);
   --accent-dark: var(--orange-dark);
-  --wash: var(--orange-soft);
+  --wash: var(--surface-subtle);
   --danger: #a12732;
   --danger-soft: #fcecef;
   --danger-line: #e7b9bf;
@@ -31,9 +32,9 @@
   --button-neutral-ink: var(--ink);
   --button-neutral-border: var(--line-strong);
   --button-soft-hover: var(--surface-subtle);
-  --button-disabled-bg: #f0eade;
-  --button-disabled-ink: #71665c;
-  --button-disabled-border: #e2d8ca;
+  --button-disabled-bg: #f0f0f0;
+  --button-disabled-ink: #6b6b6b;
+  --button-disabled-border: #dcdcdc;
 
   /* Type scale */
   --text-2xs: 11px;
@@ -85,11 +86,11 @@
   --nav-height: 68px;
   --body: 'Inter Variable', sans-serif;
   --display: var(--body);
-  /* Depth: quiet shadows; borders carry most of the structure. */
-  --shadow-sm: 0 1px 2px rgb(41 35 31 / 6%);
-  --shadow-card: 0 1px 2px rgb(41 35 31 / 4%);
-  --shadow-lift: 0 6px 20px -10px rgb(41 35 31 / 18%);
-  --shadow-menu: 0 16px 40px -16px rgb(41 35 31 / 24%), 0 1px 3px rgb(41 35 31 / 6%);
+  /* Depth: borders carry structure; shadows stay minimal. */
+  --shadow-sm: none;
+  --shadow-card: none;
+  --shadow-lift: none;
+  --shadow-menu: 0 12px 32px -16px rgb(31 31 31 / 18%), 0 1px 3px rgb(31 31 31 / 6%);
   --ring-orange: 0 0 0 3px rgb(236 94 39 / 16%);
 
   --motion-fast: 160ms;
@@ -182,7 +183,7 @@ img {
   max-width: 100%;
 }
 ::selection {
-  background: var(--orange-line);
+  background: color-mix(in srgb, var(--brand-orange) 28%, white);
 }
 :focus-visible {
   outline: 3px solid var(--orange-strong);
@@ -209,7 +210,7 @@ img {
    primary (default) · secondary · quiet/ghost · danger — md (default) · sm · lg */
 .button {
   --button-bg: var(--button-primary);
-  --button-ink: var(--ink);
+  --button-ink: var(--brand-white);
   --button-border: var(--button-primary);
   --button-hover-bg: var(--button-primary-hover);
   --button-hover-ink: var(--brand-white);
@@ -398,7 +399,8 @@ button.text-link {
   border-radius: var(--radius-lg);
 }
 .accent-text {
-  color: var(--brand-orange);
+  /* UI/body-sized accent must clear 4.5:1; bright brand orange is fill/display only. */
+  color: var(--accent);
 }
 
 /* Loading placeholders keep the final layout so nothing jumps when data arrives. */
