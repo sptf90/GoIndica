@@ -170,6 +170,7 @@ export default async function Feed({
               {followedCities.map((c) => (
                 <Link
                   key={c.id}
+                  scroll={false}
                   href={'/app?' + new URLSearchParams({ city: String(c.id), q, status })}
                 >
                   {c.name} — {c.state_code}

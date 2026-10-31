@@ -1,6 +1,28 @@
 'use client';
 import { animate } from 'motion/react';
-import { useLayoutEffect, useRef, type ReactNode } from 'react';
+import {
+  Children,
+  cloneElement,
+  isValidElement,
+  useLayoutEffect,
+  useRef,
+  type ReactElement,
+  type ReactNode,
+} from 'react';
+
+type TabLinkProps = {
+  href?: string;
+  scroll?: boolean;
+};
+
+function keepPageScroll(children: ReactNode) {
+  return Children.map(children, (child) => {
+    if (!isValidElement(child)) return child;
+    const props = child.props as TabLinkProps;
+    if (props.href == null || props.scroll != null) return child;
+    return cloneElement(child as ReactElement<TabLinkProps>, { scroll: false });
+  });
+}
 
 export function ScrollableTabs({
   active,
@@ -51,7 +73,7 @@ export function ScrollableTabs({
   return (
     <nav ref={navigation} className={`tabs ${className}`} aria-label={label}>
       <span ref={pill} className="tab-pill" aria-hidden="true" />
-      {children}
+      {keepPageScroll(children)}
     </nav>
   );
 }
