@@ -8,7 +8,7 @@ export default function ErrorPage({ reset }: { reset: () => void }) {
         Tente novamente em instantes. Suas confirmações já registradas continuam salvas.
       </p>
       <button className="button" onClick={reset}>
-        Tentar novamente
+        Tentar novamente 
       </button>
     </MainContent>
   );
